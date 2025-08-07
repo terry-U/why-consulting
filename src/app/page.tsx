@@ -24,11 +24,14 @@ export default function Home() {
       
       if (session?.user) {
         setAuthUser(session.user)
-        const userData = await getUserById(session.user.id)
-        setUser(userData)
         
-        // 기존 세션 확인
-        await loadExistingSession(session.user.id)
+        // 병렬로 사용자 정보와 세션 정보 로드
+        const [userData] = await Promise.all([
+          getUserById(session.user.id),
+          loadExistingSession(session.user.id)
+        ])
+        
+        setUser(userData)
       }
       
       setLoading(false)
@@ -39,9 +42,14 @@ export default function Home() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         setAuthUser(session.user)
-        const userData = await getUserById(session.user.id)
+        
+        // 병렬 처리
+        const [userData] = await Promise.all([
+          getUserById(session.user.id),
+          loadExistingSession(session.user.id)
+        ])
+        
         setUser(userData)
-        await loadExistingSession(session.user.id)
       } else {
         setAuthUser(null)
         setUser(null)

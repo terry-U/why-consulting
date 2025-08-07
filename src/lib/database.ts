@@ -38,24 +38,30 @@ export async function updateUserPaidStatus(userId: string, isPaid: boolean): Pro
 }
 
 // 세션 관련 함수들
-export async function createSession(userId: string): Promise<Session | null> {
-  const { data, error } = await supabaseAdmin
-    .from('sessions')
-    .insert({
-      user_id: userId,
-      started_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      is_completed: false
-    })
-    .select()
-    .single()
+export async function createSession(userId: string, threadId: string): Promise<Session | null> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('sessions')
+      .insert([
+        {
+          user_id: userId,
+          thread_id: threadId,
+          status: 'active'
+        }
+      ])
+      .select()
+      .single()
 
-  if (error) {
-    console.error('세션 생성 오류:', error)
+    if (error) {
+      console.error('세션 생성 오류:', error)
+      return null
+    }
+
+    return data
+  } catch (error) {
+    console.error('세션 생성 중 예외:', error)
     return null
   }
-
-  return data
 }
 
 export async function getActiveSession(userId: string): Promise<Session | null> {
@@ -94,6 +100,26 @@ export async function updateSession(sessionId: string, updates: Partial<Session>
   }
 
   return true
+}
+
+export async function getSessionById(sessionId: string): Promise<Session | null> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('sessions')
+      .select('*')
+      .eq('id', sessionId)
+      .single()
+
+    if (error) {
+      console.error('세션 조회 오류:', error)
+      return null
+    }
+
+    return data
+  } catch (error) {
+    console.error('세션 조회 중 예외:', error)
+    return null
+  }
 }
 
 // 메시지 관련 함수들
