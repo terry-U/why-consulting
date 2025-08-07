@@ -20,21 +20,39 @@ export default function Home() {
   // 인증 상태 확인
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (session?.user) {
-        setAuthUser(session.user)
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
         
-        // 병렬로 사용자 정보와 세션 정보 로드
-        const [userData] = await Promise.all([
-          getUserById(session.user.id),
-          loadExistingSession(session.user.id)
-        ])
-        
-        setUser(userData)
+        if (session?.user) {
+          setAuthUser(session.user)
+          
+          // 병렬로 사용자 정보와 세션 정보 로드 (타임아웃 추가)
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout')), 10000) // 10초 타임아웃
+          )
+          
+          try {
+            const result = await Promise.race([
+              Promise.all([
+                getUserById(session.user.id),
+                loadExistingSession(session.user.id)
+              ]),
+              timeoutPromise
+            ]) as [User | null, void]
+            
+            setUser(result[0])
+          } catch (error) {
+            console.error('데이터 로드 타임아웃 또는 오류:', error)
+            // 타임아웃되어도 기본 사용자 정보는 설정
+            const userData = await getUserById(session.user.id)
+            setUser(userData)
+          }
+        }
+      } catch (error) {
+        console.error('인증 확인 오류:', error)
+      } finally {
+        setLoading(false)
       }
-      
-      setLoading(false)
     }
 
     checkAuth()
@@ -43,13 +61,17 @@ export default function Home() {
       if (session?.user) {
         setAuthUser(session.user)
         
-        // 병렬 처리
-        const [userData] = await Promise.all([
-          getUserById(session.user.id),
-          loadExistingSession(session.user.id)
-        ])
-        
-        setUser(userData)
+        // 병렬 처리 (타임아웃 적용)
+        try {
+          const [userData] = await Promise.all([
+            getUserById(session.user.id),
+            loadExistingSession(session.user.id)
+          ])
+          
+          setUser(userData)
+        } catch (error) {
+          console.error('Auth 상태 변경 시 데이터 로드 오류:', error)
+        }
       } else {
         setAuthUser(null)
         setUser(null)

@@ -22,7 +22,7 @@ export async function getActiveSession(userId: string): Promise<Session | null> 
     .from('sessions')
     .select('*')
     .eq('user_id', userId)
-    .eq('is_completed', false)
+    .eq('status', 'active')  // is_completed -> status로 변경
     .order('updated_at', { ascending: false })
     .limit(1)
     .single()

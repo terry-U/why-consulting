@@ -26,7 +26,6 @@ export interface Payment {
 export interface Session {
   id: string
   user_id: string
-  thread_id?: string  // OpenAI Assistant API Thread ID 추가
   status: 'active' | 'completed' | 'paused'
   created_at: string
   updated_at: string

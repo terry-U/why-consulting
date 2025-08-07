@@ -166,96 +166,29 @@ export const COUNSELING_SYSTEM_PROMPT = `지금부터 상담을 시작해주세�
 	•	두 개 이상의 질문은 금지
 	•	중간은 없어요, 하나만 고른다면요? 방식으로 감정 선택 유도`
 
-// Assistant 생성/관리
-let assistantId: string | null = null;
-
-async function getOrCreateAssistant() {
-  if (assistantId) {
-    return assistantId;
-  }
-
-  try {
-    const assistant = await openai.beta.assistants.create({
-      name: "Why 발견 상담사",
-      instructions: COUNSELING_SYSTEM_PROMPT,
-      model: "gpt-4o",
-      temperature: 1.0,
-    });
-    
-    assistantId = assistant.id;
-    return assistantId;
-  } catch (error) {
-    console.error('Assistant 생성 오류:', error);
-    throw error;
-  }
-}
-
-// Thread 생성
-export async function createThread(): Promise<string> {
-  try {
-    const thread = await openai.beta.threads.create();
-    return thread.id;
-  } catch (error) {
-    console.error('Thread 생성 오류:', error);
-    throw error;
-  }
-}
-
-// 메시지 전송 및 응답 받기
-export async function sendMessageToAssistant(
-  threadId: string, 
-  message: string
-): Promise<string> {
-  try {
-    const assistantIdValue = await getOrCreateAssistant();
-
-    // 사용자 메시지 추가
-    await openai.beta.threads.messages.create(threadId, {
-      role: "user",
-      content: message,
-    });
-
-    // Run 실행
-    const run = await openai.beta.threads.runs.create(threadId, {
-      assistant_id: assistantIdValue,
-    });
-
-    // Run 완료 대기
-    let runStatus = await openai.beta.threads.runs.retrieve(run.id, {
-      thread_id: threadId
-    });
-    
-    while (runStatus.status === 'in_progress' || runStatus.status === 'queued') {
-      await new Promise(resolve => setTimeout(resolve, 1000)); // 1초 대기
-      runStatus = await openai.beta.threads.runs.retrieve(run.id, {
-        thread_id: threadId
-      });
-    }
-
-    if (runStatus.status === 'completed') {
-      // 최신 메시지 가져오기
-      const messages = await openai.beta.threads.messages.list(threadId);
-      const lastMessage = messages.data[0];
-      
-      if (lastMessage.role === 'assistant' && lastMessage.content[0].type === 'text') {
-        return lastMessage.content[0].text.value;
-      }
-    }
-
-    throw new Error(`Run failed with status: ${runStatus.status}`);
-  } catch (error) {
-    console.error('메시지 전송 오류:', error);
-    throw error;
-  }
-}
-
-// 기존 함수는 호환성을 위해 유지 (사용하지 않음)
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant'
   content: string
 }
 
 export async function generateCounselingResponse(messages: ChatMessage[]): Promise<string> {
-  // 더 이상 사용하지 않는 함수
-  throw new Error('이 함수는 더 이상 사용되지 않습니다. sendMessageToAssistant를 사용하세요.');
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'system',
+          content: COUNSELING_SYSTEM_PROMPT
+        },
+        ...messages
+      ],
+      temperature: 1.0,
+      max_tokens: 1000,
+    })
+
+    return response.choices[0]?.message?.content || '죄송합니다. 응답을 생성할 수 없습니다.'
+  } catch (error) {
+    console.error('OpenAI API 오류:', error)
+    throw error
+  }
 } 

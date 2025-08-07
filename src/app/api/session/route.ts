@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSession, getActiveSession, getSessionMessages } from '@/lib/database'
-import { createThread } from '@/lib/openai'
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,11 +12,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // OpenAI Thread 생성
-    const threadId = await createThread()
-
-    // 새 세션 생성 (thread_id 포함)
-    const session = await createSession(userId, threadId)
+    // 새 세션 생성
+    const session = await createSession(userId)
 
     if (!session) {
       return NextResponse.json(

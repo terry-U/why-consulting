@@ -38,14 +38,13 @@ export async function updateUserPaidStatus(userId: string, isPaid: boolean): Pro
 }
 
 // 세션 관련 함수들
-export async function createSession(userId: string, threadId: string): Promise<Session | null> {
+export async function createSession(userId: string): Promise<Session | null> {
   try {
     const { data, error } = await supabaseAdmin
       .from('sessions')
       .insert([
         {
           user_id: userId,
-          thread_id: threadId,
           status: 'active'
         }
       ])

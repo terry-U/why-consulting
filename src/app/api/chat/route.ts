@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sendMessageToAssistant } from '@/lib/openai'
-import { addMessage, getSessionById, updateSession } from '@/lib/database'
+import { generateCounselingResponse, ChatMessage } from '@/lib/openai'
+import { addMessage, getRecentMessages, updateSession } from '@/lib/database'
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,21 +16,20 @@ export async function POST(request: NextRequest) {
     // 사용자 메시지 저장
     const userMessage = await addMessage(sessionId, userId, 'user', message)
 
-    // 세션에서 thread_id 가져오기
-    const session = await getSessionById(sessionId)
+    // 최근 메시지들 가져오기 (컨텍스트용)
+    const recentMessages = await getRecentMessages(sessionId, 10)
     
-    if (!session?.thread_id) {
-      return NextResponse.json(
-        { success: false, error: 'Thread ID가 없습니다.' },
-        { status: 400 }
-      )
-    }
+    // OpenAI API용 메시지 포맷 변환
+    const chatMessages: ChatMessage[] = recentMessages.map(msg => ({
+      role: msg.role as 'user' | 'assistant',
+      content: msg.content
+    }))
 
-    // OpenAI Assistant API로 응답 생성
-    const assistantResponse = await sendMessageToAssistant(session.thread_id, message)
+    // AI 응답 생성
+    const aiResponse = await generateCounselingResponse(chatMessages)
 
     // AI 응답 저장
-    const assistantMessage = await addMessage(sessionId, userId, 'assistant', assistantResponse)
+    const assistantMessage = await addMessage(sessionId, userId, 'assistant', aiResponse)
 
     // 세션 업데이트
     await updateSession(sessionId, { updated_at: new Date().toISOString() })
