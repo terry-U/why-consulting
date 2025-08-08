@@ -38,13 +38,18 @@ export async function updateUserPaidStatus(userId: string, isPaid: boolean): Pro
 }
 
 // 세션 관련 함수들
-export async function createSession(userId: string): Promise<Session | null> {
+export async function createSession(userId: string, threadId: string): Promise<Session | null> {
+  console.log('🗄️ 데이터베이스에 세션 생성 시작')
+  console.log('👤 사용자 ID:', userId)
+  console.log('🧵 Thread ID:', threadId)
+  
   try {
     const { data, error } = await supabaseAdmin
       .from('sessions')
       .insert([
         {
           user_id: userId,
+          thread_id: threadId,
           status: 'active'
         }
       ])
@@ -52,13 +57,14 @@ export async function createSession(userId: string): Promise<Session | null> {
       .single()
 
     if (error) {
-      console.error('세션 생성 오류:', error)
+      console.error('❌ 세션 생성 오류:', error)
       return null
     }
 
+    console.log('✅ 세션 생성 완료:', data.id)
     return data
   } catch (error) {
-    console.error('세션 생성 중 예외:', error)
+    console.error('❌ 세션 생성 중 예외:', error)
     return null
   }
 }
@@ -102,6 +108,8 @@ export async function updateSession(sessionId: string, updates: Partial<Session>
 }
 
 export async function getSessionById(sessionId: string): Promise<Session | null> {
+  console.log('🔍 세션 ID로 조회:', sessionId)
+  
   try {
     const { data, error } = await supabaseAdmin
       .from('sessions')
@@ -110,13 +118,14 @@ export async function getSessionById(sessionId: string): Promise<Session | null>
       .single()
 
     if (error) {
-      console.error('세션 조회 오류:', error)
+      console.error('❌ 세션 조회 오류:', error)
       return null
     }
 
+    console.log('✅ 세션 조회 완료:', data?.id)
     return data
   } catch (error) {
-    console.error('세션 조회 중 예외:', error)
+    console.error('❌ 세션 조회 중 예외:', error)
     return null
   }
 }

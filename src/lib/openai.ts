@@ -166,29 +166,125 @@ export const COUNSELING_SYSTEM_PROMPT = `지금부터 상담을 시작해주세�
 	•	두 개 이상의 질문은 금지
 	•	중간은 없어요, 하나만 고른다면요? 방식으로 감정 선택 유도`
 
+// Assistant 관리
+let assistantId: string | null = null;
+
+async function getOrCreateAssistant() {
+  console.log('🤖 Assistant 생성/조회 시작')
+  
+  if (assistantId) {
+    console.log('✅ 기존 Assistant 사용:', assistantId)
+    return assistantId;
+  }
+
+  try {
+    const assistant = await openai.beta.assistants.create({
+      name: "Why 발견 상담사",
+      instructions: COUNSELING_SYSTEM_PROMPT,
+      model: "gpt-4o",
+      temperature: 1.0,
+    });
+    
+    assistantId = assistant.id;
+    console.log('✅ 새 Assistant 생성 완료:', assistantId)
+    return assistantId;
+  } catch (error) {
+    console.error('❌ Assistant 생성 오류:', error);
+    throw error;
+  }
+}
+
+// Thread 생성
+export async function createThread(): Promise<string> {
+  console.log('🧵 Thread 생성 시작')
+  
+  try {
+    const thread = await openai.beta.threads.create();
+    console.log('✅ Thread 생성 완료:', thread.id)
+    return thread.id;
+  } catch (error) {
+    console.error('❌ Thread 생성 오류:', error);
+    throw error;
+  }
+}
+
+// 메시지 전송 및 응답 받기
+export async function sendMessageToAssistant(
+  threadId: string, 
+  message: string
+): Promise<string> {
+  console.log('💬 Assistant에 메시지 전송 시작')
+  console.log('📝 사용자 메시지:', message)
+  
+  try {
+    const assistantIdValue = await getOrCreateAssistant();
+
+    // 사용자 메시지 추가
+    console.log('📤 사용자 메시지를 Thread에 추가 중...')
+    await openai.beta.threads.messages.create(threadId, {
+      role: "user",
+      content: message,
+    });
+
+    // Run 실행
+    console.log('🏃 Run 실행 시작...')
+    const run = await openai.beta.threads.runs.create(threadId, {
+      assistant_id: assistantIdValue,
+    });
+
+    console.log('⏳ Run 완료 대기 중... (ID:', run.id, ')')
+    
+    // Run 완료 대기
+    let runStatus = await openai.beta.threads.runs.retrieve(run.id, {
+      thread_id: threadId
+    });
+    let attempts = 0;
+    const maxAttempts = 60; // 60초 타임아웃
+    
+    while (runStatus.status === 'in_progress' || runStatus.status === 'queued') {
+      attempts++;
+      if (attempts > maxAttempts) {
+        throw new Error('Run 타임아웃: 60초 초과');
+      }
+      
+      console.log(`⏳ Run 상태: ${runStatus.status} (${attempts}/${maxAttempts})`)
+      await new Promise(resolve => setTimeout(resolve, 1000)); // 1초 대기
+      runStatus = await openai.beta.threads.runs.retrieve(run.id, {
+        thread_id: threadId
+      });
+    }
+
+    console.log('🏁 Run 완료! 상태:', runStatus.status)
+
+    if (runStatus.status === 'completed') {
+      // 최신 메시지 가져오기
+      console.log('📥 Assistant 응답 조회 중...')
+      const messages = await openai.beta.threads.messages.list(threadId);
+      const lastMessage = messages.data[0];
+      
+      if (lastMessage.role === 'assistant' && lastMessage.content[0].type === 'text') {
+        const response = lastMessage.content[0].text.value;
+        console.log('✅ Assistant 응답 수신 완료')
+        console.log('📝 응답 내용:', response.substring(0, 100) + '...')
+        return response;
+      }
+    }
+
+    console.error('❌ Run 실패:', runStatus.status)
+    throw new Error(`Run failed with status: ${runStatus.status}`);
+  } catch (error) {
+    console.error('❌ 메시지 전송 오류:', error);
+    throw error;
+  }
+}
+
+// 기존 함수는 호환성을 위해 유지 (사용하지 않음)
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant'
   content: string
 }
 
 export async function generateCounselingResponse(messages: ChatMessage[]): Promise<string> {
-  try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'system',
-          content: COUNSELING_SYSTEM_PROMPT
-        },
-        ...messages
-      ],
-      temperature: 1.0,
-      max_tokens: 1000,
-    })
-
-    return response.choices[0]?.message?.content || '죄송합니다. 응답을 생성할 수 없습니다.'
-  } catch (error) {
-    console.error('OpenAI API 오류:', error)
-    throw error
-  }
+  // 더 이상 사용하지 않는 함수
+  throw new Error('이 함수는 더 이상 사용되지 않습니다. sendMessageToAssistant를 사용하세요.');
 } 
