@@ -241,6 +241,40 @@ export default function Home() {
     )
   }
 
+  // 유료 사용자이지만 세션이 없는 경우
+  if (user && user.is_paid_user && !session) {
+    return (
+      <div className="min-h-screen bg-gray-100 py-8">
+        <div className="container mx-auto px-4">
+          <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h1 className="text-2xl font-bold">Why 상담사</h1>
+              <button
+                onClick={handleLogout}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                로그아웃
+              </button>
+            </div>
+            
+            <div className="text-center">
+              <h2 className="text-xl font-semibold mb-4">상담 세션이 필요합니다</h2>
+              <p className="text-gray-600 mb-6">
+                새로운 상담 세션을 시작하여 당신의 Why를 찾아보세요.
+              </p>
+              <button
+                onClick={startNewSession}
+                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                새 상담 시작하기
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // 결제하지 않은 사용자
   if (user && !user.is_paid_user) {
     return (
@@ -249,10 +283,12 @@ export default function Home() {
           <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-2xl font-bold">Why 상담사</h1>
-              <Button onClick={handleLogout} variant="outline" size="sm">
-                <LogOut className="w-4 h-4 mr-2" />
+              <button
+                onClick={handleLogout}
+                className="text-gray-500 hover:text-gray-700"
+              >
                 로그아웃
-              </Button>
+              </button>
             </div>
             
             <div className="text-center">
@@ -272,9 +308,12 @@ export default function Home() {
                 </ul>
               </div>
               
-              <Button className="w-full mb-4" size="lg">
+              <button
+                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg mb-4"
+                disabled
+              >
                 이용권 구매하기 (추후 구현)
-              </Button>
+              </button>
               
               <p className="text-xs text-gray-500">
                 결제 기능은 개발 중입니다.
