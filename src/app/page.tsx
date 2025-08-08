@@ -125,6 +125,9 @@ export default function Home() {
             } catch (error) {
               console.error('❌ 세션 자동 생성 오류:', error)
             }
+          } else {
+            console.log('✅ 기존 세션 사용:', existingSession.id)
+            // 이미 loadExistingSession에서 setSession, setMessages 호출됨
           }
         } catch (error) {
           console.error('Auth 상태 변경 시 데이터 로드 오류:', error)
