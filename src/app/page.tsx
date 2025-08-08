@@ -84,17 +84,28 @@ export default function Home() {
   }, [])
 
   const loadExistingSession = async (userId: string) => {
+    console.log('🔍 기존 세션 조회 시작')
     try {
       const response = await fetch(`/api/session?userId=${userId}`)
       const data = await response.json()
       
-      if (data.success) {
+      if (data.success && data.session) {
+        console.log('✅ 기존 세션 발견:', data.session.id)
+        
+        // thread_id가 없는 구 세션이면 새 세션 생성
+        if (!data.session.thread_id) {
+          console.log('⚠️ Thread ID가 없는 구 세션 - 새 세션 생성')
+          return null
+        }
+        
         setSession(data.session)
-        setMessages(data.messages)
+        setMessages(data.messages || [])
+        return data.session
       }
     } catch (error) {
-      console.error('세션 로드 오류:', error)
+      console.error('❌ 세션 로딩 오류:', error)
     }
+    return null
   }
 
   const handleAuthSuccess = async () => {

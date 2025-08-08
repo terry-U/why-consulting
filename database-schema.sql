@@ -24,10 +24,10 @@ CREATE TABLE IF NOT EXISTS payments (
 CREATE TABLE IF NOT EXISTS sessions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  thread_id TEXT, -- OpenAI Assistant API Thread ID
+  status TEXT CHECK (status IN ('active', 'completed', 'paused')) DEFAULT 'active',
   started_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  is_completed BOOLEAN DEFAULT FALSE,
-  final_why TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
