@@ -17,7 +17,38 @@ export default function Home() {
   const [chatLoading, setChatLoading] = useState(false)
   const [authUser, setAuthUser] = useState<{ id: string; email?: string } | null>(null)
 
-  // 인증 상태 확인
+  const startNewSession = async () => {
+    if (!authUser) return
+
+    console.log('🚀 새 세션 생성 시작')
+    try {
+      const response = await fetch('/api/session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: authUser.id }),
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        console.log('✅ 새 세션 생성 완료:', data.session.id)
+        setSession(data.session)
+        setMessages([])
+        return data.session
+      } else {
+        console.error('❌ 세션 생성 실패:', data.error)
+        alert('새 상담 세션 시작에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error('❌ 새 세션 시작 오류:', error)
+      alert('오류가 발생했습니다.')
+    }
+    return null
+  }
+
+  // 인증 상태 확인 및 초기 데이터 로드
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -63,12 +94,38 @@ export default function Home() {
         
         // 병렬 처리 (타임아웃 적용)
         try {
-          const [userData] = await Promise.all([
+          const [userData, existingSession] = await Promise.all([
             getUserById(session.user.id),
             loadExistingSession(session.user.id)
           ])
           
           setUser(userData)
+          
+          // 기존 세션이 없거나 구 세션이면 새 세션 생성
+          if (!existingSession) {
+            console.log('🚀 새 세션 자동 생성')
+            try {
+              const response = await fetch('/api/session', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userId: session.user.id }),
+              })
+
+              const data = await response.json()
+              
+              if (data.success) {
+                console.log('✅ 새 세션 자동 생성 완료:', data.session.id)
+                setSession(data.session)
+                setMessages([])
+              } else {
+                console.error('❌ 세션 자동 생성 실패:', data.error)
+              }
+            } catch (error) {
+              console.error('❌ 세션 자동 생성 오류:', error)
+            }
+          }
         } catch (error) {
           console.error('Auth 상태 변경 시 데이터 로드 오류:', error)
         }
@@ -124,32 +181,6 @@ export default function Home() {
     setAuthUser(null)
     setSession(null)
     setMessages([])
-  }
-
-  const startNewSession = async () => {
-    if (!authUser) return
-
-    try {
-      const response = await fetch('/api/session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId: authUser.id }),
-      })
-
-      const data = await response.json()
-      
-      if (data.success) {
-        setSession(data.session)
-        setMessages([])
-      } else {
-        alert('새 상담 세션 시작에 실패했습니다.')
-      }
-    } catch (error) {
-      console.error('새 세션 시작 오류:', error)
-      alert('오류가 발생했습니다.')
-    }
   }
 
   const handleSendMessage = async (content: string) => {
