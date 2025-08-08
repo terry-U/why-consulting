@@ -9,14 +9,18 @@ interface ChatInterfaceProps {
   messages: Message[]
   onSendMessage: (content: string) => Promise<void>
   loading: boolean
-  sessionId: string | null
+  sessionId?: string
+  onNewSession: () => void
+  onLogout: () => void
 }
 
 export default function ChatInterface({ 
   messages, 
   onSendMessage, 
-  loading,
-  sessionId 
+  loading, 
+  sessionId,
+  onNewSession,
+  onLogout
 }: ChatInterfaceProps) {
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -46,16 +50,27 @@ export default function ChatInterface({
   return (
     <div className="flex flex-col h-full max-w-4xl mx-auto">
       {/* 헤더 */}
-      <div className="bg-blue-600 text-white p-4 rounded-t-lg">
-        <h2 className="text-xl font-semibold">Why 상담사</h2>
-        <p className="text-blue-100 text-sm">
-          당신의 진정한 동기를 찾아드립니다
-        </p>
-        {sessionId && (
-          <p className="text-blue-200 text-xs mt-1">
-            세션 ID: {sessionId.slice(0, 8)}...
-          </p>
-        )}
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-t-lg shadow-lg">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-xl font-bold">Why 상담사</h1>
+            <p className="text-blue-100 text-sm">당신의 진정한 동기를 찾아드립니다</p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={onNewSession}
+              className="bg-white/20 hover:bg-white/30 px-3 py-1 rounded text-sm transition-colors"
+            >
+              새 상담
+            </button>
+            <button
+              onClick={onLogout}
+              className="bg-white/20 hover:bg-white/30 px-3 py-1 rounded text-sm transition-colors"
+            >
+              로그아웃
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* 메시지 영역 */}
@@ -116,13 +131,17 @@ export default function ChatInterface({
             className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
             maxLength={500}
           />
-          <Button
+          <button
             type="submit"
             disabled={loading || !input.trim()}
-            size="icon"
+            className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+              loading || !input.trim()
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105'
+            }`}
           >
-            <Send className="w-4 h-4" />
-          </Button>
+            {loading ? '전송 중...' : '전송'}
+          </button>
         </div>
         <p className="text-xs text-gray-500 mt-1">
           최대 500자까지 입력 가능합니다.

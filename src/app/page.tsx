@@ -271,7 +271,7 @@ export default function Home() {
               </p>
               <button
                 onClick={startNewSession}
-                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
                 새 상담 시작하기
               </button>
@@ -316,7 +316,7 @@ export default function Home() {
               </div>
               
               <button
-                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg mb-4"
+                className="w-full bg-gradient-to-r from-gray-400 to-gray-500 text-white py-3 px-4 rounded-lg mb-4 opacity-60 cursor-not-allowed"
                 disabled
               >
                 이용권 구매하기 (추후 구현)
@@ -371,7 +371,9 @@ export default function Home() {
               messages={messages}
               onSendMessage={handleSendMessage}
               loading={chatLoading}
-              sessionId={session.id}
+              sessionId={session?.id}
+              onNewSession={startNewSession}
+              onLogout={handleLogout}
             />
           </div>
         ) : (
