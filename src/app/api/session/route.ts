@@ -18,14 +18,22 @@ export async function POST(request: NextRequest) {
 
     console.log('👤 요청 사용자 ID:', userId)
 
+    // 환경 변수 확인
+    console.log('🔑 환경 변수 확인:')
+    console.log('- OPENAI_API_KEY 존재:', !!process.env.OPENAI_API_KEY)
+    console.log('- SUPABASE_SERVICE_ROLE_KEY 존재:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
+
     // OpenAI Thread 생성
+    console.log('🧵 OpenAI Thread 생성 시도...')
     const threadId = await createThread()
+    console.log('✅ Thread 생성 성공:', threadId)
 
     // 새 세션 생성 (thread_id 포함)
+    console.log('🗄️ 데이터베이스 세션 생성 시도...')
     const session = await createSession(userId, threadId)
 
     if (!session) {
-      console.error('❌ 세션 생성 실패')
+      console.error('❌ 세션 생성 실패 - createSession이 null 반환')
       return NextResponse.json(
         { success: false, error: '세션 생성에 실패했습니다.' },
         { status: 500 }
@@ -39,9 +47,10 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('❌ 세션 생성 API 오류:', error)
+    console.error('❌ 세션 생성 API 오류 상세:', error)
+    console.error('오류 스택:', error instanceof Error ? error.stack : 'No stack trace')
     return NextResponse.json(
-      { success: false, error: '서버 오류가 발생했습니다.' },
+      { success: false, error: `서버 오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}` },
       { status: 500 }
     )
   }

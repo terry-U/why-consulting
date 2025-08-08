@@ -182,7 +182,7 @@ async function getOrCreateAssistant() {
       name: "Why 발견 상담사",
       instructions: COUNSELING_SYSTEM_PROMPT,
       model: "gpt-4o",
-      temperature: 1.0,
+      temperature: 0.8, // 1.0에서 0.8로 조정 (더 일관성 있게)
     });
     
     assistantId = assistant.id;

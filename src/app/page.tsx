@@ -148,16 +148,20 @@ export default function Home() {
       
       if (data.success && data.session) {
         console.log('✅ 기존 세션 발견:', data.session.id)
+        console.log('🧵 Thread ID 확인:', data.session.thread_id)
         
         // thread_id가 없는 구 세션이면 새 세션 생성
         if (!data.session.thread_id) {
-          console.log('⚠️ Thread ID가 없는 구 세션 - 새 세션 생성')
+          console.log('⚠️ Thread ID가 없는 구 세션 - 새 세션 생성 필요')
           return null
         }
         
+        console.log('✅ 유효한 세션 로드 완료')
         setSession(data.session)
         setMessages(data.messages || [])
         return data.session
+      } else {
+        console.log('ℹ️ 기존 세션 없음')
       }
     } catch (error) {
       console.error('❌ 세션 로딩 오류:', error)
