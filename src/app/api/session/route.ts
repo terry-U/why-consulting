@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSession, getActiveSession, getSessionMessages, listUserSessions, listUserSessionsWithLastMessage } from '@/lib/database'
+import { createSession, getActiveSession, getSessionMessages, listUserSessions, listUserSessionsWithLastMessage, getSessionById } from '@/lib/database'
 import { createThread } from '@/lib/openai'
 
 export async function POST(request: NextRequest) {

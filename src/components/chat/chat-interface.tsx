@@ -9,7 +9,6 @@ interface ChatInterfaceProps {
   messages: Message[]
   onSendMessage: (content: string) => Promise<void>
   loading: boolean
-  sessionId?: string
   onNewSession: () => void
   onLogout: () => void
 }
