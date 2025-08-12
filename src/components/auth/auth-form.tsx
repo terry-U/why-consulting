@@ -47,7 +47,7 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps) {
           setMessage('회원가입이 완료되었습니다. 이메일을 확인해주세요.')
         }
       }
-          } catch (_err) {
+          } catch {
         setMessage('오류가 발생했습니다.')
       } finally {
       setLoading(false)

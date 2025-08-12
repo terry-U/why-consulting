@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Session } from '@/lib/supabase'
+import { Session, Message } from '@/lib/supabase'
 
 interface Props {
   userId?: string
@@ -43,7 +43,7 @@ export default function SessionList({ userId, onStartNew }: Props) {
         <p className="text-gray-500">진행 중인 상담이 없습니다.</p>
       ) : (
         <ul className="divide-y">
-          {sessions.map((s: any) => (
+          {sessions.map((s: Session & { last_message?: Message }) => (
             <li key={s.id} className="py-3 flex items-center justify-between">
               <div className="min-w-0">
                 <p className="font-medium truncate">세션 {s.id.substring(0, 6)} · {s.status}</p>

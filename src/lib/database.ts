@@ -152,7 +152,7 @@ export async function listUserSessions(userId: string): Promise<Session[]> {
 export async function listUserSessionsWithLastMessage(userId: string): Promise<Array<Session & { last_message?: Message }>> {
   const { data, error } = await supabaseAdmin
     .from('sessions')
-    .select('*, messages(*)')
+    .select('id, user_id, thread_id, status, counseling_phase, current_question_index, answers, generated_why, created_at, updated_at, messages(id, session_id, user_id, role, content, created_at)')
     .eq('user_id', userId)
     .order('updated_at', { ascending: false })
     .order('created_at', { foreignTable: 'messages', ascending: false })
@@ -163,9 +163,10 @@ export async function listUserSessionsWithLastMessage(userId: string): Promise<A
     return []
   }
 
-  // messages가 배열로 오므로 첫 요소를 last_message로 맵핑
-  // @ts-ignore - Supabase 타입 쉬운 변환
-  return (data || []).map((s: any) => ({ ...s, last_message: (s.messages && s.messages[0]) ? s.messages[0] : undefined }))
+  return (data || []).map((s: { messages?: Message[] } & Session) => ({
+    ...s,
+    last_message: s.messages && s.messages.length > 0 ? s.messages[0] : undefined
+  }))
 }
 
 // 메시지 관련 함수들
