@@ -384,33 +384,7 @@ export default function Home() {
         />
       )}
       {/* 헤더 */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-xl font-bold text-gray-900">Why 상담사</h1>
-              {user && (
-                <span className="text-sm text-gray-600">
-                  {user.email}님 안녕하세요!
-                </span>
-              )}
-            </div>
-
-            <div className="flex items-center space-x-2">
-              {session && (
-                <Button onClick={startNewSession} variant="outline" size="sm">
-                  <Plus className="w-4 h-4 mr-2" />
-                  새 상담
-                </Button>
-              )}
-              <Button onClick={handleLogout} variant="outline" size="sm">
-                <LogOut className="w-4 h-4 mr-2" />
-                로그아웃
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* 헤더 제거 (요청 사항) */}
 
       {/* 메인 콘텐츠 */}
       <main className="container mx-auto px-4 py-6">

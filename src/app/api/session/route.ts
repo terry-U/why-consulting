@@ -85,27 +85,36 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
     const mode = searchParams.get('mode') // 'list'면 목록 반환
+    const sessionId = searchParams.get('sessionId')
 
-    if (!userId) {
-      console.error('❌ 사용자 ID 누락 (GET)')
+    if (!userId && !sessionId) {
+      console.error('❌ 사용자 ID 또는 세션 ID 누락 (GET)')
       return NextResponse.json(
-        { success: false, error: '사용자 ID가 필요합니다.' },
+        { success: false, error: 'userId 또는 sessionId가 필요합니다.' },
         { status: 400 }
       )
     }
 
-    console.log('👤 조회 사용자 ID:', userId)
+    if (userId) console.log('👤 조회 사용자 ID:', userId)
+    if (sessionId) console.log('🆔 조회 세션 ID:', sessionId)
 
-    if (mode === 'list') {
+    if (mode === 'list' && userId) {
       const sessions = await listUserSessions(userId)
       return NextResponse.json({ success: true, sessions })
-    } else if (mode === 'listWithLast') {
+    } else if (mode === 'listWithLast' && userId) {
       const sessions = await listUserSessionsWithLastMessage(userId)
       return NextResponse.json({ success: true, sessions })
+    } else if (sessionId) {
+      const session = await getSessionById(sessionId)
+      if (!session) {
+        return NextResponse.json({ success: false, error: '세션을 찾을 수 없습니다.' }, { status: 404 })
+      }
+      const messages = await getSessionMessages(sessionId)
+      return NextResponse.json({ success: true, session, messages })
     }
 
     // 활성 세션 조회 (기본)
-    const session = await getActiveSession(userId)
+    const session = userId ? await getActiveSession(userId) : null
     
     if (!session) {
       console.log('ℹ️ 활성 세션 없음')
