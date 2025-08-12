@@ -55,7 +55,8 @@ export async function POST(request: NextRequest) {
       // 인트로 단계 처리
       console.log('🌟 인트로 단계 처리 중...')
       
-      if (CounselingManager.isProgressSignal(message, currentPhase)) {
+      const isNextSignal = message === '__NEXT__' || CounselingManager.isProgressSignal(message, currentPhase)
+      if (isNextSignal) {
         // 다음 단계로 진행
         nextPhaseData = CounselingManager.getNextPhaseData(session)
         const firstQuestion = COUNSELING_QUESTIONS[0]
@@ -106,8 +107,8 @@ export async function POST(request: NextRequest) {
       assistantResponse = "상담이 완료되었습니다. 새로운 상담을 시작하려면 '새 상담' 버튼을 눌러주세요."
     }
 
-    // 일반적인 상담 응답 생성 (Why 생성 제외)
-    if (currentPhase !== 'why_generation') {
+    // 질문 단계에서는 컨텍스트를 포함해 GPT 호출
+    if (currentPhase === 'questions') {
       const currentQuestion = CounselingManager.getCurrentQuestion(session)
       assistantResponse = await sendCounselingMessage(
         session.thread_id, 

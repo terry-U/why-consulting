@@ -119,7 +119,8 @@ export class CounselingManager {
   // 질문 메시지 생성
   static generateQuestionMessage(question: CounselingQuestion): string {
     const counselor = question.counselor
-    return `${counselor.emoji} **${counselor.name}**: ${question.question}`
+    const scaffolding = `\n\n답이 바로 떠오르지 않아도 전혀 괜찮아요. 아래 중 편한 방식으로 떠올려볼까요?\n- 작년에 비슷한 감정을 느꼈던 순간은? 제작년이라면?\n- 최근 6개월/3개월/1주일 중 떠오르는 장면은?\n- 그때의 색, 온도, 표정을 떠올리면 어떤 느낌이었나요?\n- 기억이 흐릿하면 "모르겠어요"라고 말씀해 주세요. 제가 부드럽게 도와드릴게요.`
+    return `${counselor.emoji} **${counselor.name}**: ${question.question}${scaffolding}`
   }
 
   // Why 생성 프롬프트 생성
