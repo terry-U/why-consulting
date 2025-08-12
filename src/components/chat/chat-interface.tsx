@@ -17,7 +17,6 @@ export default function ChatInterface({
   messages, 
   onSendMessage, 
   loading, 
-  sessionId,
   onNewSession,
   onLogout
 }: ChatInterfaceProps) {
