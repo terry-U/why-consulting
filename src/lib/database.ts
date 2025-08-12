@@ -50,7 +50,10 @@ export async function createSession(userId: string, threadId: string): Promise<S
         {
           user_id: userId,
           thread_id: threadId,
-          status: 'active'
+          status: 'active',
+          counseling_phase: 'intro',
+          current_question_index: 0,
+          answers: {}
         }
       ])
       .select()
@@ -74,7 +77,7 @@ export async function getActiveSession(userId: string): Promise<Session | null> 
     .from('sessions')
     .select('*')
     .eq('user_id', userId)
-    .eq('is_completed', false)
+    .eq('status', 'active')
     .order('updated_at', { ascending: false })
     .limit(1)
     .single()
@@ -135,7 +138,8 @@ export async function addMessage(
   sessionId: string, 
   userId: string, 
   role: 'user' | 'assistant', 
-  content: string
+  content: string,
+  counselorId?: string
 ): Promise<Message | null> {
   const { data, error } = await supabaseAdmin
     .from('messages')
@@ -144,6 +148,7 @@ export async function addMessage(
       user_id: userId,
       role,
       content,
+      counselor_id: counselorId,
       created_at: new Date().toISOString()
     })
     .select()

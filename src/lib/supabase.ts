@@ -28,6 +28,11 @@ export interface Session {
   user_id: string
   thread_id?: string  // OpenAI Assistant API Thread ID
   status: 'active' | 'completed' | 'paused'
+  // 상담 구조 관련 필드
+  counseling_phase: 'intro' | 'questions' | 'why_generation' | 'completed'
+  current_question_index: number
+  answers: Record<string, string> // 질문별 답변 저장
+  generated_why?: string // 최종 도출된 Why 문장
   created_at: string
   updated_at: string
 }
@@ -38,5 +43,6 @@ export interface Message {
   user_id: string
   role: 'user' | 'assistant'
   content: string
+  counselor_id?: string // 메시지를 보낸 상담사 ID
   created_at: string
 } 

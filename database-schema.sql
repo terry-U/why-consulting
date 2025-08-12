@@ -26,6 +26,11 @@ CREATE TABLE IF NOT EXISTS sessions (
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   thread_id TEXT, -- OpenAI Assistant API Thread ID
   status TEXT CHECK (status IN ('active', 'completed', 'paused')) DEFAULT 'active',
+  -- 상담 구조 관련 필드
+  counseling_phase TEXT CHECK (counseling_phase IN ('intro', 'questions', 'why_generation', 'completed')) DEFAULT 'intro',
+  current_question_index INTEGER DEFAULT 0,
+  answers JSONB DEFAULT '{}', -- 질문별 답변 저장 {questionId: answer}
+  generated_why TEXT, -- 최종 도출된 Why 문장
   started_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -38,6 +43,7 @@ CREATE TABLE IF NOT EXISTS messages (
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   role TEXT CHECK (role IN ('user', 'assistant')) NOT NULL,
   content TEXT NOT NULL,
+  counselor_id TEXT, -- 메시지를 보낸 상담사 ID
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

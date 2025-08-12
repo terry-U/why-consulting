@@ -40,19 +40,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 상담사 첫 인사 메시지 추가
-    console.log('👋 상담사 첫 인사 메시지 생성...')
+    // 인트로 메시지들 생성
+    console.log('👋 인트로 메시지 시퀀스 생성...')
     try {
-      const { sendMessageToAssistant } = await import('@/lib/openai')
-      const welcomeMessage = await sendMessageToAssistant(threadId, "상담을 시작해주세요. 따뜻한 인사와 함께 현재 상황을 자연스럽게 물어보세요.")
-      
-      // 상담사 첫 메시지를 DB에 저장
+      const { INTRO_MESSAGES } = await import('@/lib/counseling-types')
       const { addMessage } = await import('@/lib/database')
-      await addMessage(session.id, userId, 'assistant', welcomeMessage)
       
-      console.log('✅ 상담사 첫 인사 완료')
+      // 첫 번째 인트로 메시지 추가
+      const firstIntroMessage = INTRO_MESSAGES[0]
+      await addMessage(session.id, userId, 'assistant', firstIntroMessage.message, firstIntroMessage.counselor.id)
+      
+      console.log('✅ 첫 인트로 메시지 완료')
     } catch (error) {
-      console.error('⚠️ 첫 인사 메시지 생성 실패:', error)
+      console.error('⚠️ 인트로 메시지 생성 실패:', error)
       // 세션은 생성되었으므로 계속 진행
     }
 

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Send, Loader2 } from 'lucide-react'
 import { Message } from '@/lib/supabase'
+import CounselorMessage from './counselor-message'
 
 interface ChatInterfaceProps {
   messages: Message[]
@@ -83,25 +84,7 @@ export default function ChatInterface({
           </div>
         ) : (
           messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${
-                message.role === 'user' ? 'justify-end' : 'justify-start'
-              }`}
-            >
-              <div
-                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                  message.role === 'user'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-800 border border-gray-200'
-                }`}
-              >
-                <p className="whitespace-pre-wrap">{message.content}</p>
-                <p className="text-xs mt-1 opacity-70">
-                  {new Date(message.created_at).toLocaleTimeString('ko-KR')}
-                </p>
-              </div>
-            </div>
+            <CounselorMessage key={message.id} message={message} />
           ))
         )}
         

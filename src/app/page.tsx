@@ -18,7 +18,10 @@ export default function Home() {
   const [authUser, setAuthUser] = useState<{ id: string; email?: string } | null>(null)
 
   const startNewSession = async () => {
-    if (!authUser) return
+    if (!authUser) {
+      console.error('❌ authUser가 없어서 세션 생성 불가')
+      return null
+    }
 
     console.log('🚀 새 세션 생성 시작')
     try {
@@ -69,9 +72,39 @@ export default function Home() {
                 loadExistingSession(session.user.id)
               ]),
               timeoutPromise
-            ]) as [User | null, void]
+            ]) as [User | null, Session | null]
             
-            setUser(result[0])
+            const [userData, existingSession] = result
+            setUser(userData)
+            
+            // 기존 세션이 없거나 구 세션이면 새 세션 생성
+            if (!existingSession) {
+              console.log('🚀 새 세션 자동 생성')
+              try {
+                const response = await fetch('/api/session', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ userId: session.user.id }),
+                })
+
+                const data = await response.json()
+                
+                if (data.success) {
+                  console.log('✅ 새 세션 자동 생성 완료:', data.session.id)
+                  setSession(data.session)
+                  setMessages([])
+                } else {
+                  console.error('❌ 세션 자동 생성 실패:', data.error)
+                }
+              } catch (error) {
+                console.error('❌ 세션 자동 생성 오류:', error)
+              }
+            } else {
+              console.log('✅ 기존 세션 사용:', existingSession.id)
+              // loadExistingSession에서 이미 setSession, setMessages 호출됨
+            }
           } catch (error) {
             console.error('데이터 로드 타임아웃 또는 오류:', error)
             // 타임아웃되어도 기본 사용자 정보는 설정
@@ -92,7 +125,7 @@ export default function Home() {
       if (session?.user) {
         setAuthUser(session.user)
         
-        // 병렬 처리 (타임아웃 적용)
+        // 병렬 처리
         try {
           const [userData, existingSession] = await Promise.all([
             getUserById(session.user.id),
@@ -127,7 +160,7 @@ export default function Home() {
             }
           } else {
             console.log('✅ 기존 세션 사용:', existingSession.id)
-            // 이미 loadExistingSession에서 setSession, setMessages 호출됨
+            // loadExistingSession에서 이미 setSession, setMessages 호출됨
           }
         } catch (error) {
           console.error('Auth 상태 변경 시 데이터 로드 오류:', error)
@@ -175,10 +208,18 @@ export default function Home() {
   const handleAuthSuccess = async () => {
     const { data: { session } } = await supabase.auth.getSession()
     if (session?.user) {
-      const userData = await getUserById(session.user.id)
+      const [userData, existingSession] = await Promise.all([
+        getUserById(session.user.id),
+        loadExistingSession(session.user.id)
+      ])
       setUser(userData)
       setAuthUser(session.user)
-      await loadExistingSession(session.user.id)
+      
+      // 기존 세션이 없으면 새 세션 생성
+      if (!existingSession) {
+        console.log('🚀 로그인 후 새 세션 자동 생성')
+        await startNewSession()
+      }
     }
   }
 
@@ -346,7 +387,7 @@ export default function Home() {
                 </span>
               )}
             </div>
-            
+
             <div className="flex items-center space-x-2">
               {session && (
                 <Button onClick={startNewSession} variant="outline" size="sm">
@@ -387,7 +428,7 @@ export default function Home() {
             <Button onClick={startNewSession} size="lg" className="w-full">
               상담 시작하기
             </Button>
-          </div>
+        </div>
         )}
       </main>
     </div>
