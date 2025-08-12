@@ -38,7 +38,7 @@ export async function updateUserPaidStatus(userId: string, isPaid: boolean): Pro
 }
 
 // 세션 관련 함수들
-export async function createSession(userId: string, threadId: string): Promise<Session | null> {
+export async function createSession(userId: string, threadId: string): Promise<{ session: Session | null; error?: string }> {
   console.log('🗄️ 데이터베이스에 세션 생성 시작')
   console.log('👤 사용자 ID:', userId)
   console.log('🧵 Thread ID:', threadId)
@@ -61,14 +61,14 @@ export async function createSession(userId: string, threadId: string): Promise<S
 
     if (error) {
       console.error('❌ 세션 생성 오류:', error)
-      return null
+      return { session: null, error: error.message }
     }
 
     console.log('✅ 세션 생성 완료:', data.id)
-    return data
+    return { session: data }
   } catch (error) {
     console.error('❌ 세션 생성 중 예외:', error)
-    return null
+    return { session: null, error: (error as Error)?.message || 'Unknown error' }
   }
 }
 

@@ -25,17 +25,23 @@ export async function POST(request: NextRequest) {
 
     // OpenAI Thread 생성
     console.log('🧵 OpenAI Thread 생성 시도...')
-    const threadId = await createThread()
+    let threadId: string
+    try {
+      threadId = await createThread()
+    } catch (e) {
+      console.error('❌ Thread 생성 실패:', e)
+      return NextResponse.json({ success: false, step: 'createThread', error: (e as Error)?.message || 'Thread 생성 실패' }, { status: 500 })
+    }
     console.log('✅ Thread 생성 성공:', threadId)
 
     // 새 세션 생성 (thread_id 포함)
     console.log('🗄️ 데이터베이스 세션 생성 시도...')
-    const session = await createSession(userId, threadId)
+    const { session, error: createSessionError } = await createSession(userId, threadId)
 
     if (!session) {
-      console.error('❌ 세션 생성 실패 - createSession이 null 반환')
+      console.error('❌ 세션 생성 실패 - createSession 오류:', createSessionError)
       return NextResponse.json(
-        { success: false, error: '세션 생성에 실패했습니다.' },
+        { success: false, step: 'createSession', error: createSessionError || '세션 생성에 실패했습니다.' },
         { status: 500 }
       )
     }

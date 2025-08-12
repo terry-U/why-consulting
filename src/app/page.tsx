@@ -41,8 +41,8 @@ export default function Home() {
         setMessages([])
         return data.session
       } else {
-        console.error('❌ 세션 생성 실패:', data.error)
-        alert('새 상담 세션 시작에 실패했습니다.')
+        console.error('❌ 세션 생성 실패:', data)
+        alert(`새 상담 세션 시작에 실패했습니다.\n사유: ${data.error || '알 수 없는 오류'}`)
       }
     } catch (error) {
       console.error('❌ 새 세션 시작 오류:', error)
