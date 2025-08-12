@@ -10,7 +10,17 @@ interface CounselorMessageProps {
 
 export default function CounselorMessage({ message, pagedForMain = true, onNextPage }: CounselorMessageProps) {
   const counselor = message.counselor_id ? COUNSELOR_CHARACTERS[message.counselor_id] : COUNSELOR_CHARACTERS.main
-  
+  const isMainPaged = pagedForMain && (message.counselor_id ?? 'main') === 'main' && message.role !== 'user'
+  const [idx, setIdx] = React.useState(0)
+  const sentences = React.useMemo(() => {
+    const arr = (isMainPaged ? message.content.split(/(?<=[.!?]|\n)/) : [message.content]).filter(Boolean)
+    return arr.length > 0 ? arr : ['']
+  }, [message.content, isMainPaged])
+
+  React.useEffect(() => {
+    setIdx(0)
+  }, [message.id, message.content])
+
   if (message.role === 'user') {
     return (
       <div className="flex justify-end mb-4">
@@ -21,10 +31,7 @@ export default function CounselorMessage({ message, pagedForMain = true, onNextP
     )
   }
 
-  // 메인 상담사: 한 페이지 한 문장 페이징 옵션
-  if (pagedForMain && (message.counselor_id ?? 'main') === 'main') {
-    const sentences = message.content.split(/(?<=[.!?]|\n)/).filter(Boolean)
-    const [idx, setIdx] = React.useState(0)
+  if (isMainPaged) {
     const next = () => {
       if (idx < sentences.length - 1) setIdx(idx + 1)
       else onNextPage?.()

@@ -184,7 +184,7 @@ export interface ChatMessage {
   content: string
 }
 
-export async function generateCounselingResponse(messages: ChatMessage[]): Promise<string> {
+export async function generateCounselingResponse(_messages: ChatMessage[]): Promise<string> {
   // 더 이상 사용하지 않는 함수
   throw new Error('이 함수는 더 이상 사용되지 않습니다. sendMessageToAssistant를 사용하세요.');
 } 

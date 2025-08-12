@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Send, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { Message } from '@/lib/supabase'
 import CounselorMessage from './counselor-message'
 
