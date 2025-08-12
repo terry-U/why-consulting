@@ -394,7 +394,6 @@ export default function Home() {
               messages={messages}
               onSendMessage={handleSendMessage}
               loading={chatLoading}
-              sessionId={session?.id}
               onNewSession={startNewSession}
               onLogout={handleLogout}
             />
