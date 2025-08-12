@@ -133,6 +133,21 @@ export async function getSessionById(sessionId: string): Promise<Session | null>
   }
 }
 
+// 사용자 세션 목록 조회 (최근 업데이트 순)
+export async function listUserSessions(userId: string): Promise<Session[]> {
+  const { data, error } = await supabaseAdmin
+    .from('sessions')
+    .select('*')
+    .eq('user_id', userId)
+    .order('updated_at', { ascending: false })
+
+  if (error) {
+    console.error('사용자 세션 목록 조회 오류:', error)
+    return []
+  }
+  return data || []
+}
+
 // 메시지 관련 함수들
 export async function addMessage(
   sessionId: string, 

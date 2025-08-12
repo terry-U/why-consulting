@@ -8,6 +8,7 @@ import ChatInterface from '@/components/chat/chat-interface'
 import { Button } from '@/components/ui/button'
 import { User, Session, Message } from '@/lib/supabase'
 import { LogOut, Plus, MessageCircle } from 'lucide-react'
+import SessionList from '@/components/session/session-list'
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null)
@@ -292,9 +293,9 @@ export default function Home() {
   // 유료 사용자이지만 세션이 없는 경우
   if (user && user.is_paid_user && !session) {
     return (
-      <div className="min-h-screen bg-gray-100 py-8">
-        <div className="container mx-auto px-4">
-          <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
+      <div className="min-h-screen bg-gray-50 py-5">
+        <div className="max-w-md mx-auto px-4">
+          <div className="bg-white rounded-xl shadow-md p-5">
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-2xl font-bold">Why 상담사</h1>
               <button
@@ -305,18 +306,7 @@ export default function Home() {
               </button>
             </div>
             
-            <div className="text-center">
-              <h2 className="text-xl font-semibold mb-4">상담 세션이 필요합니다</h2>
-              <p className="text-gray-600 mb-6">
-                새로운 상담 세션을 시작하여 당신의 Why를 찾아보세요.
-              </p>
-              <button
-                onClick={startNewSession}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-              >
-                새 상담 시작하기
-              </button>
-            </div>
+            <SessionList userId={authUser?.id} onStartNew={startNewSession} />
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSession, getActiveSession, getSessionMessages } from '@/lib/database'
+import { createSession, getActiveSession, getSessionMessages, listUserSessions } from '@/lib/database'
 import { createThread } from '@/lib/openai'
 
 export async function POST(request: NextRequest) {
@@ -84,6 +84,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
+    const mode = searchParams.get('mode') // 'list'면 목록 반환
 
     if (!userId) {
       console.error('❌ 사용자 ID 누락 (GET)')
@@ -95,7 +96,12 @@ export async function GET(request: NextRequest) {
 
     console.log('👤 조회 사용자 ID:', userId)
 
-    // 활성 세션 조회
+    if (mode === 'list') {
+      const sessions = await listUserSessions(userId)
+      return NextResponse.json({ success: true, sessions })
+    }
+
+    // 활성 세션 조회 (기본)
     const session = await getActiveSession(userId)
     
     if (!session) {
