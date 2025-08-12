@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSession, getActiveSession, getSessionMessages, listUserSessions } from '@/lib/database'
+import { createSession, getActiveSession, getSessionMessages, listUserSessions, listUserSessionsWithLastMessage } from '@/lib/database'
 import { createThread } from '@/lib/openai'
 
 export async function POST(request: NextRequest) {
@@ -98,6 +98,9 @@ export async function GET(request: NextRequest) {
 
     if (mode === 'list') {
       const sessions = await listUserSessions(userId)
+      return NextResponse.json({ success: true, sessions })
+    } else if (mode === 'listWithLast') {
+      const sessions = await listUserSessionsWithLastMessage(userId)
       return NextResponse.json({ success: true, sessions })
     }
 

@@ -148,6 +148,26 @@ export async function listUserSessions(userId: string): Promise<Session[]> {
   return data || []
 }
 
+// 세션 목록 + 각 세션의 마지막 메시지 1개 포함
+export async function listUserSessionsWithLastMessage(userId: string): Promise<Array<Session & { last_message?: Message }>> {
+  const { data, error } = await supabaseAdmin
+    .from('sessions')
+    .select('*, messages(*)')
+    .eq('user_id', userId)
+    .order('updated_at', { ascending: false })
+    .order('created_at', { foreignTable: 'messages', ascending: false })
+    .limit(1, { foreignTable: 'messages' })
+
+  if (error) {
+    console.error('세션 목록(마지막 메시지 포함) 조회 오류:', error)
+    return []
+  }
+
+  // messages가 배열로 오므로 첫 요소를 last_message로 맵핑
+  // @ts-ignore - Supabase 타입 쉬운 변환
+  return (data || []).map((s: any) => ({ ...s, last_message: (s.messages && s.messages[0]) ? s.messages[0] : undefined }))
+}
+
 // 메시지 관련 함수들
 export async function addMessage(
   sessionId: string, 

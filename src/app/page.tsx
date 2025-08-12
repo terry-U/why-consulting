@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button'
 import { User, Session, Message } from '@/lib/supabase'
 import { LogOut, Plus, MessageCircle } from 'lucide-react'
 import SessionList from '@/components/session/session-list'
+import FullscreenIntro from '@/components/chat/fullscreen-intro'
+import { INTRO_MESSAGES } from '@/lib/counseling-types'
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null)
@@ -17,6 +19,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [chatLoading, setChatLoading] = useState(false)
   const [authUser, setAuthUser] = useState<{ id: string; email?: string } | null>(null)
+  const [showIntro, setShowIntro] = useState(false)
 
   const startNewSession = async () => {
     if (!authUser) {
@@ -306,7 +309,15 @@ export default function Home() {
               </button>
             </div>
             
-            <SessionList userId={authUser?.id} onStartNew={startNewSession} />
+            <div className="space-y-4">
+              <button
+                onClick={() => setShowIntro(true)}
+                className="w-full bg-gradient-to-r from-indigo-600 to-fuchsia-600 text-white py-3 rounded-lg shadow hover:shadow-md"
+              >
+                새로운 상담 시작하기 (튜토리얼)
+              </button>
+              <SessionList userId={authUser?.id} onStartNew={startNewSession} />
+            </div>
           </div>
         </div>
       </div>
@@ -365,6 +376,13 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-100">
+      {showIntro && (
+        <FullscreenIntro 
+          pages={INTRO_MESSAGES.map(i => i.message)}
+          onFinish={async () => { setShowIntro(false); await startNewSession(); }}
+          onExit={() => setShowIntro(false)}
+        />
+      )}
       {/* 헤더 */}
       <header className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-4 py-3">

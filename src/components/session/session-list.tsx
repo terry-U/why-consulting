@@ -17,7 +17,7 @@ export default function SessionList({ userId, onStartNew }: Props) {
     const load = async () => {
       setLoading(true)
       try {
-        const res = await fetch(`/api/session?userId=${userId}&mode=list`)
+        const res = await fetch(`/api/session?userId=${userId}&mode=listWithLast`)
         const data = await res.json()
         if (data.success) setSessions(data.sessions || [])
       } finally {
@@ -43,20 +43,22 @@ export default function SessionList({ userId, onStartNew }: Props) {
         <p className="text-gray-500">진행 중인 상담이 없습니다.</p>
       ) : (
         <ul className="divide-y">
-          {sessions.map((s) => (
+          {sessions.map((s: any) => (
             <li key={s.id} className="py-3 flex items-center justify-between">
-              <div>
-                <p className="font-medium">세션 {s.id.substring(0, 6)}</p>
-                <p className="text-xs text-gray-500">{s.status} · {new Date(s.updated_at).toLocaleString('ko-KR')}</p>
+              <div className="min-w-0">
+                <p className="font-medium truncate">세션 {s.id.substring(0, 6)} · {s.status}</p>
+                <p className="text-xs text-gray-500 truncate">{new Date(s.updated_at).toLocaleString('ko-KR')}</p>
+                {s.last_message && (
+                  <p className="text-sm text-gray-600 mt-1 truncate">마지막: {s.last_message.content}</p>
+                )}
               </div>
               <a
                 href="#"
                 onClick={(e) => {
                   e.preventDefault()
-                  // 단순히 새로고침으로 서버 세션 상태를 유지한 채 이어서 하게 함
                   window.location.reload()
                 }}
-                className="text-blue-600 text-sm"
+                className="text-blue-600 text-sm flex-shrink-0"
               >
                 이어서 진행
               </a>
