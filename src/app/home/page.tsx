@@ -5,10 +5,24 @@ import { useRouter } from 'next/navigation'
 import { getCurrentUser, signOut } from '@/lib/auth'
 import { Session } from '@/lib/supabase'
 import { getUserSessions, createNewSession } from '@/lib/sessions'
+import { getUserConsultationHistory, SessionWithHistory } from '@/lib/history'
+import dynamic from 'next/dynamic'
+
+// 지연 로딩으로 성능 최적화
+const ConsultationHistoryList = dynamic(
+  () => import('@/components/history/consultation-history-list'),
+  { 
+    loading: () => <SkeletonLoader type="session" count={3} />,
+    ssr: false
+  }
+)
+import { DashboardSkeleton } from '@/components/common/skeleton-loader'
+import SkeletonLoader from '@/components/common/skeleton-loader'
+import ResponsiveLayout from '@/components/layout/responsive-layout'
 
 export default function HomePage() {
   const [user, setUser] = useState<any>(null)
-  const [sessions, setSessions] = useState<Session[]>([])
+  const [sessions, setSessions] = useState<SessionWithHistory[]>([])
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
@@ -23,12 +37,12 @@ export default function HomePage() {
 
         setUser(currentUser)
         
-        // 사용자 세션 목록 가져오기
+        // 사용자 상담 히스토리 가져오기
         try {
-          const userSessions = await getUserSessions(currentUser.id)
-          setSessions(userSessions)
+          const userHistory = await getUserConsultationHistory(currentUser.id)
+          setSessions(userHistory)
         } catch (error) {
-          console.error('세션 목록 로딩 오류:', error)
+          console.error('히스토리 로딩 오류:', error)
           setSessions([])
         }
       } catch (error) {
@@ -65,15 +79,14 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-600"></div>
-      </div>
+      <ResponsiveLayout className="bg-gradient-to-br from-yellow-50 to-orange-100">
+        <DashboardSkeleton />
+      </ResponsiveLayout>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-100">
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
+    <ResponsiveLayout className="bg-gradient-to-br from-yellow-50 to-orange-100">
         {/* 헤더 */}
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -138,7 +151,28 @@ export default function HomePage() {
         <div className="space-y-6">
           <h2 className="text-xl font-semibold text-gray-900">내 상담 기록</h2>
           
-          {sessions.length === 0 ? (
+          <ConsultationHistoryList
+            history={sessions}
+            onSelectSession={(sessionId) => {
+              const session = sessions.find(s => s.id === sessionId)
+              if (session?.status === 'completed' && session.whyStatement) {
+                router.push(`/session/${sessionId}/why`)
+              } else {
+                router.push(`/session/${sessionId}`)
+              }
+            }}
+            onDeleteSession={async (sessionId) => {
+              try {
+                // TODO: 삭제 API 구현
+                setSessions(sessions.filter(s => s.id !== sessionId))
+              } catch (error) {
+                console.error('세션 삭제 오류:', error)
+                alert('세션 삭제에 실패했습니다.')
+              }
+            }}
+          />
+          
+          {sessions.length === 0 && (
             <div className="bg-white rounded-2xl p-8 text-center shadow-sm">
               <div className="text-4xl mb-4">🌱</div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -154,44 +188,6 @@ export default function HomePage() {
                 첫 상담 시작하기
               </button>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {sessions.map((session) => (
-                <div
-                  key={session.id}
-                  className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => router.push(`/session/${session.id}`)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">
-                        상담 #{session.id.slice(0, 8)}
-                      </h3>
-                      <p className="text-gray-600 text-sm mt-1">
-                        {new Date(session.created_at).toLocaleDateString('ko-KR')}
-                      </p>
-                      <div className="mt-2">
-                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                          session.status === 'active' 
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : session.status === 'completed'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {session.status === 'active' ? '진행 중' : 
-                           session.status === 'completed' ? '완료' : '일시정지'}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <button className="text-yellow-600 hover:text-yellow-700 font-medium">
-                        {session.status === 'active' ? '이어서 하기' : '다시 보기'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
           )}
         </div>
 
@@ -204,7 +200,6 @@ export default function HomePage() {
             온보딩 다시보기
           </button>
         </div>
-      </div>
-    </div>
+    </ResponsiveLayout>
   )
 }

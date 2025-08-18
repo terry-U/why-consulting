@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 // PRD에 명시된 정확한 온보딩 문구들
@@ -20,7 +20,7 @@ const ONBOARDING_MESSAGES = [
   "준비 됐나요?"
 ]
 
-export default function OnboardingPage() {
+function OnboardingContent() {
   const [currentStep, setCurrentStep] = useState(0)
   const [showTicketModal, setShowTicketModal] = useState(false)
   const router = useRouter()
@@ -157,5 +157,17 @@ export default function OnboardingPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50 flex items-center justify-center">
+        <div className="text-2xl text-gray-600">로딩 중...</div>
+      </div>
+    }>
+      <OnboardingContent />
+    </Suspense>
   )
 }

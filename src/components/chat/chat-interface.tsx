@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { Message, Session } from '@/lib/supabase'
-import { getSessionMessages } from '@/lib/messages'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { Message, Session, supabase } from '@/lib/supabase'
+// import { getSessionMessages } from '@/lib/messages' // 현재 사용하지 않음
 import CharacterMessage, { UserMessage } from './character-message'
 import { CounselingManager } from '@/lib/counseling-manager'
 import { getCharacter } from '@/lib/characters'
+import { CharacterType } from '@/types/characters'
 
 interface ChatInterfaceProps {
   session: Session
@@ -17,19 +18,52 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  
-  const counselingManager = new CounselingManager(session)
-  const currentCounselor = counselingManager.getCurrentCounselor()
-  const currentQuestion = counselingManager.getCurrentQuestion()
-  const progress = counselingManager.getProgress()
 
-  const scrollToBottom = () => {
+  // 초기 환영 메시지 설정
+  useEffect(() => {
+    const setupWelcomeMessage = async () => {
+      if (initialMessages.length === 0) {
+        const welcomeMessage: Message = {
+          id: `welcome-${Date.now()}`,
+          session_id: session.id,
+          user_id: session.user_id,
+          role: 'assistant',
+          content: '안녕하세요! 저는 상담사 지혜입니다. 오늘 이 시간을 통해 당신의 내면을 탐색하고, 삶의 목적을 함께 찾아보는 시간을 갖고 싶어요. 편안한 마음으로 대화를 시작해볼까요?',
+          counselor_id: 'main',
+          created_at: new Date().toISOString()
+        }
+        
+        // 환영 메시지를 DB에 저장
+        await supabase
+          .from('messages')
+          .insert({
+            session_id: session.id,
+            user_id: session.user_id,
+            role: 'assistant',
+            content: welcomeMessage.content,
+            counselor_id: 'main'
+          })
+        
+        setMessages([welcomeMessage])
+      }
+    }
+
+    setupWelcomeMessage()
+  }, [session, initialMessages.length])
+  
+  // 성능 최적화: 메모이제이션
+  const counselingManager = useMemo(() => new CounselingManager(session), [session])
+  const currentCounselor = useMemo(() => counselingManager.getCurrentCounselor(), [counselingManager])
+  const currentQuestion = useMemo(() => counselingManager.getCurrentQuestion(), [counselingManager])
+  const progress = useMemo(() => counselingManager.getProgress(), [counselingManager])
+
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
+  }, [])
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages])
+  }, [messages, scrollToBottom])
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return
@@ -50,20 +84,41 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
       }
       setMessages(prev => [...prev, newUserMessage])
 
-      // TODO: 실제 API 호출로 AI 응답 받기
-      // 지금은 임시 응답
-      await new Promise(resolve => setTimeout(resolve, 1000)) // 1초 대기
+      // 실제 채팅 API 호출
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          sessionId: session.id, 
+          message: userMessage,
+          userId: session.user_id 
+        }),
+      })
 
-      const aiResponse: Message = {
-        id: `temp-ai-${Date.now()}`,
-        session_id: session.id,
-        user_id: session.user_id,
-        role: 'assistant',
-        content: '네, 잘 들었어요. 그 감정을 조금 더 자세히 말해주실 수 있나요?',
-        counselor_id: currentCounselor.type,
-        created_at: new Date().toISOString()
+      const data = await response.json()
+
+      if (data.success) {
+        const aiResponse: Message = {
+          id: `ai-${Date.now()}`,
+          session_id: session.id,
+          user_id: session.user_id,
+          role: 'assistant',
+          content: data.response,
+          counselor_id: data.counselor.type,
+          created_at: new Date().toISOString()
+        }
+        setMessages(prev => [...prev, aiResponse])
+
+        // 다음 단계로 진행해야 하는 경우
+        if (data.shouldAdvance && data.nextPhaseData) {
+          console.log('⏭️ 다음 단계 진행:', data.nextPhaseData)
+          // TODO: 세션 상태 업데이트 및 UI 반영
+        }
+      } else {
+        throw new Error(data.error)
       }
-      setMessages(prev => [...prev, aiResponse])
 
     } catch (error) {
       console.error('메시지 전송 오류:', error)

@@ -1,7 +1,94 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSession, getActiveSession, getSessionMessages, listUserSessions, listUserSessionsWithLastMessage, getSessionById } from '@/lib/database'
-import { createNewSession, getUserSessions, getSessionById as getSessionByIdClient } from '@/lib/sessions'
-import { createThread } from '@/lib/openai'
+import { supabaseServer } from '@/lib/supabase-server'
+import { OpenAI } from 'openai'
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+})
+
+// OpenAI Thread 생성 함수
+async function createThread(): Promise<string> {
+  const thread = await openai.beta.threads.create()
+  return thread.id
+}
+
+// 데이터베이스 함수들
+async function createSession(userId: string, threadId: string) {
+  const { data, error } = await supabaseServer
+    .from('sessions')
+    .insert({
+      user_id: userId,
+      thread_id: threadId,
+      status: 'active',
+      counseling_phase: 'intro',
+      current_question_index: 0,
+      answers: {}
+    })
+    .select()
+    .single()
+
+  return { session: data, error }
+}
+
+async function getActiveSession(userId: string) {
+  const { data, error } = await supabaseServer
+    .from('sessions')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  return error ? null : data
+}
+
+async function getSessionMessages(sessionId: string) {
+  const { data, error } = await supabaseServer
+    .from('messages')
+    .select('*')
+    .eq('session_id', sessionId)
+    .order('created_at', { ascending: true })
+
+  return data || []
+}
+
+async function listUserSessions(userId: string) {
+  const { data, error } = await supabaseServer
+    .from('sessions')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+
+  return data || []
+}
+
+async function listUserSessionsWithLastMessage(userId: string) {
+  const sessions = await listUserSessions(userId)
+  
+  const sessionsWithMessages = await Promise.all(
+    sessions.map(async (session) => {
+      const messages = await getSessionMessages(session.id)
+      const lastMessage = messages[messages.length - 1]
+      return {
+        ...session,
+        lastMessage
+      }
+    })
+  )
+
+  return sessionsWithMessages
+}
+
+async function getSessionById(sessionId: string) {
+  const { data, error } = await supabaseServer
+    .from('sessions')
+    .select('*')
+    .eq('id', sessionId)
+    .single()
+
+  return error ? null : data
+}
 
 export async function POST(request: NextRequest) {
   console.log('🚀 새 세션 생성 API 호출')
@@ -47,17 +134,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 인트로 메시지들 생성
-    console.log('👋 인트로 메시지 시퀀스 생성...')
+    // 인트로 메시지 생성
+    console.log('👋 인트로 메시지 생성...')
     try {
-      const { INTRO_MESSAGES } = await import('@/lib/counseling-types')
-      const { addMessage } = await import('@/lib/database')
+      await supabaseServer
+        .from('messages')
+        .insert({
+          session_id: session.id,
+          user_id: userId,
+          role: 'assistant',
+          content: '안녕하세요! 저는 상담사 지혜입니다. 오늘 이 시간을 통해 당신의 내면을 탐색하고, 삶의 목적을 함께 찾아보는 시간을 갖고 싶어요. 편안한 마음으로 대화를 시작해볼까요?',
+          counselor_id: 'main'
+        })
       
-      // 첫 번째 인트로 메시지 추가
-      const firstIntroMessage = INTRO_MESSAGES[0]
-      await addMessage(session.id, userId, 'assistant', firstIntroMessage.message, firstIntroMessage.counselor.id)
-      
-      console.log('✅ 첫 인트로 메시지 완료')
+      console.log('✅ 인트로 메시지 완료')
     } catch (error) {
       console.error('⚠️ 인트로 메시지 생성 실패:', error)
       // 세션은 생성되었으므로 계속 진행
