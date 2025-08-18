@@ -1,0 +1,585 @@
+# Why 상담사 - AI 기반 감정 탐색 상담 서비스
+
+## Overview
+Why 상담사는 구조화된 8단계 질문을 통해 사용자의 핵심 감정 동기를 찾아주는 AI 기반 상담 서비스입니다. 사용자가 자신의 진정한 "Why"를 발견할 수 있도록 도와주며, "[방법/스타일]함으로써 [궁극적 감정 상태][세상/사람들에게][~한다]" 형태의 개인화된 Why 문장을 도출합니다.
+
+## Core Features
+
+### 1. 사용자 인증 및 세션 관리
+- 이메일 기반 회원가입/로그인 (Supabase Auth)
+- 상담 세션 생성, 저장, 이어서 진행 기능
+- 사용자별 상담 히스토리 관리
+
+### 2. 대시보드 (인덱스 페이지)
+- 진행 중인 상담과 완료된 상담 리스트 표시
+- 각 상담의 마지막 메시지 미리보기
+- "새 상담 시작" 버튼으로 새로운 상담 세션 생성
+- 기존 상담 선택 시 해당 상담으로 이어서 진행
+
+### 3. 온보딩/튜토리얼 시스템
+- 새 상담 시작 시 풀스크린 튜토리얼 제공
+- 피크민/젤다의 전설 스타일의 게임적 UI/UX
+- 메인 상담사 캐릭터가 안내하는 다단계 온보딩
+- 핵심 메시지들:
+  - "메인 캐릭터가 상담을 진행합니다"
+  - "가장 마음이 차분해지는 곳으로 가서 마음에 드는 노래를 틀어보세요"
+  - "내 인생의 가장 중요한 한마디를 찾아가는 것입니다"
+  - "한번에 정확하게 모두 찾을 수 있을 거라 생각하지 마세요"
+  - "적어도 5번은 해보세요"
+  - "그 과정에서 나도 모르게 나에게 집중하고 있다는 것을 알게 될 것입니다"
+
+### 4. 구조화된 상담 시스템
+- **인트로 단계**: 상담 안내 및 준비
+- **8단계 질문**: 각기 다른 상담사 캐릭터가 담당
+- **Why 생성 단계**: 답변을 바탕으로 한 개인화된 Why 문장 도출
+
+### 5. 다중 상담사 캐릭터 시스템
+- **메인 상담사** 🌟: 인트로, Why 생성, 전체 진행 관리
+- **옐로** 🌞: 뿌듯함, 보람 관련 질문 (밝고 긍정적 톤)
+- **비비** 🦋: 감정, 좋은/힘든 순간 탐구 (차분하고 깊이 있는 톤)
+- **그린** 🌿: 꿈과 비전 탐구 (자연스럽고 안정적 톤)
+더 추가
+
+### 6. 실시간 대화 인터페이스
+- 타이핑 효과로 AI 응답 실시간 표시
+- 캐릭터별 테마 색상과 그라데이션 적용
+- 모바일 친화적 UI (큰 폰트, 적절한 패딩)
+- 사용자 메시지와 AI 응답 구분된 디스플레이
+
+## User Experience
+
+### 사용자 페르소나
+- **주 타겟**: 자기 이해를 원하는 20-40대 성인
+- **니즈**: 인생의 방향성, 진정한 동기 탐색
+- **특징**: 깊이 있는 성찰을 원하지만 혼자서는 어려워하는 사용자
+
+### 핵심 사용자 플로우
+1. **로그인/회원가입** → **대시보드 진입**
+2. **"새 상담 시작"** → **풀스크린 온보딩**
+3. **온보딩 완료** → **실제 상담 시작**
+4. **8단계 질문 진행** → **Why 문장 도출**
+5. **상담 완료/저장** → **대시보드로 복귀**
+
+### UI/UX 고려사항
+- 모바일과 PC 모두 최적화된 반응형 디자인
+- 헤더 없는 풀스크린 몰입형 경험
+- 게임적 요소가 포함된 친근한 인터페이스
+- 감정적으로 안전하고 따뜻한 분위기의 색상/타이포그래피
+
+## Technical Architecture
+
+### 프론트엔드
+- **Next.js 15** (App Router)
+- **React 19**
+- **TypeScript** (타입 안전성)
+- **Tailwind CSS** (스타일링 및 반응형 디자인)
+
+### 백엔드 & 데이터베이스
+- **Supabase** (PostgreSQL + Auth + 실시간 기능)
+- **Row Level Security (RLS)** 적용된 보안 모델
+- 주요 테이블: users, sessions, messages, payments
+
+### AI 통합
+- **OpenAI GPT-4o** (상담 AI)
+- **Assistant API** 사용 (컨텍스트 유지 및 토큰 효율성)
+- Thread 기반 대화 관리
+
+### 배포 및 인프라
+- **Vercel** (프론트엔드 배포)
+- **GitHub** (버전 관리 및 CI/CD)
+- **환경변수 관리** (개발/프로덕션 분리)
+
+## Development Roadmap
+
+### Phase 1: 기본 인프라 및 인증 (MVP 기반)
+- 사용자 인증 시스템 구현
+- 기본 대시보드 레이아웃
+- 세션 생성/관리 API
+- 기본적인 상담 인터페이스
+
+### Phase 2: 온보딩 및 튜토리얼 시스템
+- 풀스크린 온보딩 컴포넌트 구현
+- 게임적 UI/UX 요소 적용
+- 단계별 안내 메시지 시스템
+- 온보딩 완료 후 상담 시작 플로우
+
+### Phase 3: 구조화된 상담 시스템
+- 8단계 질문 시스템 구현
+- 다중 상담사 캐릭터 시스템
+- 캐릭터별 UI 테마 변경
+- 상담 진행 상태 관리
+
+### Phase 4: 고급 UI/UX 및 최적화
+- 타이핑 효과 및 실시간 응답
+- 모바일 최적화
+- 성능 최적화 (로딩 시간 단축)
+- 접근성 개선
+
+### Phase 5: Why 생성 및 완성도 향상
+- AI 기반 Why 문장 생성 로직
+- 상담 결과 저장 및 표시
+- 상담 히스토리 관리
+- 사용자 피드백 수집
+
+## Logical Dependency Chain
+
+### 1단계: 기반 시설 (Foundation)
+- Next.js 프로젝트 구조
+- Supabase 연동 및 인증
+- 기본 라우팅 시스템
+
+### 2단계: 사용자 인터페이스 기본
+- 로그인/회원가입 폼
+- 대시보드 기본 레이아웃
+- 세션 리스트 컴포넌트
+
+### 3단계: 상담 시작 플로우
+- "새 상담 시작" 기능
+- 온보딩/튜토리얼 시스템
+- 상담 세션 생성 로직
+
+### 4단계: 실제 상담 기능
+- AI 상담 인터페이스
+- 메시지 송수신 시스템
+- 상담사 캐릭터 시스템
+
+### 5단계: 고도화 및 완성
+- Why 생성 알고리즘
+- 상담 완료 및 저장
+- 성능 최적화
+
+## Risks and Mitigations
+
+### 기술적 도전
+- **OpenAI API 비용**: Assistant API 사용으로 토큰 사용량 최적화
+- **실시간 응답 성능**: 적절한 로딩 상태 및 타이핑 효과로 UX 개선
+- **모바일 호환성**: Tailwind CSS 반응형 디자인으로 해결
+
+### MVP 정의 및 범위
+- **핵심 기능 우선**: 인증, 기본 상담, 세션 관리에 집중
+- **점진적 개선**: 캐릭터 시스템, 고급 UI는 후순위
+- **사용자 피드백**: 빠른 프로토타입으로 검증 후 개선
+
+### 리소스 제약
+- **개발 시간**: 단계별 개발로 점진적 배포
+- **API 비용**: 개발 단계에서 비용 모니터링
+- **유지보수**: 코드 품질 및 문서화에 집중
+
+## Appendix
+
+### 기술 사양
+- **Node.js**: v18+
+- **Next.js**: v15
+- **React**: v19
+- **TypeScript**: v5+
+- **Tailwind CSS**: v3+
+
+### 주요 의존성
+- **@supabase/ssr**: Supabase Next.js 통합
+- **openai**: OpenAI API 클라이언트
+- **class-variance-authority**: 컴포넌트 스타일링
+- **@radix-ui**: 접근성 높은 UI 컴포넌트
+
+### 환경 변수
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `OPENAI_API_KEY`
+
+
+
+WHY 상담 서비스 — PRD v0.1
+목표: “이 사람의 삶을 옳은 방향으로 이끌 수 있는가”를 판단 기준으로, 누구나 이탈 없이 자신의 깊은 내면을 표현하고 ‘Why 문장’을 발견하도록 돕는 대화형 상담 서비스의 제품 요구사항 정의서.
+
+0. 제품 한눈에 보기
+* 제품명(가칭): WHY Discovery
+* 핵심 가치 제안: 8개의 정교한 질문 흐름과 TPO(시간·장소·상황) 인지형 UX를 통해, 사용자가 스스로의 핵심 동기(Why)를 한 문장으로 도출하도록 돕고, 이를 일상 행동으로 연결.
+* 가격: 299,000원 (초기 상담권 10장 포함)
+* 성공의 정의(북극성 지표): 상담 완주율 및 검증된 Why 문장 도출율 + 사후 행동 변화(후속 저널/미션 수행율)
+* 주요 위험: 정서적 안전성, 중도 이탈, 과도한 자기노출 피로. → 안전 가드레일/세이프티 플로우/미세 인터랙션으로 완화.
+
+1. 비전 & 원칙
+1. 윤리/안전 최우선: 정서적 안전 장치(세이프워드, 중단·재개, 위기 지원 안내), 데이터 프라이버시 투명성.
+2. 1초 단위 의식 흐름 체크: 입력 지연/포커스 이탈/스크롤 반복 등 마이크로 신호를 관찰해, 즉시 UX 라이팅/심볼 반응/페이스 조절.
+3. TPO 인지형 경험: 시간대, 세션 단계, 사용자의 정서 신호(속도·사고 정지 등) 기반으로 카피톤·질문 강도를 조절.
+4. 한 번에 하나의 질문: 과부하 방지. 필요 시 리듬(호흡·정리·요약) 삽입.
+5. 증거 기반 설계: 심리학·인지과학 레퍼런스에 맞춘 단계(회상→정서 라벨링→의미화→패턴화→문장화→행동화).
+6. 재현 가능성: 최소 5회 반복을 장려하고, 반복 간 학습 로드맵 제시.
+
+2. 범위(Scope)
+포함
+* 인입 랜딩/로그인, 온보딩(대화형), 상담 세션(8문항 흐름), 결과(Why 문장), 사후 적용 가이드, 저널/미션, 티켓 지갑, 결제, 리플레이 온보딩, 공유/초대, 고객지원.
+
+3. 사용자 & 시나리오
+* 페르소나 A(자기탐색형): 20–40대, 자아 탐색 욕구, 장문의 텍스트를 선호.
+* 페르소나 B(결정 피로형): 짧은 입력 선호, 선택형 UI·감정 슬라이더 필요.
+* 페르소나 C(성과 지향형): 결과·행동 플랜에 높은 관심, 리마인더/미션 중요.
+주요 시나리오
+1. SNS 광고 → 랜딩 → 온보딩 → 결제/티켓 확인 → 첫 상담 → 결과 요약 → 저널/미션 시작.
+2. 진행 중 세션 중단 → 재개 알림 → 이어서 완주.
+3. Why 문장 확정 후 공유/리마인더 설정.
+
+4. 정보구조(IA) & 페이지 요구사항
+4.1 랜딩(로그아웃 인덱스)
+* 목적: 가치 제안 이해, 신뢰 형성, 전환 유도.
+* 주요 구성: 히어로(심볼 애니메이션, 3D/2D 대응), 핵심 베네핏, 실제 예시(익명), 절차(8문항), 가격(299,000원/10장), 윤리·안전 안내, FAQ, CTA(로그인/빠른 체험 1문항 프리뷰).
+* 기능: 스크롤 감지형 카피 톤 조절, 프리뷰 질문 1개 체험(응답은 저장 X), 쿠키/세션 기반 리턴 유저 메시지.
+* 상태: 최초/재방문, 저속 네트워크(라이트 Lottie), 접근성 모드.
+* 측정: 랜딩→로그인 CTR, 체험완료율, FAQ 열람율.
+4.2 로그인/가입
+* 목적: 마찰 최소화. 소셜 로그인 + 이메일.
+* 기능: 약관(비의료 안내 명시), 최소 정보 수집, 재개 링크.
+* 상태: 신규/기존, 실패/재시도, 캡차(이상행동).
+4.3 홈(상담 센터 대시보드)
+* 목적: 진행중 상담 재개, 새 상담 시작, 티켓/가격/온보딩 리플레이.
+* 구성: “옐로우” 심볼(상태 반응), 진행중 카드, 새 상담 CTA, 티켓 지갑(잔여/구매), 온보딩 다시보기, 최근 저널, 공지.
+* 기능: 세션 재개, 상담 히스토리(타임라인), 공유 링크, 리마인더 설정.
+4.4 온보딩(대화형·리플레이 가능)
+* 목적: 신뢰·몰입·메타 기대 설정.
+* UI: 피크민/젤다처럼 대화형 인터페이스 + **심볼(옐로우)**의 감정·색/형태 변화. 3D(웹GL)와 2D(Lottie) 이중 제공.
+* 사용자에게 보여줄 문구(순서 고정):
+    * 안녕하세요, 큰 결심 하셨어요. 저렴한 금액은 아니었을텐데.
+    * 하지만 반대로 확실히 말씀드릴 수 있는건, 당신이 더 당신답게 살고 싶다는 마음이 매우 간절하다는거에요.
+    * 지금까지의 삶은 어떠셨나요? 즐거웠나요? 지루했나요? 아니면 괴로웠나요. 혹은 참지 못 할 만큼 답답했나요?
+    * 지금부터 우리가 함께 찾아볼 “why”는 당신의 삶이 왜 그럴 수 밖에 없었는지를 발견 해 줄거에요.
+    * 그리고 사소한 습관부터 계획과 목표까지. 더 당신다운 삶으로 하나씩 조정해나갈 수 있는 절대적 기준. 동기의 원천을 찾아드릴거에요.
+    * 점이나 사주같은게 아니에요. 지금부터 저희는 당신에게 딱 8가지의 질문을 던질건데, 그것을 떠올리는 과정에서 심리학, 정신분석학, 인지과학 등 여러가지 방법론을 활용해 당신을 가장 잘 설명할 수 있는 단 한마디의 문장으로 정리할거에요.
+    * 그리고 이 소중한 문장을 어떻게 활용할 수 있는지는 상담이 끝나고 말씀드릴게요.
+    * 아. 시작하기 전에, 그저 몇마디 질문에 당신의 복잡하고 소중한 인생을 정의할 수 있다고 생각하시는건 아니죠?
+    * 이 상담은 최소 5번은 반복해서 해 보셔야 해요. 상담을 반복하면 반복할수록, 사실은 그 과정에서 나 스스로를 더 솔직하게 바라보게 된답니다. 나에게 가장 솔직해졌을 때, 진정한 나의 한 문장을 발견할 수 있을거에요. 그 문장을 바라보고 소름이 돋거나, 눈물이 핑 돌거나, 말할 수 없는 해방감이 느껴진다면. 그 때 멈추시면 돼요.
+    * 그래서 상담권을 10장 충전해드릴거에요. (상담권 10장 팝업)
+    * 그럼 이제 정말 시작해봅시다.
+    * 우선 방해받지 않고 마음이 가장 편안해지는 곳으로 이동해주세요. 좋아하는 노래를 틀어도 좋아요.
+    * 준비 됐나요? (버튼: 준비 됐어!)
+    * 그럼 시작합니다. 옐로우! 상담 시작이에요! → 첫 번째 상담자 옐로우 등장
+* 기능: 스킵/다시보기, 내레이션 속도 조절, 접근성 자막/낭독, 심볼 반응(색/형태/눈깜빡임/호흡).
+4.5 결제/티켓 지갑
+* 목적: 가격·혜택·환불 정책 명확화, 구매 마찰 최소화.
+* 기능: 결제수단(카드/간편), 영수증, 초기 10장 지급 팝업, 잔여 티켓 표시, 사용 로그, 선물/공유.
+* 상태: 성공/실패/보류, 부분환불 규칙(정책 문구 고지), 보안 3DS.
+4.6 상담 세션(8문항 인터랙티브)
+* 목적: Why 도출을 위한 정교한 흐름.
+* UI: 채팅형/카드형 혼합. 한 질문·한 입력 원칙. 긴 입력용 캔버스 + 감정 라벨러(이모지·바 차트·단어칩), 타임라인 점진 공개.
+* 핵심 기능:
+    * 1초 단위 의식 신호 체크: 입력 정지·지연, 포커스 아웃, 백스페이스 급증 등 감지 → 미세 카피/휴식 제안.
+    * TPO 반응형 UX 라이팅: 시간대(밤=부드러운 톤), 세션 단계(초반=안심, 중반=탐색, 후반=결론), 정서 신호에 따른 카피.
+    * 세이프워드/중단/재개: “멈춤” 버튼 및 키워드. 중단 시 요약 저장.
+    * 요약·되짚기: 매 2~3문항 후 요약 카드. 사용자가 확인·수정.
+    * 자동 저장: 초당 스냅샷(트래픽 최적화), 로컬 캐시+서버.
+    * 모더레이션 & 위기 신호 탐지: 자해·위기 단어 감지 → 온화한 안내 + 전문기관 리소스.
+* 상태: 온라인/오프라인, 모바일 키보드 가림, 저사양 모드.
+* 종료: Why 초안 2~3안 생성(사용자에게는 2/3단계만 노출), 최종 선택/수정 → 확정.
+4.7 결과(Why 문장) & 적용 가이드
+* 목적: 단 한 문장의 명료화와 실천 연결.
+* 구성: Why 문장(큰 타이포), 근거 요약(감정·패턴), “오늘/이번주/이번달” 미션 제안(3개), 배경화면·카드 내보내기, 공유.
+* 기능: 홈 위젯/푸시 리마인더, 캘린더 연동(선택), 문장 낭독 음성.
+4.8 저널/미션
+* 목적: 습관화·리플렉션.
+* 기능: 일일 저널 프롬프트, 체크인(감정/에너지), 미션 완료 체크, 주간 리포트, 궤적 시각화.
+4.9 설정/개인정보/고객지원
+* 기능: 프로필, 알림, 접근성, 데이터 내려받기/삭제, 비의료 면책, 위기 지원 리소스, 문의.
+4.10 관리자(내부)
+* 기능: 질문 시나리오 편집, 카피 라이브러리(TPO별), 심볼 상태맵, 세션 리플레이(익명화), 실험 배포.
+
+5. 사용자 흐름(하이레벨)
+1. 인입: SNS → 랜딩 체험 → 로그인 → 홈.
+2. 온보딩: 대화형 시퀀스(리플레이 가능) → 티켓 확인.
+3. 상담 시작: 티켓 차감 → 8문항 진행(요약·휴식 삽입) → Why 초안 → 확정.
+4. 사후: 적용 가이드/미션 → 저널 · 리마인더.
+5. 반복: 최소 5회 추천, 반복별 인사이트 비교 제공.
+
+6. TPO 엔진(요구사항)
+* 입력 시그널: 키 입력 속도, 삭제 비율, 포커스, 체류/스크롤, 세션 시각.
+* 컨텍스트: 단계(온보딩/문항/요약/결과), 장치(모바일/데스크톱), 네트워크.
+* 반응 정책: 카피톤(안심/탐색/정리/결론), 대기/휴식 제안, 질문 난이도 조정(회상→감정→의미), 심볼 애니메이션 강도.
+* 프라이버시: 로깅 항목을 투명 고지, 민감 필드 최소화, 익명화 지표만 저장.
+
+7. 콘텐츠 & UX 라이팅 가이드
+* 톤: 인간적·따뜻·과장 없음. 판단·진단 금지. “당신다운”을 핵심 어휘로 유지.
+* 원칙: 한 문장·한 질문. 선택지 표현은 유도·편향 금지.
+* 상태별 카피 예시:
+    * 입력 정지 10초: “괜찮아요. 천천히 떠올리셔도 돼요.”
+    * 심리적 과부하 추정: “잠시 숨 고를까요? 30초 휴식 타임을 드릴게요.”
+    * 재개: “이어가볼게요. 방금까지의 이야기에서 가장 마음이 움직인 지점은 어디였나요?”
+
+8. 데이터 모델(초안)
+* users(id, email, signup_provider, consent_flags, accessibility_prefs, created_at)
+* tickets(id, user_id, balance, source[purchase|initial], history_json, updated_at)
+* payments(id, user_id, amount, currency, status, provider_ref, created_at)
+* sessions(id, user_id, status[active|paused|done], stage, tpo_snapshot_json, created_at)
+* messages(id, session_id, role[user|system|assistant], content, emotion_tags[], created_at)
+* summaries(id, session_id, block_idx, summary_text)
+* why_statements(id, user_id, text, evidence_json, version, created_at)
+* journals(id, user_id, date, prompt_id, entry, mood, energy)
+* missions(id, user_id, type, title, due_date, status)
+* events_telemetry(id, user_id, session_id, event, payload_json, ts)
+
+9. 지표 & 계측(필수 이벤트)
+* view_landing, cta_preview_click, preview_done
+* login_success, onboarding_start|end, ticket_granted_10
+* session_start, q_shown_{1..8}, q_answered_{1..8}
+* micropause_suggested|accepted, safeword_triggered
+* summary_ack_{k}, session_done
+* why_generated, why_confirmed
+* mission_started, journal_submitted
+* revisit_onboarding, ticket_purchase
+핵심 KPI: 랜딩→세션 시작 전환율, 세션 완주율, Why 확정율, 7일·30일 저널 지속율, 재상담 N회 비율.
+
+10. 접근성 & 안전
+* 텍스트 크기 조절, 키보드만으로 조작 가능, 시각 대비, 스크린리더 라벨.
+* 위기 신호(자·타해 언급) 탐지 시 지역 리소스 제공 + 즉시 중단 옵션.
+* 비의료 서비스 면책 및 데이터 사용 고지.
+
+11. 기술 요구사항(개요)
+* FE: Next.js + React, 애니메이션(Lottie/Three.js), PWA, 오프라인 캐시.
+* BE: API 게이트웨이 + 세션 스토어(PostgreSQL/Supabase), 큐(요약/안전성 검사), 벡터 스토어(요약/회상).
+* AI: LLM(대화/요약/문장화), 감정 라벨링 파이프라인, 모더레이션(실시간).
+* 실험/분석: A/B 프레임워크, 이벤트 파이프라인(Amplitude/GA4).
+* 보안: OAuth, 결제 토큰화, PII 암호화, 지역 데이터 거버넌스.
+
+12. 테스트·수용 기준(샘플)
+* [랜딩] “프리뷰 1문항” 응답은 저장되지 않는다. 실패 시 사용자에게 저장 오해를 주지 않는다.
+* [온보딩] 지정된 문구 순서가 정확히 노출된다. 스킵 시 리플레이 안내.
+* [세션] 한 화면에 질문은 1개만 노출된다. 입력 중 이탈 후 5분 내 복귀 시 위치 복원.
+* [세이프티] 위기 키워드 입력 시 1초 내 안내 패널 표시, 로그는 익명화.
+* [결과] Why 확정 후 홈·위젯·리마인더 설정이 즉시 가능.
+
+13. 릴리즈 계획
+* α(내부): Lottie 심볼, 2문항 프로토타입, TPO 마이크로 이벤트 로깅.
+* β(폐쇄형): 8문항 완주, Why 생성, 1주 저널.
+* GA: 결제/티켓, 온보딩 리플레이, 공유/리마인더, 관리자 실험 배포.
+
+14. 리스크 & 대응
+* 이탈: 한 질문 원칙, 요약·휴식 삽입, 마이크로 피드백.
+* 과노출 피로: 비공개 영역 강조, 내보내기/삭제 통제권.
+* 오남용: 비의료 면책, 위기 안내, 신고.
+
+15. 부록 — UX 컴포넌트 체크리스트
+* 질문 카드, 감정 라벨러, 요약 카드, 휴식 타이머, 세이프워드 버튼, 티켓 배지, 심볼 상태표(색/형태/애니메이션 강도), 접근성 토글.
+
+끝. 다음 단계 제안
+* 와이어프레임(홈/세션/결과) v0.1
+* 질문 시나리오 JSON 스키마 정의(버전·실험 플래그 포함)
+* TPO 카피 라이브러리 초안(상황 × 톤 매트릭스)
+
+구현 명세 (Next.js + Supabase + OpenAI Assistants API)
+0) 기술 스택 & 배포
+* FE: Next.js(App Router) + TypeScript + Tailwind + shadcn/ui, Vercel 배포
+* BE: Next.js Route Handlers(API), Edge 런타임 가능한 부분은 Edge로. 서버 런타임은 Supabase Admin 사용.
+* DB: Supabase(PostgreSQL)
+* AI: OpenAI Assistants API (Threads/Runs + Tools(Function calling))
+* Auth: Supabase Auth(소셜 + 이메일)
+* CDN/자산: Vercel + Supabase Storage(심볼 애니메이션)
+* 분석: Amplitude/GA4(이벤트 키 지정은 PRD 9항과 동일)
+
+화면(페이지) 설계 — 개발·디자인 바로 착수용
+라우트, 목적, 컴포넌트, 상태/이벤트, UX 카피 슬롯, 엣지케이스를 한 번에 정리했습니다.
+전체 라우트 맵
+페이지	경로	목적	핵심 컴포넌트
+랜딩(비로그인)	/	가치 제안·전환	HeroSymbol, ValueGrid, PreviewQuestion, FAQ, Pricing, CTASection
+로그인/가입	/auth	마찰 최소 로그인	AuthCard, SocialButtons, TOSModal
+홈 대시보드	/home	진행중/새 상담, 티켓	SessionList, NewSessionCTA, TicketWallet, OnboardingReplay
+온보딩(리플레이)	/onboarding	신뢰·몰입·기대 설정	OnboardingFlow, SymbolStage, ScriptedLines
+상담 세션	/session/[id]	8문항 진행	ChatPanel, CounselorBadge, ProgressDots, SummaryCard, SafePanel
+답안 확정 모달	(컴포넌트)	후보→확정	AnswerConfirmSheet
+WHY 결과	/session/[id]/why	후보 2~3안→최종	WhyCandidates, EvidenceList, FinalizeBar
+저널/미션	/journal	습관화	DailyPrompt, MoodCheck, MissionList
+티켓/결제	/wallet	구매/영수증	TicketWallet, PaymentPanel
+설정·개인정보	/settings	접근성·데이터	PrefForm, DataExport, DangerZone
+고객지원	/support	문의/위기 안내	HelpArticles, CrisisResources
+관리자(CMS)	/admin	질문/카피 관리	PromptEditor, PersonaLibrary, ReleaseToggles
+공통 디자인 시스템
+* 그리드/레이아웃: 4/8pt spacing, 컨테이너 max-w-2xl, 모바일 우선.
+* 반응형: sm(375), md(768), lg(1024+). 세션 화면은 md 이상에서 2컬럼(대화 + 고정 요약).
+* 타이포: 제목 text-2xl/3xl, 본문 text-base, 보조 text-sm.
+* 컬러 토큰(상담자):
+    * yellow: #FDE047, green: #22C55E, purple: #A78BFA, red: #EF4444, blue: #3B82F6, orange: #FB923C, khaki: #A3A380, black: #111827
+* 심볼(옐로우 등): Lottie/Three.js, 상태별 애니 강도(안정/탐색/집중/휴식) 토글.
+
+1) 랜딩(비로그인) — /
+목표: 가치 이해 → 프리뷰 1문항 체험 → 로그인 전환.
+컴포넌트
+* HeroSymbol(심볼 애니 + 헤드카피)
+* ValueGrid(3-4개 베네핏 카드)
+* ProcessSteps(8문항 흐름 다이어그램)
+* PreviewQuestion(체험: 응답 저장 X)
+* Pricing(299,000원 + 10장 혜택)
+* FAQ, FooterCTA
+상태/이벤트
+* 로딩: 심볼 Lottie 라이트 버전
+* 이벤트: view_landing, cta_preview_click, preview_done, login_cta
+UX 카피 슬롯
+* 헤드: “당신답게 사는 기준을 찾는 8개의 질문”
+* 프리뷰 안내: “이건 체험이에요. 지금 적는 내용은 저장되지 않아요.”
+엣지케이스: 저성능 기기 → 2D 정적 일러로 폴백
+
+2) 로그인/가입 — /auth
+목표: 2스텝 이내 로그인.
+컴포넌트
+* AuthCard(이메일/비번, 마법링크)
+* SocialButtons(Apple/Google)
+* TOSModal(비의료 고지 포함)
+이벤트: login_success, login_fail
+접근성: 라벨·에러 텍스트·키보드 포커스 링
+
+3) 홈 대시보드 — /home
+목표: 재개/새 상담, 티켓 확인.
+컴포넌트
+* CounselorHero(심볼 + 오늘의 한줄)
+* SessionList(카드: 진행률, 최근 시각)
+* NewSessionCTA(버튼)
+* TicketWallet(잔여/구매)
+* OnboardingReplay(링크)
+* RecentJournal(미니)
+상태: 세션 없음 → Empty(“첫 상담을 시작해 볼까요?”)
+이벤트: session_start, revisit_onboarding, ticket_purchase
+
+4) 온보딩(리플레이) — /onboarding
+목표: 신뢰 형성과 기대 설정.
+컴포넌트
+* OnboardingFlow:
+    * SymbolStage(색/형태 변화)
+    * ScriptedLines(지정된 문구 시퀀스)
+    * Controls(스킵/다시보기/속도)
+* TicketGrantModal(10장 지급 팝업)
+상태/이벤트: onboarding_start|end, ticket_granted_10
+접근성: 내레이션 자막/낭독 토글
+
+5) 상담 세션 — /session/[id]
+목표: 한 화면 하나의 질문, 8문항 완주.
+레이아웃
+* (좌) ChatPanel / (우, md+) FixedSummary(확정 답안 리스트 + 진행률)
+핵심 컴포넌트
+* CounselorBadge(color) : 현재 상담자 색·표정 반응
+* ProgressDots(8) : 현재 idx 활성화
+* MessageList : user/assistant
+* Composer : 텍스트/음성(선택), 글자수 가이드
+* MicropauseHint : 입력 정지/백스페이스 급증 시 안내
+* SafePanel : 세이프워드/중단/재개
+* SummaryCard : 2~3문항마다 자동 요약
+* AnswerConfirmSheet : 후보 제시 → “응, 이게 정말 맞아”/“아니야, 조금 더…”
+상태
+* 로딩: 런 대기 스켈레톤
+* 오프라인: 로컬 캐시 저장 안내
+* 타임아웃: “조금 늦어지고 있어요. 5~10초만 더…”
+이벤트
+* q_shown_{1..8}, q_answered_{1..8}
+* micropause_suggested|accepted
+* propose_answer_shown, answer_confirmed, answer_edited
+UX 카피 슬롯(예)
+* Micropause: “괜찮아요. 천천히 떠올리셔도 돼요.”
+* 재개: “방금까지 이야기에서 가장 마음이 움직인 지점은 어디였나요?”
+
+6) 답안 확정 모달 — 컴포넌트
+목표: 후보→확정 저장, 다음 질문으로 진행.
+구성
+* 후보 텍스트(편집 가능), 두 버튼
+* 하단: “확정하면 수정은 가능하지만, 다음 질문으로 넘어가요.”
+상호작용
+* 확인 → /api/sessions/[id]/answers(confirm:true)
+* 수정 → 편집 → 재확인
+에러: 저장 실패 시 토스트 + 재시도
+
+7) WHY 결과 — /session/[id]/why
+목표: 후보 2~3안 제시 → 최종 확정 및 공유.
+컴포넌트
+* WhyCandidates(카드형, 클릭 시 근거 토글)
+* EvidenceList(반복 감정/패턴 3줄)
+* FinalizeBar(확정 버튼 + 배경화면/카드 내보내기)
+* ReminderToggle(푸시/캘린더)
+상태
+* 후보 없음 → 생성 트리거 버튼
+이벤트
+* why_candidates_generated(n), why_finalized
+UX 카피 슬롯
+* 확정 전: “말없이 고개가 끄덕여지면, 그 문장이 맞아요.”
+
+8) 저널/미션 — /journal
+목표: 일상 연결과 습관화.
+컴포넌트
+* DailyPrompt(오늘의 한 줄)
+* MoodCheck(감정/에너지 슬라이더)
+* MissionList(오늘/이번주/이번달)
+* StreakBar(연속 기록)
+이벤트
+* journal_submitted, mission_started|done
+
+9) 티켓/결제 — /wallet
+목표: 구매/잔여/영수증 명확화.
+컴포넌트
+* TicketWallet(잔여, 사용 히스토리)
+* PaymentPanel(카드/간편결제, 3DS)
+* RefundPolicy
+이벤트: ticket_purchase
+
+10) 설정·개인정보 — /settings
+목표: 접근성, 데이터 권리, 알림.
+컴포넌트
+* PrefForm(폰트 크기/콘트라스트/낭독)
+* Notifications(푸시/이메일)
+* DataExport, DataDelete
+이벤트: a11y_changed, data_exported|deleted
+
+11) 고객지원 — /support
+컴포넌트
+* HelpArticles
+* CrisisResources(지역 핫라인 링크)
+* ContactForm
+
+12) 관리자(CMS) — /admin
+컴포넌트
+* PromptEditor(문항 텍스트/톤 버전)
+* PersonaLibrary(컬러 상담자 카피)
+* ReleaseToggles(A/B 실험)
+
+13) 컴포넌트 사양(타입 정의 예시)
+// 상담자 뱃지
+export type CounselorColor = 'yellow'|'green'|'purple'|'red'|'blue'|'orange'|'khaki'|'black'
+export interface CounselorBadgeProps { color: CounselorColor; mood?: 'calm'|'focus'|'rest'; }
+
+// 진행 점
+export interface ProgressDotsProps { active: number; total?: number; }
+
+// 답안 확정 시트
+export interface AnswerConfirmSheetProps { qIdx: number; candidate: string; onConfirm(text:string):void; onEdit(text:string):void; }
+
+// WHY 후보 카드
+export interface WhyCandidate { text: string; evidence?: string[] }
+export interface WhyCandidatesProps { candidates: WhyCandidate[]; onFinalize(text:string):void }
+
+14) 상태 머신(세션)
+* idle → running(q=1..8) → awaiting_confirm → confirmed → next(q+1) 반복
+* 모든 q가 confirmed 되면 ready_for_why → why_generated → why_finalized
+
+15) 접근성 & 안전 가드
+* 모든 대화 메시지에 aria-live="polite"
+* 모달 오픈 시 포커스 트랩 & Escape
+* 세이프티 패널: 키워드 감지 시 즉시 표시, 외부 리소스 안내
+
+16) 에러/빈/로딩 상태 가이드
+* 로딩: 스켈레톤(말풍선 형태), 2초 초과 시 상태 카피 표기
+* 빈 상태: 친절 카피 + 즉시 행동 CTA
+* 에러: 간단 원인 + 재시도 버튼, 실패 3회 시 연락 안내
+
+17) 분석 이벤트 키 (요약)
+* 랜딩/온보딩/세션/확정/WHY/저널/결제 전 영역 — PRD 9항 + 본 섹션 보강 이벤트 사용
+
+18) QA 체크리스트(발췌)
+* [세션] 한 화면 하나의 질문만 노출 ✅
+* [확정] 확정 시 다음 문항으로 진행되고 진행률 증가 ✅
+* [WHY] 후보 근거 토글이 1초 내 응답 ✅
+* [접근성] 키보드 전용 탐색 가능 ✅
+* [오프라인] 입력 캐시가 복귀 시 복원 ✅
+
+19) 바로 착수 Todo (개발/디자인)
+개발
+1. 라우트 골격 생성(/home, /session/[id], /session/[id]/why 등)
+2. 공통 컴포넌트 제작: CounselorBadge, ProgressDots, AnswerConfirmSheet
+3. API 연동: 세션 생성→메시지→툴콜→확정 저장 플로우 연결
+4. 이벤트 로깅 훅 작성(useAnalytics)
+디자인
+1. 심볼(8컬러) 모션 가이드 4상태(안정/탐색/집중/휴식)
+2. 채팅 레이아웃 2단(모바일/데스크탑) 와이어프레임
+3. 모달/시트 컴포넌트 키트(확정/세이프티/요약)
+4. 톤&매너 카피 라이브러리(상황×톤 매트릭스)
+
