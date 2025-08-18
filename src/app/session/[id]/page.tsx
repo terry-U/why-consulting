@@ -4,11 +4,14 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/auth'
 import { getSessionById } from '@/lib/sessions'
-import { Session } from '@/lib/supabase'
+import { getSessionMessages } from '@/lib/messages'
+import { Session, Message } from '@/lib/supabase'
+import ChatInterface from '@/components/chat/chat-interface'
 
 export default function SessionPage() {
   const [user, setUser] = useState<any>(null)
   const [session, setSession] = useState<Session | null>(null)
+  const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
   const params = useParams()
   const router = useRouter()
@@ -39,6 +42,15 @@ export default function SessionPage() {
         }
 
         setSession(sessionData)
+
+        // 세션 메시지 가져오기
+        try {
+          const sessionMessages = await getSessionMessages(sessionId)
+          setMessages(sessionMessages)
+        } catch (error) {
+          console.error('메시지 로딩 오류:', error)
+          setMessages([])
+        }
       } catch (error) {
         console.error('세션 데이터 로딩 오류:', error)
         router.push('/home')
@@ -126,16 +138,8 @@ export default function SessionPage() {
         </div>
 
         {/* 상담 인터페이스 영역 */}
-        <div className="bg-white rounded-2xl shadow-lg min-h-[500px] flex items-center justify-center">
-          <div className="text-center p-8">
-            <div className="text-4xl mb-4">🚧</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              상담 인터페이스 구현 중
-            </h3>
-            <p className="text-gray-600">
-              곧 완성될 예정입니다
-            </p>
-          </div>
+        <div className="bg-white rounded-2xl shadow-lg h-[600px] overflow-hidden">
+          <ChatInterface session={session} initialMessages={messages} />
         </div>
       </div>
     </div>
