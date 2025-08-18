@@ -59,7 +59,7 @@ export async function middleware(req: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession()
 
   // 보호된 경로들 (로그인이 필요한 경로)
-  const protectedPaths = ['/dashboard', '/chat']
+  const protectedPaths = ['/home', '/session', '/onboarding', '/journal', '/wallet', '/settings']
   
   // 현재 경로가 보호된 경로인지 확인
   const isProtectedPath = protectedPaths.some(path => 
@@ -67,14 +67,14 @@ export async function middleware(req: NextRequest) {
   )
 
   // 로그인 관련 페이지들
-  const authPaths = ['/login', '/signup']
+  const authPaths = ['/login', '/signup', '/auth']
   const isAuthPath = authPaths.some(path => 
     req.nextUrl.pathname.startsWith(path)
   )
 
   // 보호된 경로에 접근하려는데 로그인되지 않은 경우
   if (isProtectedPath && !session) {
-    return NextResponse.redirect(new URL('/login', req.url))
+    return NextResponse.redirect(new URL('/auth', req.url))
   }
 
   // 이미 로그인된 사용자가 인증 페이지에 접근하는 경우
