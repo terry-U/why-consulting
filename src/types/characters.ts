@@ -44,7 +44,7 @@ export interface WhyCandidatesProps {
 }
 
 // 상담 단계 타입
-export type CounselingPhase = 'intro' | 'questions' | 'why_generation' | 'completed'
+export type CounselingPhase = 'questions' | 'summary' | 'completed'
 
 // 상담 질문 인터페이스
 export interface CounselingQuestion {

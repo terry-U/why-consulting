@@ -46,7 +46,7 @@ export class CounselingManager {
         // 현재 질문에 대한 답변이 있는지 확인
         const currentQuestionId = `q${this.session.current_question_index + 1}`
         return !!this.session.answers[currentQuestionId]
-      case 'why_generation':
+      case 'summary':
         return !!this.session.generated_why
       case 'completed':
         return false // 이미 완료됨
@@ -73,7 +73,7 @@ export class CounselingManager {
         if (nextQuestionIndex >= COUNSELING_QUESTIONS.length) {
           // 모든 질문 완료 - Why 생성 단계로
           return {
-            phase: 'why_generation',
+            phase: 'summary',
             questionIndex: nextQuestionIndex,
             counselor: getCharacter('main')
           }
@@ -85,7 +85,7 @@ export class CounselingManager {
           counselor: getCurrentCounselor(nextQuestionIndex + 1)
         }
       
-      case 'why_generation':
+      case 'summary':
         return {
           phase: 'completed',
           questionIndex: this.session.current_question_index,
@@ -121,7 +121,7 @@ export class CounselingManager {
       case 'questions':
         const answeredQuestions = Object.keys(this.session.answers).length
         return 10 + (answeredQuestions / COUNSELING_QUESTIONS.length) * 80 // 10-90%
-      case 'why_generation':
+      case 'summary':
         return 95 // 거의 완료
       case 'completed':
         return 100 // 완료

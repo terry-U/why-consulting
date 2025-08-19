@@ -147,7 +147,7 @@ export default function ConsultationHistoryList({
                     <span className="ml-2 text-gray-600">
                       {session.counseling_phase === 'questions' ? '상담 중' :
                        session.counseling_phase === 'questions' ? `질문 ${session.current_question_index + 1}/8` :
-                       session.counseling_phase === 'why_generation' ? 'Why 생성' :
+                       session.counseling_phase === 'summary' ? '요약 중' :
                        session.counseling_phase === 'completed' ? '완료' : '알 수 없음'}
                     </span>
                   </div>
@@ -157,7 +157,7 @@ export default function ConsultationHistoryList({
                     <span className="ml-2 text-gray-600">
                       {session.counseling_phase === 'completed' ? '100%' :
                        session.counseling_phase === 'questions' ? `${Math.round((session.current_question_index / 8) * 100)}%` :
-                       session.counseling_phase === 'why_generation' ? '90%' : '5%'}
+                       session.counseling_phase === 'summary' ? '90%' : '5%'}
                     </span>
                   </div>
                   

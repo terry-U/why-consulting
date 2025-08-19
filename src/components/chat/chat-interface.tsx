@@ -127,8 +127,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
     }
   }, [initialMessages, handleFirstCounselorGreeting])
   
-  // 성능 최적화: 메모이제이션
-  const counselingManager = useMemo(() => new CounselingManager(session), [session])
+  // 성능 최적화: 메모이제이션 (향후 사용 예정)
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -349,7 +348,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
 
   // 현재 상담사 결정 로직
   const getCurrentCounselor = () => {
-    if (session.counseling_phase === 'why_generation' || session.counseling_phase === 'completed') {
+    if (session.counseling_phase === 'summary' || session.counseling_phase === 'completed') {
       return 'main'
     }
     
