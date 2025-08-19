@@ -20,8 +20,8 @@ async function createSession(userId: string, threadId: string) {
       user_id: userId,
       thread_id: threadId,
       status: 'active',
-      counseling_phase: 'intro',
-      current_question_index: 0,
+      counseling_phase: 'questions',
+      current_question_index: 1,
       answers: {}
     })
     .select()
@@ -134,8 +134,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 인트로 메시지 생성
-    console.log('👋 인트로 메시지 생성...')
+    // 옐로 상담사의 첫 질문 메시지 생성
+    console.log('🌞 옐로 상담사 첫 질문 메시지 생성...')
     try {
       await supabaseServer
         .from('messages')
@@ -143,13 +143,13 @@ export async function POST(request: NextRequest) {
           session_id: session.id,
           user_id: userId,
           role: 'assistant',
-          content: '안녕하세요! 저는 상담사 지혜입니다. 오늘 이 시간을 통해 당신의 내면을 탐색하고, 삶의 목적을 함께 찾아보는 시간을 갖고 싶어요. 편안한 마음으로 대화를 시작해볼까요?',
-          counselor_id: 'main'
+          content: '안녕하세요! 저는 옐로예요 🌞 오늘 함께 당신의 소중한 이야기를 들어보고 싶어요. 편안하게 대화해봐요!\n\n당신이 가장 뿌듯했던 경험은 무엇인가요?',
+          counselor_id: 'yellow'
         })
       
-      console.log('✅ 인트로 메시지 완료')
+      console.log('✅ 옐로 상담사 메시지 완료')
     } catch (error) {
-      console.error('⚠️ 인트로 메시지 생성 실패:', error)
+      console.error('⚠️ 첫 질문 메시지 생성 실패:', error)
       // 세션은 생성되었으므로 계속 진행
     }
 

@@ -21,37 +21,12 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
   const [nextPhaseData, setNextPhaseData] = useState<any>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // 초기 환영 메시지 설정
+    // 초기 메시지 설정 (옐로 상담사가 이미 세션 생성 시 메시지를 보냄)
   useEffect(() => {
-    const setupWelcomeMessage = async () => {
-      if (initialMessages.length === 0) {
-        const welcomeMessage: Message = {
-          id: `welcome-${Date.now()}`,
-          session_id: session.id,
-          user_id: session.user_id,
-          role: 'assistant',
-          content: '안녕하세요! 저는 상담사 지혜입니다. 오늘 이 시간을 통해 당신의 내면을 탐색하고, 삶의 목적을 함께 찾아보는 시간을 갖고 싶어요. 편안한 마음으로 대화를 시작해볼까요?',
-          counselor_id: 'main',
-          created_at: new Date().toISOString()
-        }
-        
-        // 환영 메시지를 DB에 저장
-        await supabase
-          .from('messages')
-          .insert({
-            session_id: session.id,
-            user_id: session.user_id,
-            role: 'assistant',
-            content: welcomeMessage.content,
-            counselor_id: 'main'
-          })
-        
-        setMessages([welcomeMessage])
-      }
+    if (initialMessages.length > 0) {
+      setMessages(initialMessages)
     }
-
-    setupWelcomeMessage()
-  }, [session, initialMessages.length])
+  }, [initialMessages])
   
   // 성능 최적화: 메모이제이션
   const counselingManager = useMemo(() => new CounselingManager(session), [session])
@@ -139,44 +114,93 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
   }
 
   const handleAdvanceToNext = async (confirmed: boolean) => {
-    if (!confirmed || !nextPhaseData) {
-      setShowAdvanceButtons(false)
-      return
-    }
+    if (!nextPhaseData) return
 
     try {
       setIsLoading(true)
       
-      // 세션 상태 업데이트
-      const response = await fetch(`/api/session/${session.id}/advance`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          nextPhase: nextPhaseData.nextPhase,
-          nextQuestionIndex: nextPhaseData.nextQuestionIndex,
-          userAnswer: messages[messages.length - 2]?.content // 마지막 사용자 메시지
-        }),
-      })
+      if (confirmed) {
+        // "응, 맞아!" - 다음 단계로 진행
+        const response = await fetch(`/api/session/${session.id}/advance`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            nextPhase: nextPhaseData.nextPhase,
+            nextQuestionIndex: nextPhaseData.nextQuestionIndex,
+            userAnswer: messages[messages.length - 2]?.content // 마지막 사용자 메시지
+          }),
+        })
 
-      const data = await response.json()
+        const data = await response.json()
 
-      if (data.success) {
-        setShowAdvanceButtons(false)
-        setNextPhaseData(null)
-        
-        // 페이지 새로고침으로 새로운 세션 상태 반영
-        window.location.reload()
+        if (data.success) {
+          setShowAdvanceButtons(false)
+          setNextPhaseData(null)
+          
+          // 페이지 새로고침으로 새로운 세션 상태 반영
+          window.location.reload()
+        } else {
+          throw new Error(data.error)
+        }
       } else {
-        throw new Error(data.error)
+        // "조금 더 생각해볼게" - 격려 메시지 받기
+        const currentCounselor = getCurrentCounselor()
+        const response = await fetch(`/api/session/${session.id}/encourage`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            counselorType: currentCounselor
+          }),
+        })
+
+        const data = await response.json()
+
+        if (data.success) {
+          // 격려 메시지를 채팅에 추가
+          const encouragementMessage: Message = {
+            id: `encourage-${Date.now()}`,
+            session_id: session.id,
+            user_id: session.user_id,
+            role: 'assistant',
+            content: data.message,
+            counselor_id: currentCounselor,
+            created_at: new Date().toISOString()
+          }
+          setMessages(prev => [...prev, encouragementMessage])
+          setShowAdvanceButtons(false)
+          setNextPhaseData(null)
+        } else {
+          throw new Error(data.error)
+        }
       }
     } catch (error) {
       console.error('단계 진행 오류:', error)
-      alert('다음 단계로 진행할 수 없습니다. 다시 시도해주세요.')
+      alert('처리 중 오류가 발생했습니다. 다시 시도해주세요.')
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const getCurrentCounselor = () => {
+    if (session.counseling_phase === 'questions' && session.current_question_index >= 1) {
+      const questionIndex = session.current_question_index - 1
+      const counselingQuestions = [
+        { counselor: 'yellow' },
+        { counselor: 'yellow' },
+        { counselor: 'bibi' },
+        { counselor: 'bibi' },
+        { counselor: 'green' },
+        { counselor: 'green' },
+        { counselor: 'bibi' },
+        { counselor: 'main' }
+      ]
+      return counselingQuestions[questionIndex]?.counselor || 'yellow'
+    }
+    return 'yellow'
   }
 
   return (
