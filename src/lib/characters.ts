@@ -96,59 +96,67 @@ export const CHARACTERS: Record<CharacterType, Character> = {
 export const COUNSELING_QUESTIONS: CounselingQuestion[] = [
   {
     id: 'q1',
-    text: '당신이 가장 뿌듯했던 경험은 무엇인가요?',
+    text: '최근에 "아, 내가 정말 잘했구나" 하고 느꼈던 순간이 있었나요?',
     counselor: 'yellow',
     phase: 1,
-    helpText: '크고 작은 일 모두 괜찮아요. 그때의 기분을 떠올려보세요.'
+    helpText: '작은 일이라도 괜찮아요. 스스로 대견했던 그 기분을 떠올려보세요.',
+    binaryChoices: ['성취감을 느낄 때 vs 인정받을 때', '혼자 해낸 것 vs 함께 이룬 것']
   },
   {
     id: 'q2', 
-    text: '가장 보람 있었던 경험은요?',
+    text: '무언가를 하고 나서 마음 깊은 곳에서 "정말 의미 있는 일이었다" 하고 느낀 적이 있나요?',
     counselor: 'orange',
     phase: 2,
-    helpText: '뿌듯함과는 다른, 깊은 만족감을 느꼈던 순간을 말해보세요.'
+    helpText: '뿌듯함과는 다른, 깊은 만족감을 느꼈던 순간을 말해보세요.',
+    binaryChoices: ['나를 위한 일 vs 남을 위한 일', '결과가 좋을 때 vs 과정이 좋을 때']
   },
   {
     id: 'q3',
-    text: '인생에서 가장 좋았던 순간은 언제였나요?',
+    text: '혹시 "아, 지금 이 순간이 정말 행복하다" 하고 느꼈던 때가 있었나요?',
     counselor: 'bibi',
     phase: 3,
-    helpText: '행복했던 그 순간을 자세히 떠올려보세요.'
+    helpText: '그 순간의 따뜻함을 다시 한번 느껴보세요.',
+    binaryChoices: ['평온한 행복 vs 역동적인 행복', '혼자만의 시간 vs 누군가와 함께한 시간']
   },
   {
     id: 'q4',
-    text: '가장 괴로웠던/힘들었던 순간은요?',
+    text: '살면서 "정말 힘들었지만, 그래도 이겨냈구나" 하고 생각한 경험이 있나요?',
     counselor: 'purple',
     phase: 4,
-    helpText: '괜찮아요. 천천히 말씀해주세요.'
+    helpText: '괜찮아요. 그 시간을 통해 더 강해진 자신을 인정해주세요.',
+    binaryChoices: ['혼자 견딘 것 vs 도움받아 극복한 것', '피하고 싶었던 것 vs 맞서 싸운 것']
   },
   {
     id: 'q5',
-    text: '전지전능하다면, 어떤 세상을 만들고 싶으세요?',
+    text: '만약 마법이 있다면, 이 세상에서 가장 먼저 바꾸고 싶은 것이 있나요?',
     counselor: 'green',
     phase: 5,
-    helpText: '상상력을 발휘해서 자유롭게 말해보세요.'
+    helpText: '현실적인 생각은 잠시 내려두고, 마음이 가는 대로 상상해보세요.',
+    binaryChoices: ['개인의 변화 vs 사회의 변화', '문제 해결 vs 새로운 창조']
   },
   {
     id: 'q6',
-    text: '돈과 시간이 무한하다면, 무엇을 하고 싶으세요?',
+    text: '만약 시간과 돈이 전혀 걱정되지 않는다면, 가장 먼저 하고 싶은 일이 뭘까요?',
     counselor: 'blue',
     phase: 6,
-    helpText: '현실적인 제약 없이 진정으로 하고 싶은 것을 말해보세요.'
+    helpText: '마음속 깊은 곳에서 "정말 하고 싶다"고 속삭이는 것을 들어보세요.',
+    binaryChoices: ['배우는 것 vs 만드는 것', '모험하는 것 vs 안정적인 것']
   },
   {
     id: 'q7',
-    text: '당신의 감정 중 남에게도 전파하고 싶은 감정은 무엇인가요?',
+    text: '다른 사람들도 당신처럼 느꼈으면 좋겠다고 생각하는 감정이 있나요?',
     counselor: 'pink',
     phase: 7,
-    helpText: '다른 사람들도 느꼈으면 하는 감정을 생각해보세요.'
+    helpText: '세상 사람들이 이 감정을 안다면 더 좋아질 것 같은 그런 느낌 말이에요.',
+    binaryChoices: ['평화로운 감정 vs 역동적인 감정', '개인적 행복 vs 연대감']
   },
   {
     id: 'q8',
-    text: '당신과 성격이 비슷한 후배 룸메이트가 있다면, 그 친구에게 꼭 해주고 싶은 인생 조언은?',
+    text: '만약 과거의 자신을 만날 수 있다면, 가장 해주고 싶은 말이 있나요?',
     counselor: 'main',
     phase: 8,
-    helpText: '과거의 자신에게 해주고 싶었던 조언을 떠올려보세요.'
+    helpText: '그때의 당신이 꼭 들었으면 했던 그 한마디를 생각해보세요.',
+    binaryChoices: ['위로하는 말 vs 격려하는 말', '조심하라는 말 vs 도전하라는 말']
   }
 ]
 

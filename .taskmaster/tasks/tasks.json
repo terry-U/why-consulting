@@ -206,11 +206,29 @@
         ],
         "status": "done",
         "subtasks": []
+      },
+      {
+        "id": 16,
+        "title": "프로젝트 구조 문서화 및 파일 관계도 작성",
+        "description": "프로젝트의 전체 구조를 문서화하고 파일 간 관계도를 작성하여 토큰 효율성을 위한 참고 자료 생성",
+        "details": "1. 프로젝트 디렉토리 구조 문서화:\n   ```bash\n   # 프로젝트 루트에서 실행\n   find . -type f -not -path \"*/node_modules/*\" -not -path \"*/\\.*\" | sort > project_structure.txt\n   ```\n\n2. 주요 디렉토리 및 파일 설명 문서 작성:\n   ```markdown\n   # 프로젝트 구조 문서\n   \n   ## 디렉토리 구조\n   - `/app`: Next.js 라우팅 및 페이지 컴포넌트\n   - `/components`: 재사용 가능한 UI 컴포넌트\n   - `/lib`: 유틸리티 함수 및 API 클라이언트\n   - `/public`: 정적 에셋 파일\n   - `/styles`: 글로벌 스타일 및 테마 설정\n   \n   ## 주요 파일 설명\n   - `app/layout.tsx`: 전역 레이아웃 컴포넌트\n   - `lib/supabase.ts`: Supabase 클라이언트 설정\n   - `lib/openai.ts`: OpenAI API 연동 설정\n   ```\n\n3. 컴포넌트 의존성 관계도 작성:\n   ```typescript\n   // docs/component-relationships.ts\n   interface ComponentRelationship {\n     component: string;\n     dependencies: string[];\n     description: string;\n   }\n   \n   export const componentRelationships: ComponentRelationship[] = [\n     {\n       component: 'ChatInterface',\n       dependencies: ['MessageList', 'InputForm', 'CharacterSelection'],\n       description: '상담 인터페이스 메인 컴포넌트'\n     },\n     {\n       component: 'MessageList',\n       dependencies: ['Message', 'LoadingIndicator'],\n       description: '메시지 목록 표시 컴포넌트'\n     },\n     // 추가 컴포넌트 관계 정의\n   ];\n   ```\n\n4. API 및 데이터 흐름 다이어그램 작성:\n   ```mermaid\n   graph TD\n     A[사용자 입력] --> B[InputForm]\n     B --> C[API 요청 처리]\n     C --> D[OpenAI API]\n     D --> E[응답 처리]\n     E --> F[메시지 저장]\n     F --> G[Supabase DB]\n     E --> H[UI 업데이트]\n   ```\n\n5. 토큰 효율성을 위한 프롬프트 참조 문서 작성:\n   ```markdown\n   # 프롬프트 최적화 가이드\n   \n   ## 토큰 효율성 향상 방법\n   1. 핵심 정보만 포함하기\n   2. 중복 설명 제거하기\n   3. 간결한 지시문 사용하기\n   \n   ## 주요 프롬프트 템플릿\n   - 상담 시작 프롬프트: [템플릿 설명]\n   - Why 문장 생성 프롬프트: [템플릿 설명]\n   ```\n\n6. 문서화 자동화 스크립트 작성:\n   ```typescript\n   // scripts/generate-docs.ts\n   import fs from 'fs';\n   import path from 'path';\n   \n   async function generateProjectStructure() {\n     // 구현 로직\n   }\n   \n   async function generateComponentRelationships() {\n     // 구현 로직\n   }\n   \n   async function main() {\n     await generateProjectStructure();\n     await generateComponentRelationships();\n     console.log('Documentation generated successfully');\n   }\n   \n   main().catch(console.error);\n   ```",
+        "testStrategy": "1. 프로젝트 구조 문서 검증:\n   - 모든 주요 디렉토리와 파일이 문서에 포함되었는지 확인\n   - 누락된 중요 컴포넌트나 모듈이 없는지 검토\n\n2. 컴포넌트 관계도 정확성 검증:\n   - 각 컴포넌트의 import 문을 분석하여 실제 의존성과 문서화된 의존성이 일치하는지 확인\n   - 누락된 의존성이 있는지 검토\n\n3. API 및 데이터 흐름 다이어그램 검증:\n   - 실제 코드 흐름과 다이어그램이 일치하는지 확인\n   - 주요 데이터 처리 경로가 모두 포함되었는지 검토\n\n4. 토큰 효율성 문서 유용성 평가:\n   - 개발자 피드백을 통해 문서의 실용성 평가\n   - 실제 프롬프트 최적화에 도움이 되는지 검증\n\n5. 문서 가독성 및 접근성 테스트:\n   - 팀원들이 문서를 쉽게 찾고 이해할 수 있는지 확인\n   - 문서 포맷과 구조의 일관성 검토\n\n6. 자동화 스크립트 테스트:\n   - 문서 생성 스크립트가 오류 없이 실행되는지 확인\n   - 생성된 문서가 최신 코드베이스를 정확히 반영하는지 검증",
+        "status": "done",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4,
+          10,
+          15
+        ],
+        "priority": "medium",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-08-18T05:37:51.615Z",
-      "updated": "2025-08-18T06:04:02.973Z",
+      "updated": "2025-08-19T08:10:24.733Z",
       "description": "Tasks for master context"
     }
   }

@@ -53,4 +53,5 @@ export interface CounselingQuestion {
   counselor: CharacterType
   phase: number
   helpText?: string
+  binaryChoices?: string[]
 }
