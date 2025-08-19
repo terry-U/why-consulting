@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Message, Session } from '@/lib/supabase'
 // import { getSessionMessages } from '@/lib/messages' // 현재 사용하지 않음
 import CharacterMessage, { UserMessage } from './character-message'
-import { CounselingManager } from '@/lib/counseling-manager'
+
 import { getCharacter, COUNSELING_QUESTIONS } from '@/lib/characters'
 import { CharacterType } from '@/types/characters'
 
