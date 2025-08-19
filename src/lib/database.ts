@@ -51,8 +51,8 @@ export async function createSession(userId: string, threadId: string): Promise<{
           user_id: userId,
           thread_id: threadId,
           status: 'active',
-          counseling_phase: 'intro',
-          current_question_index: 0,
+          counseling_phase: 'questions',
+          current_question_index: 1,
           answers: {}
         }
       ])

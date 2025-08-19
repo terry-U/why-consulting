@@ -13,7 +13,7 @@ export class CounselingManager {
    * 현재 단계의 상담사를 가져옵니다
    */
   getCurrentCounselor(): Character {
-    if (this.session.counseling_phase === 'intro' || this.session.counseling_phase === 'why_generation') {
+    if (this.session.counseling_phase === 'summary' || this.session.counseling_phase === 'completed') {
       return getCharacter('main')
     }
 

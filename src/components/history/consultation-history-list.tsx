@@ -145,7 +145,7 @@ export default function ConsultationHistoryList({
                   <div>
                     <span className="font-medium text-gray-700">상담 단계:</span>
                     <span className="ml-2 text-gray-600">
-                      {session.counseling_phase === 'intro' ? '인트로' :
+                      {session.counseling_phase === 'questions' ? '상담 중' :
                        session.counseling_phase === 'questions' ? `질문 ${session.current_question_index + 1}/8` :
                        session.counseling_phase === 'why_generation' ? 'Why 생성' :
                        session.counseling_phase === 'completed' ? '완료' : '알 수 없음'}

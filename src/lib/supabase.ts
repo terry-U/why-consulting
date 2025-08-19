@@ -29,7 +29,7 @@ export interface Session {
   thread_id?: string  // OpenAI Assistant API Thread ID
   status: 'active' | 'completed' | 'paused'
   // 상담 구조 관련 필드
-  counseling_phase: 'intro' | 'questions' | 'why_generation' | 'completed'
+  counseling_phase: 'questions' | 'summary' | 'completed'
   current_question_index: number
   answers: Record<string, string> // 질문별 답변 저장
   generated_why?: string // 최종 도출된 Why 문장

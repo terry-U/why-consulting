@@ -72,8 +72,8 @@ export async function createNewSession(userId: string): Promise<Session> {
     .insert({
       user_id: userId,
       status: 'active',
-      counseling_phase: 'intro',
-      current_question_index: 0,
+      counseling_phase: 'questions',
+      current_question_index: 1,
       answers: {}
     })
     .select()
