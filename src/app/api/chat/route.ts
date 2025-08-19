@@ -389,19 +389,29 @@ export async function POST(request: NextRequest) {
     if (hasAnswerReady) {
       // 다음 단계 진행 정보 준비
       shouldAdvance = true
+      console.log('🔍 답변 확인 신호 감지! 다음 단계 준비 중...')
       
       if (session.counseling_phase === 'questions') {
         const currentQuestionIndex = session.current_question_index
         const nextQuestionIndex = currentQuestionIndex + 1
         
+        console.log('📊 질문 인덱스:', { 
+          current: currentQuestionIndex, 
+          next: nextQuestionIndex,
+          totalQuestions: counselingQuestions.length 
+        })
+        
         if (nextQuestionIndex <= 8) {
           const nextQuestion = counselingQuestions[nextQuestionIndex - 1]
+          console.log('📝 다음 질문:', nextQuestion)
+          
           nextPhaseData = {
             nextPhase: 'questions',
             nextQuestionIndex,
             nextCounselor: nextQuestion.counselor,
             nextQuestion: nextQuestion.question
           }
+          console.log('✅ nextPhaseData 생성 완료:', nextPhaseData)
         } else {
           // 모든 질문 완료 - Why 생성 단계로
           nextPhaseData = {
