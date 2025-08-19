@@ -36,9 +36,12 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
       actualIndex: typeof session.current_question_index
     })
     
-    if (session.counseling_phase === 'questions' && session.current_question_index > 0) {
-      const question = COUNSELING_QUESTIONS[session.current_question_index - 1]
-      console.log('📝 선택된 질문:', question)
+    // intro 단계이거나 index가 0인 경우 첫 번째 질문으로 처리
+    if ((session.counseling_phase === 'questions' && session.current_question_index > 0) ||
+        (session.counseling_phase === 'intro')) {
+      const questionIndex = session.counseling_phase === 'intro' ? 0 : session.current_question_index - 1
+      const question = COUNSELING_QUESTIONS[questionIndex]
+      console.log('📝 선택된 질문:', question, '(index:', questionIndex, ')')
       return question
     }
     console.log('❌ 질문 조건 불만족 - phase:', session.counseling_phase, 'index:', session.current_question_index)
