@@ -405,60 +405,56 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
         <div ref={messagesEndRef} />
       </div>
 
-      {/* 답변 확인 버튼들 */}
+      {/* 답변 확인 버튼들 - 전체 화면 */}
       {showAdvanceButtons && nextPhaseData && (
-        <div className="bg-white border-t border-gray-200 p-6">
-          <div className="max-w-md mx-auto">
-            <div className="text-center mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                답변이 정리되었나요?
-              </h3>
-              <p className="text-sm text-gray-600">
-                확인해주시면 다음 질문으로 넘어갑니다
-              </p>
-            </div>
-            
-            {/* 현재 질문과 답변 표시 */}
-            {currentQuestion && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 space-y-3">
-                <div>
-                  <p className="text-xs text-blue-700 mb-1">현재 질문</p>
-                  <p className="text-sm font-medium text-gray-800">"{currentQuestion.text}"</p>
-                </div>
-                {messages.length > 1 && messages[messages.length - 2]?.role === 'user' && (
-                  <div>
-                    <p className="text-xs text-green-700 mb-1">내 답변</p>
-                    <div className="bg-green-100 border border-green-200 rounded-lg p-3">
-                      <p className="text-sm text-gray-800">{messages[messages.length - 2].content}</p>
-                    </div>
-                  </div>
-                )}
+        <div className="fixed inset-0 bg-white z-50 flex flex-col">
+          <div className="flex-1 p-6 overflow-y-auto">
+            <div className="max-w-2xl mx-auto">
+              <div className="text-center mb-8">
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                  답변이 정리되었나요?
+                </h3>
+                <p className="text-gray-600">
+                  확인해주시면 다음 질문으로 넘어갑니다
+                </p>
               </div>
-            )}
-            
-            {/* 상담사가 정리한 답변 표시 */}
-            {messages.length > 0 && (() => {
-              const lastMessage = messages[messages.length - 1];
-              const answerReadyMatch = lastMessage.content.match(/\*\*\[ANSWER_READY\]\*\*(.*?)\*\*\[ANSWER_READY\]\*\*/);
-              return answerReadyMatch ? (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
-                  <p className="text-xs text-amber-700 mb-1">상담사가 정리한 답변</p>
-                  <p className="text-sm font-medium text-gray-800 leading-relaxed">💡 {answerReadyMatch[1]}</p>
+              
+              {/* 현재 질문 */}
+              {currentQuestion && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
+                  <p className="text-sm text-blue-700 mb-2">현재 질문</p>
+                  <p className="text-lg font-medium text-gray-800">"{currentQuestion.text}"</p>
                 </div>
-              ) : null;
-            })()}
-            <div className="flex justify-center space-x-3 mt-6">
+              )}
+              
+              {/* 마지막에 하이라이트 된 답변 */}
+              {messages.length > 0 && (() => {
+                const lastMessage = messages[messages.length - 1];
+                const answerReadyMatch = lastMessage.content.match(/\*\*\[ANSWER_READY\]\*\*(.*?)\*\*\[ANSWER_READY\]\*\*/);
+                return answerReadyMatch ? (
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-6 mb-8">
+                    <p className="text-sm text-green-700 mb-2">내 답변</p>
+                    <p className="text-lg text-gray-800 leading-relaxed">💡 {answerReadyMatch[1]}</p>
+                  </div>
+                ) : null;
+              })()}
+            </div>
+          </div>
+          
+          {/* 하단 버튼 영역 */}
+          <div className="border-t border-gray-200 p-6 bg-white">
+            <div className="max-w-md mx-auto flex justify-center space-x-4">
               <button
                 onClick={() => handleAdvanceToNext(true)}
                 disabled={isLoading}
-                className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-8 py-3 rounded-full font-medium hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 disabled:opacity-50 shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-10 py-4 rounded-full font-medium hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 disabled:opacity-50 shadow-lg hover:shadow-xl transform hover:scale-105 text-lg"
               >
                 네, 맞아요! 🎯
               </button>
               <button
                 onClick={() => handleAdvanceToNext(false)}
                 disabled={isLoading}
-                className="bg-white text-gray-700 px-8 py-3 rounded-full font-medium hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 border border-gray-200 shadow-sm hover:shadow-md"
+                className="bg-white text-gray-700 px-10 py-4 rounded-full font-medium hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 border border-gray-200 shadow-sm hover:shadow-md text-lg"
               >
                 좀 더 생각해볼게요 🤔
               </button>
