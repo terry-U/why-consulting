@@ -17,6 +17,8 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [showAdvanceButtons, setShowAdvanceButtons] = useState(false)
+  const [nextPhaseData, setNextPhaseData] = useState<any>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // 초기 환영 메시지 설정
@@ -113,8 +115,9 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
 
         // 다음 단계로 진행해야 하는 경우
         if (data.shouldAdvance && data.nextPhaseData) {
-          console.log('⏭️ 다음 단계 진행:', data.nextPhaseData)
-          // TODO: 세션 상태 업데이트 및 UI 반영
+          console.log('⏭️ 다음 단계 진행 신호 수신:', data.nextPhaseData)
+          setShowAdvanceButtons(true)
+          setNextPhaseData(data.nextPhaseData)
         }
       } else {
         throw new Error(data.error)
@@ -132,6 +135,47 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSendMessage()
+    }
+  }
+
+  const handleAdvanceToNext = async (confirmed: boolean) => {
+    if (!confirmed || !nextPhaseData) {
+      setShowAdvanceButtons(false)
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      
+      // 세션 상태 업데이트
+      const response = await fetch(`/api/session/${session.id}/advance`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nextPhase: nextPhaseData.nextPhase,
+          nextQuestionIndex: nextPhaseData.nextQuestionIndex,
+          userAnswer: messages[messages.length - 2]?.content // 마지막 사용자 메시지
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setShowAdvanceButtons(false)
+        setNextPhaseData(null)
+        
+        // 페이지 새로고침으로 새로운 세션 상태 반영
+        window.location.reload()
+      } else {
+        throw new Error(data.error)
+      }
+    } catch (error) {
+      console.error('단계 진행 오류:', error)
+      alert('다음 단계로 진행할 수 없습니다. 다시 시도해주세요.')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -213,6 +257,38 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
         
         <div ref={messagesEndRef} />
       </div>
+
+      {/* 답변 확인 버튼들 */}
+      {showAdvanceButtons && nextPhaseData && (
+        <div className="bg-yellow-50 border-t border-yellow-200 p-4">
+          <div className="text-center space-y-4">
+            <p className="text-sm text-yellow-800 font-medium">
+              답변이 정리되었습니다. 다음 질문으로 넘어가시겠어요?
+            </p>
+            {nextPhaseData.nextQuestion && (
+              <p className="text-sm text-gray-600">
+                다음 질문: "{nextPhaseData.nextQuestion}"
+              </p>
+            )}
+            <div className="flex justify-center space-x-4">
+              <button
+                onClick={() => handleAdvanceToNext(true)}
+                disabled={isLoading}
+                className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-6 py-2 rounded-full font-medium hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 disabled:opacity-50"
+              >
+                응, 맞아!
+              </button>
+              <button
+                onClick={() => handleAdvanceToNext(false)}
+                disabled={isLoading}
+                className="bg-gray-200 text-gray-700 px-6 py-2 rounded-full font-medium hover:bg-gray-300 transition-all duration-200 disabled:opacity-50"
+              >
+                조금 더 생각해볼게
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 현재 질문 표시 */}
       {currentQuestion && (

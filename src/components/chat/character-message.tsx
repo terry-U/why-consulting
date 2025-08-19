@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Character } from '@/types/characters'
+import HighlightedMessage from './highlighted-message'
 
 interface CharacterMessageProps {
   character: Character
@@ -86,7 +87,7 @@ export default function CharacterMessage({
             </div>
           ) : (
             <div className="text-gray-800 leading-relaxed">
-              {displayedText}
+              <HighlightedMessage content={displayedText} />
               {showTypingEffect && !isComplete && (
                 <span className="inline-block w-2 h-5 bg-gray-400 ml-1 animate-pulse"></span>
               )}

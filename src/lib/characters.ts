@@ -48,63 +48,63 @@ export const CHARACTERS: Record<CharacterType, Character> = {
   }
 }
 
-// 8단계 질문 시스템 (PRD 기반)
+// 8단계 질문 시스템 (정확한 질문 내용)
 export const COUNSELING_QUESTIONS: CounselingQuestion[] = [
   {
     id: 'q1',
-    text: '최근 1년 동안 가장 뿌듯했던 순간이 언제였나요?',
+    text: '당신이 가장 뿌듯했던 경험은 무엇인가요?',
     counselor: 'yellow',
     phase: 1,
-    helpText: '작은 일이라도 괜찮아요. 그때의 기분을 떠올려보세요.'
+    helpText: '크고 작은 일 모두 괜찮아요. 그때의 기분을 떠올려보세요.'
   },
   {
     id: 'q2', 
-    text: '그때 어떤 감정을 느끼셨나요?',
-    counselor: 'bibi',
+    text: '가장 보람 있었던 경험은요?',
+    counselor: 'yellow',
     phase: 2,
-    helpText: '정확한 단어를 찾지 못해도 괜찮아요. 느낌 그대로 표현해보세요.'
+    helpText: '뿌듯함과는 다른, 깊은 만족감을 느꼈던 순간을 말해보세요.'
   },
   {
     id: 'q3',
-    text: '반대로 가장 힘들었던 순간은 언제였나요?',
-    counselor: 'bibi', 
+    text: '인생에서 가장 좋았던 순간은 언제였나요?',
+    counselor: 'bibi',
     phase: 3,
-    helpText: '괜찮아요. 천천히 말씀해주세요.'
+    helpText: '행복했던 그 순간을 자세히 떠올려보세요.'
   },
   {
     id: 'q4',
-    text: '그 순간에 정말로 원했던 것은 무엇이었나요?',
-    counselor: 'green',
+    text: '가장 괴로웠던/힘들었던 순간은요?',
+    counselor: 'bibi',
     phase: 4,
-    helpText: '겉으로 드러난 것이 아닌, 마음 깊은 곳의 진짜 바람을 말해보세요.'
+    helpText: '괜찮아요. 천천히 말씀해주세요.'
   },
   {
     id: 'q5',
-    text: '10년 후 어떤 모습이 되고 싶으신가요?',
+    text: '전지전능하다면, 어떤 세상을 만들고 싶으세요?',
     counselor: 'green',
     phase: 5,
-    helpText: '구체적인 모습보다는 어떤 느낌으로 살고 있을지 상상해보세요.'
+    helpText: '상상력을 발휘해서 자유롭게 말해보세요.'
   },
   {
     id: 'q6',
-    text: '주변 사람들에게 어떤 사람으로 기억되고 싶으신가요?',
-    counselor: 'yellow',
+    text: '돈과 시간이 무한하다면, 무엇을 하고 싶으세요?',
+    counselor: 'green',
     phase: 6,
-    helpText: '타인의 평가가 아닌, 진정으로 전하고 싶은 당신의 모습을 말해보세요.'
+    helpText: '현실적인 제약 없이 진정으로 하고 싶은 것을 말해보세요.'
   },
   {
     id: 'q7',
-    text: '지금까지 살아오면서 가장 자주 반복되는 패턴이 있다면 무엇인가요?',
+    text: '당신의 감정 중 남에게도 전파하고 싶은 감정은 무엇인가요?',
     counselor: 'bibi',
     phase: 7,
-    helpText: '좋은 패턴이든 힘든 패턴이든 상관없어요. 자주 반복되는 것들을 떠올려보세요.'
+    helpText: '다른 사람들도 느꼈으면 하는 감정을 생각해보세요.'
   },
   {
     id: 'q8',
-    text: '지금 이 순간, 가장 간절히 바라는 것은 무엇인가요?',
+    text: '당신과 성격이 비슷한 후배 룸메이트가 있다면, 그 친구에게 꼭 해주고 싶은 인생 조언은?',
     counselor: 'main',
     phase: 8,
-    helpText: '마음 깊은 곳에서 올라오는 진짜 바람을 솔직하게 말해보세요.'
+    helpText: '과거의 자신에게 해주고 싶었던 조언을 떠올려보세요.'
   }
 ]
 
