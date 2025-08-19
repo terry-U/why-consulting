@@ -26,9 +26,18 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
 
   // 현재 질문 정보
   const currentQuestion = useMemo(() => {
+    console.log('🔍 currentQuestion 계산:', {
+      phase: session.counseling_phase,
+      index: session.current_question_index,
+      questionsLength: COUNSELING_QUESTIONS.length
+    })
+    
     if (session.counseling_phase === 'questions' && session.current_question_index > 0) {
-      return COUNSELING_QUESTIONS[session.current_question_index - 1]
+      const question = COUNSELING_QUESTIONS[session.current_question_index - 1]
+      console.log('📝 선택된 질문:', question)
+      return question
     }
+    console.log('❌ 질문 조건 불만족')
     return null
   }, [session.counseling_phase, session.current_question_index])
 
