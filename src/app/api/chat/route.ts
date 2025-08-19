@@ -268,7 +268,7 @@ export async function POST(request: NextRequest) {
     let currentCounselorType = 'yellow' // 기본값을 옐로로 설정
     
     if (session.counseling_phase === 'questions' && session.current_question_index >= 1) {
-      const questionIndex = session.current_question_index - 1
+      const questionIndex = session.current_question_index - 1 // 배열 인덱스는 0부터 시작
       if (questionIndex < counselingQuestions.length) {
         currentCounselorType = counselingQuestions[questionIndex].counselor
       }
@@ -278,23 +278,25 @@ export async function POST(request: NextRequest) {
 
     const currentCounselor = counselors[currentCounselorType as keyof typeof counselors]
 
-    // 사용자 메시지 저장
-    const { error: messageError } = await supabaseServer
-      .from('messages')
-      .insert({
-        session_id: sessionId,
-        user_id: userId,
-        role: 'user',
-        content: message,
-        counselor_id: currentCounselorType
-      })
+    // 사용자 메시지가 있을 때만 저장 (빈 메시지는 첫 인사용)
+    if (message.trim()) {
+      const { error: messageError } = await supabaseServer
+        .from('messages')
+        .insert({
+          session_id: sessionId,
+          user_id: userId,
+          role: 'user',
+          content: message,
+          counselor_id: currentCounselorType
+        })
 
-    if (messageError) {
-      console.error('사용자 메시지 저장 오류:', messageError)
-      return NextResponse.json(
-        { success: false, error: '메시지 저장에 실패했습니다.' },
-        { status: 500 }
-      )
+      if (messageError) {
+        console.error('사용자 메시지 저장 오류:', messageError)
+        return NextResponse.json(
+          { success: false, error: '메시지 저장에 실패했습니다.' },
+          { status: 500 }
+        )
+      }
     }
 
     // 기존 메시지들 조회 (컨텍스트용)
@@ -316,6 +318,14 @@ export async function POST(request: NextRequest) {
         content: msg.content
       }))
     ]
+
+    // 사용자 메시지가 있을 때만 추가 (빈 메시지는 첫 인사용)
+    if (message.trim()) {
+      openaiMessages.push({
+        role: 'user' as const,
+        content: message
+      })
+    }
 
     // OpenAI API 호출
     const completion = await openai.chat.completions.create({

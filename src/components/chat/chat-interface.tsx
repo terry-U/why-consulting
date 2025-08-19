@@ -23,12 +23,73 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
   const [nextPhaseData, setNextPhaseData] = useState<any>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-    // 초기 메시지 설정 (옐로 상담사가 이미 세션 생성 시 메시지를 보냄)
+    // 초기 메시지 설정 및 첫 상담사 인사
   useEffect(() => {
     if (initialMessages.length > 0) {
       setMessages(initialMessages)
+    } else {
+      // 메시지가 없으면 상담사가 먼저 인사
+      handleFirstCounselorGreeting()
     }
-  }, [initialMessages])
+  }, [initialMessages, handleFirstCounselorGreeting])
+
+  const handleFirstCounselorGreeting = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      
+      // 빈 메시지로 API 호출하여 상담사가 먼저 말하게 함
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId: session.id,
+          message: '', // 빈 메시지
+          userId: session.user_id
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        const aiResponse: Message = {
+          id: `greeting-${Date.now()}`,
+          session_id: session.id,
+          user_id: session.user_id,
+          role: 'assistant',
+          content: data.response,
+          counselor_id: data.counselor.type,
+          created_at: new Date().toISOString()
+        }
+        
+        // 타이핑 애니메이션과 함께 메시지 추가
+        const tempMessage: Message = {
+          ...aiResponse,
+          content: ''
+        }
+        setMessages([tempMessage])
+        
+        // 타이핑 애니메이션
+        let currentIndex = 0
+        const typingInterval = setInterval(() => {
+          if (currentIndex <= data.response.length) {
+            setMessages([{
+              ...aiResponse,
+              content: data.response.slice(0, currentIndex)
+            }])
+            currentIndex++
+          } else {
+            clearInterval(typingInterval)
+          }
+        }, 30)
+      }
+    } catch (error) {
+      console.error('첫 인사 오류:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [session.id, session.user_id])
   
   // 성능 최적화: 메모이제이션
   const counselingManager = useMemo(() => new CounselingManager(session), [session])
@@ -211,18 +272,18 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
 
   const getCurrentCounselor = () => {
     if (session.counseling_phase === 'questions' && session.current_question_index >= 1) {
-      const questionIndex = session.current_question_index - 1
+      const questionIndex = session.current_question_index // 인덱스 수정: -1 제거
       const counselingQuestions = [
-        { counselor: 'yellow' },
-        { counselor: 'yellow' },
-        { counselor: 'bibi' },
-        { counselor: 'bibi' },
-        { counselor: 'green' },
-        { counselor: 'green' },
-        { counselor: 'bibi' },
-        { counselor: 'main' }
+        { counselor: 'yellow' },   // 질문 1
+        { counselor: 'yellow' },   // 질문 2
+        { counselor: 'bibi' },     // 질문 3
+        { counselor: 'bibi' },     // 질문 4
+        { counselor: 'green' },    // 질문 5
+        { counselor: 'green' },    // 질문 6
+        { counselor: 'bibi' },     // 질문 7
+        { counselor: 'main' }      // 질문 8
       ]
-      return counselingQuestions[questionIndex]?.counselor || 'yellow'
+      return counselingQuestions[questionIndex - 1]?.counselor || 'yellow'
     }
     return 'yellow'
   }
