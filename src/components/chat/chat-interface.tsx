@@ -417,12 +417,36 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
                 확인해주시면 다음 질문으로 넘어갑니다
               </p>
             </div>
-            {nextPhaseData.nextQuestion && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
-                <p className="text-xs text-yellow-700 mb-1">다음 질문</p>
-                <p className="text-sm font-medium text-gray-800">"{nextPhaseData.nextQuestion}"</p>
+            
+            {/* 현재 질문과 답변 표시 */}
+            {currentQuestion && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 space-y-3">
+                <div>
+                  <p className="text-xs text-blue-700 mb-1">현재 질문</p>
+                  <p className="text-sm font-medium text-gray-800">"{currentQuestion.text}"</p>
+                </div>
+                {messages.length > 1 && messages[messages.length - 2]?.role === 'user' && (
+                  <div>
+                    <p className="text-xs text-green-700 mb-1">내 답변</p>
+                    <div className="bg-green-100 border border-green-200 rounded-lg p-3">
+                      <p className="text-sm text-gray-800">{messages[messages.length - 2].content}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
+            
+            {/* 상담사가 정리한 답변 표시 */}
+            {messages.length > 0 && (() => {
+              const lastMessage = messages[messages.length - 1];
+              const answerReadyMatch = lastMessage.content.match(/\*\*\[ANSWER_READY\]\*\*(.*?)\*\*\[ANSWER_READY\]\*\*/);
+              return answerReadyMatch ? (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+                  <p className="text-xs text-amber-700 mb-1">상담사가 정리한 답변</p>
+                  <p className="text-sm font-medium text-gray-800 leading-relaxed">💡 {answerReadyMatch[1]}</p>
+                </div>
+              ) : null;
+            })()}
             <div className="flex justify-center space-x-3 mt-6">
               <button
                 onClick={() => handleAdvanceToNext(true)}
