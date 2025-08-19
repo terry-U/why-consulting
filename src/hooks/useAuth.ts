@@ -24,8 +24,8 @@ export function useAuth() {
         setUser(session?.user ?? null)
         setLoading(false)
 
-        // 이메일 확인 완료 시 홈으로 리다이렉트
-        if (event === 'SIGNED_IN' && session?.user) {
+        // 이메일 확인 완료 시 홈으로 리다이렉트 (auth 페이지에서만)
+        if (event === 'SIGNED_IN' && session?.user && window.location.pathname === '/auth') {
           window.location.href = '/home'
         }
       }

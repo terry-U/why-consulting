@@ -2,7 +2,7 @@
 
 export type CounselorColor = 'yellow' | 'green' | 'purple' | 'red' | 'blue' | 'orange' | 'khaki' | 'black'
 
-export type CharacterType = 'main' | 'yellow' | 'bibi' | 'green'
+export type CharacterType = 'main' | 'yellow' | 'orange' | 'bibi' | 'purple' | 'green' | 'blue' | 'pink'
 
 export interface Character {
   type: CharacterType

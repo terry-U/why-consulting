@@ -116,30 +116,15 @@ export default function SessionPage() {
           <div></div> {/* 균형을 위한 빈 div */}
         </div>
 
-        {/* 진행률 표시 */}
-        <div className="mb-8">
-          <div className="flex justify-center space-x-2">
-            {Array.from({ length: 8 }, (_, index) => (
-              <div
-                key={index}
-                className={`w-4 h-4 rounded-full transition-colors ${
-                  index < session.current_question_index 
-                    ? 'bg-yellow-500' 
-                    : index === session.current_question_index
-                    ? 'bg-yellow-300'
-                    : 'bg-gray-300'
-                }`}
-              />
-            ))}
-          </div>
-          <p className="text-center text-gray-600 mt-2">
-            질문 {session.current_question_index + 1} / 8
-          </p>
-        </div>
+
 
         {/* 상담 인터페이스 영역 */}
         <div className="bg-white rounded-2xl shadow-lg h-[600px] overflow-hidden">
-          <ChatInterface session={session} initialMessages={messages} />
+          <ChatInterface 
+            session={session} 
+            initialMessages={messages}
+            onSessionUpdate={(updatedSession) => setSession(updatedSession)}
+          />
         </div>
       </div>
     </div>

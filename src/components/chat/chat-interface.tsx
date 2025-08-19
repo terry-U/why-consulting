@@ -5,22 +5,32 @@ import { Message, Session } from '@/lib/supabase'
 // import { getSessionMessages } from '@/lib/messages' // 현재 사용하지 않음
 import CharacterMessage, { UserMessage } from './character-message'
 import { CounselingManager } from '@/lib/counseling-manager'
-import { getCharacter } from '@/lib/characters'
+import { getCharacter, COUNSELING_QUESTIONS } from '@/lib/characters'
 import { CharacterType } from '@/types/characters'
 
 
 interface ChatInterfaceProps {
   session: Session
   initialMessages: Message[]
+  onSessionUpdate?: (session: Session) => void
 }
 
-export default function ChatInterface({ session, initialMessages }: ChatInterfaceProps) {
+export default function ChatInterface({ session, initialMessages, onSessionUpdate }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [showAdvanceButtons, setShowAdvanceButtons] = useState(false)
   const [nextPhaseData, setNextPhaseData] = useState<any>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // 현재 질문 정보
+  const currentQuestion = useMemo(() => {
+    if (session.counseling_phase === 'questions' && session.current_question_index > 0) {
+      return COUNSELING_QUESTIONS[session.current_question_index - 1]
+    }
+    return null
+  }, [session.counseling_phase, session.current_question_index])
 
   // 첫 상담사 인사 함수
   const handleFirstCounselorGreeting = useCallback(async () => {
@@ -48,19 +58,18 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
           session_id: session.id,
           user_id: session.user_id,
           role: 'assistant',
-          content: data.response,
+          content: '', // 처음에는 빈 내용으로 시작
           counselor_id: data.counselor.type,
           created_at: new Date().toISOString()
         }
         
         // 타이핑 애니메이션과 함께 메시지 추가
-        const tempMessage: Message = {
+        setMessages([{
           ...aiResponse,
-          content: ''
-        }
-        setMessages([tempMessage])
+          content: '' // 처음에는 빈 내용으로 시작
+        }])
         
-        // 타이핑 애니메이션
+        // 타이핑 애니메이션 시뮬레이션
         let currentIndex = 0
         const typingInterval = setInterval(() => {
           if (currentIndex <= data.response.length) {
@@ -93,6 +102,11 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
               console.log('⏭️ 첫 인사에서 진행 신호 수신:', data.nextPhaseData)
               setShowAdvanceButtons(true)
               setNextPhaseData(data.nextPhaseData)
+            } else {
+              // 포커스 설정
+              setTimeout(() => {
+                inputRef.current?.focus()
+              }, 100)
             }
           }
         }, 30)
@@ -104,11 +118,9 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
     }
   }, [session.id, session.user_id])
 
-  // 초기 메시지 설정 및 첫 상담사 인사
+  // 초기 메시지 로딩
   useEffect(() => {
-    if (initialMessages.length > 0) {
-      setMessages(initialMessages)
-    } else {
+    if (initialMessages.length === 0) {
       // 메시지가 없으면 상담사가 먼저 인사
       handleFirstCounselorGreeting()
     }
@@ -117,7 +129,6 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
   // 성능 최적화: 메모이제이션
   const counselingManager = useMemo(() => new CounselingManager(session), [session])
   const currentCounselor = useMemo(() => counselingManager.getCurrentCounselor(), [counselingManager])
-  const currentQuestion = useMemo(() => counselingManager.getCurrentQuestion(), [counselingManager])
   const progress = useMemo(() => counselingManager.getProgress(), [counselingManager])
 
   const scrollToBottom = useCallback(() => {
@@ -147,16 +158,16 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
       }
       setMessages(prev => [...prev, newUserMessage])
 
-      // 실제 채팅 API 호출
+      // API 호출
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          sessionId: session.id, 
+        body: JSON.stringify({
+          sessionId: session.id,
           message: userMessage,
-          userId: session.user_id 
+          userId: session.user_id
         }),
       })
 
@@ -221,16 +232,19 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
               setNextPhaseData(data.nextPhaseData)
             } else {
               console.log('❌ 진행 신호 없음 - shouldAdvance:', data.shouldAdvance, 'nextPhaseData:', data.nextPhaseData)
+              // 포커스 설정
+              setTimeout(() => {
+                inputRef.current?.focus()
+              }, 100)
             }
           }
         }, 30) // 30ms마다 한 글자씩
       } else {
         throw new Error(data.error)
       }
-
     } catch (error) {
       console.error('메시지 전송 오류:', error)
-      alert('메시지 전송에 실패했습니다. 다시 시도해주세요.')
+      alert('메시지 전송에 실패했습니다.')
     } finally {
       setIsLoading(false)
     }
@@ -266,11 +280,30 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
         const data = await response.json()
 
         if (data.success) {
+          // 세션 상태 업데이트를 부모에게 알림
+          if (onSessionUpdate) {
+            const updatedSession = {
+              ...session,
+              counseling_phase: nextPhaseData.nextPhase,
+              current_question_index: nextPhaseData.nextQuestionIndex
+            }
+            onSessionUpdate(updatedSession)
+          }
+          
+          // 채팅창 비우기
+          setMessages([])
+          
+          // 상태 초기화
           setShowAdvanceButtons(false)
           setNextPhaseData(null)
           
-          // 페이지 새로고침으로 새로운 세션 상태 반영
-          window.location.reload()
+          // 입력창에 포커스
+          setTimeout(() => {
+            inputRef.current?.focus()
+          }, 100)
+          
+          // 새로운 상담사의 첫 인사 요청
+          handleFirstCounselorGreeting()
         } else {
           throw new Error(data.error)
         }
@@ -290,9 +323,8 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
         const data = await response.json()
 
         if (data.success) {
-          // 격려 메시지를 채팅에 추가
           const encouragementMessage: Message = {
-            id: `encourage-${Date.now()}`,
+            id: `encouragement-${Date.now()}`,
             session_id: session.id,
             user_id: session.user_id,
             role: 'assistant',
@@ -300,6 +332,7 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
             counselor_id: currentCounselor,
             created_at: new Date().toISOString()
           }
+          
           setMessages(prev => [...prev, encouragementMessage])
           setShowAdvanceButtons(false)
           setNextPhaseData(null)
@@ -309,26 +342,23 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
       }
     } catch (error) {
       console.error('단계 진행 오류:', error)
-      alert('처리 중 오류가 발생했습니다. 다시 시도해주세요.')
+      alert('단계 진행에 실패했습니다.')
     } finally {
       setIsLoading(false)
     }
   }
 
+  // 현재 상담사 결정 로직
   const getCurrentCounselor = () => {
-    if (session.counseling_phase === 'questions' && session.current_question_index >= 1) {
-      const questionIndex = session.current_question_index // 인덱스 수정: -1 제거
-      const counselingQuestions = [
-        { counselor: 'yellow' },   // 질문 1
-        { counselor: 'yellow' },   // 질문 2
-        { counselor: 'bibi' },     // 질문 3
-        { counselor: 'bibi' },     // 질문 4
-        { counselor: 'green' },    // 질문 5
-        { counselor: 'green' },    // 질문 6
-        { counselor: 'bibi' },     // 질문 7
-        { counselor: 'main' }      // 질문 8
-      ]
-      return counselingQuestions[questionIndex - 1]?.counselor || 'yellow'
+    if (session.counseling_phase === 'why_generation' || session.counseling_phase === 'completed') {
+      return 'main'
+    }
+    
+    // questions 단계에서는 질문 인덱스에 따라 결정
+    const questionIndex = session.current_question_index
+    if (questionIndex >= 1 && questionIndex <= 8) {
+      const question = COUNSELING_QUESTIONS[questionIndex - 1]
+      return question.counselor
     }
     return 'yellow'
   }
@@ -337,6 +367,16 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
 
   return (
     <div className="flex flex-col h-full">
+      {/* 현재 질문 헤더 */}
+      {currentQuestion && (
+        <div className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white p-4 shadow-sm">
+          <div className="text-center">
+            <p className="text-sm opacity-90 mb-1">질문 {session.current_question_index}/8</p>
+            <p className="font-medium text-lg">{currentQuestion.text}</p>
+          </div>
+        </div>
+      )}
+      
       {/* 메시지 목록 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => {
@@ -369,15 +409,19 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
 
       {/* 답변 확인 버튼들 */}
       {showAdvanceButtons && nextPhaseData && (
-        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-t border-yellow-200 p-6">
-          <div className="text-center space-y-4">
-            <div className="text-2xl mb-2">✨</div>
-            <p className="text-sm text-yellow-800 font-medium">
-              이 답변이 맞나요?
-            </p>
+        <div className="bg-white border-t border-gray-200 p-6">
+          <div className="max-w-md mx-auto">
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                답변이 정리되었나요?
+              </h3>
+              <p className="text-sm text-gray-600">
+                확인해주시면 다음 질문으로 넘어갑니다
+              </p>
+            </div>
             {nextPhaseData.nextQuestion && (
-              <div className="bg-white/60 backdrop-blur-sm rounded-lg p-3 mt-3">
-                <p className="text-xs text-gray-600 mb-1">다음 질문</p>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                <p className="text-xs text-yellow-700 mb-1">다음 질문</p>
                 <p className="text-sm font-medium text-gray-800">"{nextPhaseData.nextQuestion}"</p>
               </div>
             )}
@@ -401,24 +445,12 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
         </div>
       )}
 
-      {/* 현재 질문 표시 */}
-      {currentQuestion && (
-        <div className="bg-gray-50 border-t border-gray-200 p-4">
-          <div className="text-center">
-            <p className="text-sm text-gray-600 mb-2">현재 질문</p>
-            <p className="font-medium text-gray-900">{currentQuestion.text}</p>
-            {currentQuestion.helpText && (
-              <p className="text-sm text-gray-500 mt-2">{currentQuestion.helpText}</p>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* 입력 영역 */}
       <div className="bg-white border-t border-gray-200 p-4">
         <div className="flex space-x-3">
           <div className="flex-1">
             <textarea
+              ref={inputRef}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
