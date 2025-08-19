@@ -23,16 +23,7 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
   const [nextPhaseData, setNextPhaseData] = useState<any>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-    // 초기 메시지 설정 및 첫 상담사 인사
-  useEffect(() => {
-    if (initialMessages.length > 0) {
-      setMessages(initialMessages)
-    } else {
-      // 메시지가 없으면 상담사가 먼저 인사
-      handleFirstCounselorGreeting()
-    }
-  }, [initialMessages, handleFirstCounselorGreeting])
-
+  // 첫 상담사 인사 함수
   const handleFirstCounselorGreeting = useCallback(async () => {
     try {
       setIsLoading(true)
@@ -90,6 +81,16 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
       setIsLoading(false)
     }
   }, [session.id, session.user_id])
+
+  // 초기 메시지 설정 및 첫 상담사 인사
+  useEffect(() => {
+    if (initialMessages.length > 0) {
+      setMessages(initialMessages)
+    } else {
+      // 메시지가 없으면 상담사가 먼저 인사
+      handleFirstCounselorGreeting()
+    }
+  }, [initialMessages, handleFirstCounselorGreeting])
   
   // 성능 최적화: 메모이제이션
   const counselingManager = useMemo(() => new CounselingManager(session), [session])
