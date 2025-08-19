@@ -64,17 +64,33 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
         let currentIndex = 0
         const typingInterval = setInterval(() => {
           if (currentIndex <= data.response.length) {
+            // [ANSWER_READY] 태그를 임시로 숨기고 타이핑
+            let displayText = data.response.slice(0, currentIndex)
+            
+            // 타이핑 중에는 [ANSWER_READY] 태그 숨김
+            if (displayText.includes('**[ANSWER_READY]**') && currentIndex < data.response.length) {
+              const beforeAnswerReady = displayText.split('**[ANSWER_READY]**')[0]
+              displayText = beforeAnswerReady
+            }
+            
             setMessages([{
               ...aiResponse,
-              content: data.response.slice(0, currentIndex)
+              content: displayText
             }])
             currentIndex++
           } else {
             clearInterval(typingInterval)
             
+            // 타이핑 완료 후 전체 내용 표시
+            setMessages([{
+              ...aiResponse,
+              content: data.response
+            }])
+            
             // 타이핑 완료 후 다음 단계 진행 신호 처리
+            console.log('🔍 첫 인사 API 응답:', { shouldAdvance: data.shouldAdvance, nextPhaseData: data.nextPhaseData })
             if (data.shouldAdvance && data.nextPhaseData) {
-              console.log('⏭️ 다음 단계 진행 신호 수신:', data.nextPhaseData)
+              console.log('⏭️ 첫 인사에서 진행 신호 수신:', data.nextPhaseData)
               setShowAdvanceButtons(true)
               setNextPhaseData(data.nextPhaseData)
             }
@@ -167,10 +183,20 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
         let currentIndex = 0
         const typingInterval = setInterval(() => {
           if (currentIndex <= data.response.length) {
+            // [ANSWER_READY] 태그를 임시로 숨기고 타이핑
+            let displayText = data.response.slice(0, currentIndex)
+            
+            // 타이핑 중에는 [ANSWER_READY] 태그 숨김
+            if (displayText.includes('**[ANSWER_READY]**') && currentIndex < data.response.length) {
+              // 아직 타이핑 중이면 [ANSWER_READY] 부분은 표시하지 않음
+              const beforeAnswerReady = displayText.split('**[ANSWER_READY]**')[0]
+              displayText = beforeAnswerReady
+            }
+            
             setMessages(prev => 
               prev.map(msg => 
                 msg.id === aiResponse.id 
-                  ? { ...msg, content: data.response.slice(0, currentIndex) }
+                  ? { ...msg, content: displayText }
                   : msg
               )
             )
@@ -178,11 +204,23 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
           } else {
             clearInterval(typingInterval)
             
+            // 타이핑 완료 후 전체 내용 표시
+            setMessages(prev => 
+              prev.map(msg => 
+                msg.id === aiResponse.id 
+                  ? { ...msg, content: data.response }
+                  : msg
+              )
+            )
+            
             // 타이핑 완료 후 다음 단계 진행 신호 처리
+            console.log('🔍 API 응답 데이터:', { shouldAdvance: data.shouldAdvance, nextPhaseData: data.nextPhaseData })
             if (data.shouldAdvance && data.nextPhaseData) {
               console.log('⏭️ 다음 단계 진행 신호 수신:', data.nextPhaseData)
               setShowAdvanceButtons(true)
               setNextPhaseData(data.nextPhaseData)
+            } else {
+              console.log('❌ 진행 신호 없음 - shouldAdvance:', data.shouldAdvance, 'nextPhaseData:', data.nextPhaseData)
             }
           }
         }, 30) // 30ms마다 한 글자씩
