@@ -479,6 +479,21 @@ export async function POST(request: NextRequest) {
       }
     } else if (session.counseling_phase === 'why_generation' || session.counseling_phase === 'completed') {
       currentCounselorType = 'main'
+    } else if (session.counseling_phase === 'intro') {
+      // intro 단계를 강제로 questions로 전환
+      console.log('🚨 intro 단계 감지! questions로 강제 전환 중...')
+      await supabaseServer
+        .from('sessions')
+        .update({
+          counseling_phase: 'questions',
+          current_question_index: 1
+        })
+        .eq('id', sessionId)
+      
+      // 세션 정보 업데이트
+      session.counseling_phase = 'questions'
+      session.current_question_index = 1
+      currentCounselorType = 'yellow'
     }
     
     console.log('🎯 상담사 결정:', {
