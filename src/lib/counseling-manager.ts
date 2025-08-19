@@ -40,8 +40,6 @@ export class CounselingManager {
    */
   canProceedToNext(): boolean {
     switch (this.session.counseling_phase) {
-      case 'intro':
-        return true // 인트로는 언제든 다음으로
       case 'questions':
         // 현재 질문에 대한 답변이 있는지 확인
         const currentQuestionId = `q${this.session.current_question_index + 1}`
@@ -60,13 +58,6 @@ export class CounselingManager {
    */
   getNextPhaseData(): { phase: CounselingPhase; questionIndex: number; counselor: Character } {
     switch (this.session.counseling_phase) {
-      case 'intro':
-        return {
-          phase: 'questions',
-          questionIndex: 0,
-          counselor: getCurrentCounselor(1)
-        }
-      
       case 'questions':
         const nextQuestionIndex = this.session.current_question_index + 1
         
@@ -116,8 +107,6 @@ export class CounselingManager {
    */
   getProgress(): number {
     switch (this.session.counseling_phase) {
-      case 'intro':
-        return 5 // 시작 단계
       case 'questions':
         const answeredQuestions = Object.keys(this.session.answers).length
         return 10 + (answeredQuestions / COUNSELING_QUESTIONS.length) * 80 // 10-90%
