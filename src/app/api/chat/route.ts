@@ -325,6 +325,12 @@ export async function POST(request: NextRequest) {
         role: 'user' as const,
         content: message
       })
+    } else {
+      // 빈 메시지일 때는 첫 인사 요청
+      openaiMessages.push({
+        role: 'user' as const,
+        content: '안녕하세요! 상담을 시작하고 싶어요.'
+      })
     }
 
     // OpenAI API 호출

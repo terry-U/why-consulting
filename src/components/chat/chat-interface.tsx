@@ -7,8 +7,7 @@ import CharacterMessage, { UserMessage } from './character-message'
 import { CounselingManager } from '@/lib/counseling-manager'
 import { getCharacter } from '@/lib/characters'
 import { CharacterType } from '@/types/characters'
-import CounselorHeader from './counselor-header'
-import { getCurrentCounselorInfo, getQuestionTitle } from '@/lib/counselor-info'
+
 
 interface ChatInterfaceProps {
   session: Session
@@ -289,26 +288,10 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
     return 'yellow'
   }
 
-  // 현재 상담사 정보 계산
-  const currentCounselorInfo = useMemo(() => 
-    getCurrentCounselorInfo(session.counseling_phase, session.current_question_index), 
-    [session.counseling_phase, session.current_question_index]
-  )
   
-  const currentQuestionTitle = useMemo(() => 
-    getQuestionTitle(session.current_question_index), 
-    [session.current_question_index]
-  )
 
   return (
     <div className="flex flex-col h-full">
-      {/* 상담사 헤더 */}
-      <CounselorHeader 
-        counselor={currentCounselorInfo}
-        currentQuestion={currentQuestionTitle}
-        isLoading={isLoading}
-      />
-
       {/* 메시지 목록 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => {

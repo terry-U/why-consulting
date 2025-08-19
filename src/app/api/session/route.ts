@@ -134,24 +134,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 옐로 상담사의 첫 질문 메시지 생성
-    console.log('🌞 옐로 상담사 첫 질문 메시지 생성...')
-    try {
-      await supabaseServer
-        .from('messages')
-        .insert({
-          session_id: session.id,
-          user_id: userId,
-          role: 'assistant',
-          content: '안녕하세요! 저는 옐로예요 🌞 오늘 함께 당신의 소중한 이야기를 들어보고 싶어요. 편안하게 대화해봐요!\n\n당신이 가장 뿌듯했던 경험은 무엇인가요?',
-          counselor_id: 'yellow'
-        })
-      
-      console.log('✅ 옐로 상담사 메시지 완료')
-    } catch (error) {
-      console.error('⚠️ 첫 질문 메시지 생성 실패:', error)
-      // 세션은 생성되었으므로 계속 진행
-    }
+    // 첫 메시지는 채팅 인터페이스에서 처리
+    console.log('✅ 세션 생성 완료 - 첫 인사는 채팅에서 처리')
 
     console.log('✅ 세션 생성 API 성공:', session.id)
     return NextResponse.json({
