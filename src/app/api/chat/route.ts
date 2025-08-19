@@ -477,7 +477,7 @@ export async function POST(request: NextRequest) {
       if (questionIndex < counselingQuestions.length) {
         currentCounselorType = counselingQuestions[questionIndex].counselor
       }
-    } else if (session.counseling_phase === 'why_generation' || session.counseling_phase === 'completed') {
+    } else if (session.counseling_phase === 'summary' || session.counseling_phase === 'completed') {
       currentCounselorType = 'main'
     } else if (session.counseling_phase === 'intro') {
       // intro 단계를 강제로 questions로 전환
@@ -631,9 +631,9 @@ export async function POST(request: NextRequest) {
           }
           console.log('✅ nextPhaseData 생성 완료:', nextPhaseData)
         } else {
-          // 모든 질문 완료 - Why 생성 단계로
+          // 모든 질문 완료 - 써머리 단계로 (아직 개발 안됨)
           nextPhaseData = {
-            nextPhase: 'why_generation',
+            nextPhase: 'summary',
             nextQuestionIndex: 0,
             nextCounselor: 'main',
             nextQuestion: null

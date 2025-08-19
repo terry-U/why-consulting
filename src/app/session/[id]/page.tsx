@@ -109,9 +109,6 @@ export default function SessionPage() {
             <h1 className="text-xl font-semibold text-gray-900">
               상담 진행 중
             </h1>
-            <p className="text-gray-600 text-sm">
-              단계: {session.counseling_phase}
-            </p>
           </div>
           <div></div> {/* 균형을 위한 빈 div */}
         </div>
