@@ -22,7 +22,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
   const [showAdvanceButtons, setShowAdvanceButtons] = useState(false)
   const [nextPhaseData, setNextPhaseData] = useState<any>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
 
   // 현재 질문 정보
   const currentQuestion = useMemo(() => {
