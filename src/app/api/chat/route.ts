@@ -242,7 +242,7 @@ export async function POST(request: NextRequest) {
   try {
     const { sessionId, message, userId } = await request.json()
 
-    if (!sessionId || !message || !userId) {
+    if (!sessionId || message === undefined || !userId) {
       return NextResponse.json(
         { success: false, error: '필수 파라미터가 누락되었습니다.' },
         { status: 400 }
