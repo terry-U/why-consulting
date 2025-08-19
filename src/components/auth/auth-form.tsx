@@ -13,19 +13,27 @@ export default function AuthForm({ mode, onSuccess }: AuthFormProps) {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
+    setMessage('')
 
     try {
       if (mode === 'signup') {
-        await signUp(email, password)
+        const result = await signUp(email, password)
+        if (result.user && !result.session) {
+          // 이메일 확인이 필요한 경우
+          setMessage('회원가입이 완료되었습니다! 이메일을 확인하여 계정을 활성화해주세요.')
+        } else {
+          onSuccess()
+        }
       } else {
         await signIn(email, password)
+        onSuccess()
       }
-      onSuccess()
     } catch (err) {
       setError(err instanceof Error ? err.message : '오류가 발생했습니다')
     } finally {
@@ -91,6 +99,14 @@ export default function AuthForm({ mode, onSuccess }: AuthFormProps) {
             <div className="rounded-md bg-red-50 p-4">
               <div className="text-sm text-red-700">
                 {error}
+              </div>
+            </div>
+          )}
+
+          {message && (
+            <div className="rounded-md bg-green-50 p-4">
+              <div className="text-sm text-green-700">
+                {message}
               </div>
             </div>
           )}

@@ -1,12 +1,21 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import AuthForm from '@/components/auth/auth-form'
 
-export default function AuthPage() {
+function AuthContent() {
   const [mode, setMode] = useState<'login' | 'signup'>('login')
+  const [authError, setAuthError] = useState('')
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const error = searchParams.get('error')
+    if (error) {
+      setAuthError(decodeURIComponent(error))
+    }
+  }, [searchParams])
 
   const handleAuthSuccess = () => {
     router.push('/home')
@@ -22,6 +31,17 @@ export default function AuthPage() {
         >
           ← 메인으로 돌아가기
         </button>
+
+        {/* 오류 메시지 */}
+        {authError && (
+          <div className="max-w-md mx-auto mb-6">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="text-sm text-red-700">
+                {authError}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 인증 폼 */}
         <div className="max-w-md mx-auto">
@@ -53,5 +73,17 @@ export default function AuthPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-100 flex items-center justify-center">
+        <div className="text-2xl text-gray-600">로딩 중...</div>
+      </div>
+    }>
+      <AuthContent />
+    </Suspense>
   )
 }

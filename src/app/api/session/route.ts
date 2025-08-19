@@ -126,10 +126,10 @@ export async function POST(request: NextRequest) {
     console.log('🗄️ 데이터베이스 세션 생성 시도...')
     const { session, error: createSessionError } = await createSession(userId, threadId)
 
-    if (!session) {
+    if (!session || createSessionError) {
       console.error('❌ 세션 생성 실패 - createSession 오류:', createSessionError)
       return NextResponse.json(
-        { success: false, step: 'createSession', error: createSessionError || '세션 생성에 실패했습니다.' },
+        { success: false, step: 'createSession', error: createSessionError?.message || '세션 생성에 실패했습니다.' },
         { status: 500 }
       )
     }

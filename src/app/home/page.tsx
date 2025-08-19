@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getCurrentUser, signOut } from '@/lib/auth'
+import { signOut } from '@/lib/auth'
 import { Session } from '@/lib/supabase'
 import { getUserSessions, createNewSession } from '@/lib/sessions'
 import { getUserConsultationHistory, SessionWithHistory } from '@/lib/history'
+import { useAuth } from '@/hooks/useAuth'
 import dynamic from 'next/dynamic'
 
 // 지연 로딩으로 성능 최적화
@@ -21,40 +22,34 @@ import SkeletonLoader from '@/components/common/skeleton-loader'
 import ResponsiveLayout from '@/components/layout/responsive-layout'
 
 export default function HomePage() {
-  const [user, setUser] = useState<any>(null)
+  const { user, loading: authLoading } = useAuth()
   const [sessions, setSessions] = useState<SessionWithHistory[]>([])
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
+    if (authLoading) return
+
+    if (!user) {
+      router.push('/auth')
+      return
+    }
+
     const loadUserData = async () => {
       try {
-        const currentUser = await getCurrentUser()
-        if (!currentUser) {
-          router.push('/auth')
-          return
-        }
-
-        setUser(currentUser)
-        
         // 사용자 상담 히스토리 가져오기
-        try {
-          const userHistory = await getUserConsultationHistory(currentUser.id)
-          setSessions(userHistory)
-        } catch (error) {
-          console.error('히스토리 로딩 오류:', error)
-          setSessions([])
-        }
+        const userHistory = await getUserConsultationHistory(user.id)
+        setSessions(userHistory)
       } catch (error) {
-        console.error('사용자 데이터 로딩 오류:', error)
-        router.push('/auth')
+        console.error('히스토리 로딩 오류:', error)
+        setSessions([])
       } finally {
         setLoading(false)
       }
     }
 
     loadUserData()
-  }, [router])
+  }, [user, authLoading, router])
 
   const handleLogout = async () => {
     try {
@@ -77,7 +72,7 @@ export default function HomePage() {
     }
   }
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <ResponsiveLayout className="bg-gradient-to-br from-yellow-50 to-orange-100">
         <DashboardSkeleton />
