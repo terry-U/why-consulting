@@ -71,6 +71,13 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
             currentIndex++
           } else {
             clearInterval(typingInterval)
+            
+            // 타이핑 완료 후 다음 단계 진행 신호 처리
+            if (data.shouldAdvance && data.nextPhaseData) {
+              console.log('⏭️ 다음 단계 진행 신호 수신:', data.nextPhaseData)
+              setShowAdvanceButtons(true)
+              setNextPhaseData(data.nextPhaseData)
+            }
           }
         }, 30)
       }
