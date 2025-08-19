@@ -29,7 +29,11 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
     console.log('🔍 currentQuestion 계산:', {
       phase: session.counseling_phase,
       index: session.current_question_index,
-      questionsLength: COUNSELING_QUESTIONS.length
+      questionsLength: COUNSELING_QUESTIONS.length,
+      phaseCheck: session.counseling_phase === 'questions',
+      indexCheck: session.current_question_index > 0,
+      actualPhase: typeof session.counseling_phase,
+      actualIndex: typeof session.current_question_index
     })
     
     if (session.counseling_phase === 'questions' && session.current_question_index > 0) {
@@ -37,7 +41,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
       console.log('📝 선택된 질문:', question)
       return question
     }
-    console.log('❌ 질문 조건 불만족')
+    console.log('❌ 질문 조건 불만족 - phase:', session.counseling_phase, 'index:', session.current_question_index)
     return null
   }, [session.counseling_phase, session.current_question_index])
 
