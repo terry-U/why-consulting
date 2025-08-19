@@ -39,7 +39,7 @@ export default function CharacterMessage({
         setIsComplete(true)
         clearInterval(typingInterval)
       }
-    }, 50) // 50ms마다 한 글자씩
+    }, 30) // 30ms마다 한 글자씩 (더 자연스럽게)
 
     return () => clearInterval(typingInterval)
   }, [message, showTypingEffect])

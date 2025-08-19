@@ -83,47 +83,64 @@ export default function HomePage() {
   return (
     <ResponsiveLayout className="bg-gradient-to-br from-yellow-50 to-orange-100">
         {/* 헤더 */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              안녕하세요! 👋
+            <h1 className="text-xl font-semibold text-gray-900">
+              다시 만나서 반가워요 😊
             </h1>
-            <p className="text-gray-600 mt-1">
-              {user?.email}
+            <p className="text-gray-500 text-sm mt-1">
+              {user?.email?.split('@')[0]}님
             </p>
           </div>
           <button
             onClick={handleLogout}
-            className="text-gray-500 hover:text-gray-700 text-sm"
+            className="text-gray-400 hover:text-gray-600 text-sm px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
           >
             로그아웃
           </button>
         </div>
 
-        {/* 심볼 영역 */}
-        <div className="text-center mb-8">
-          <div className="w-24 h-24 mx-auto bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-4xl mb-4 animate-pulse">
-            🌟
-          </div>
-          <p className="text-lg text-gray-700">
-            오늘도 나답게 살아가고 계신가요?
-          </p>
-        </div>
-
-        {/* 새 상담 시작 CTA */}
+        {/* 메인 CTA */}
         <div className="mb-8">
           <button
             onClick={handleNewSession}
-            className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-xl font-semibold py-6 px-8 rounded-2xl hover:from-yellow-600 hover:to-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl"
+            className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-semibold py-8 px-6 rounded-3xl hover:from-yellow-600 hover:to-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
           >
-            <div className="flex items-center justify-center space-x-3">
-              <span className="text-2xl">✨</span>
-              <span>새 상담 시작하기</span>
+            <div className="text-center">
+              <div className="text-3xl mb-3">🌟</div>
+              <div className="text-xl mb-2">새로운 Why 찾기</div>
+              <p className="text-yellow-100 text-sm opacity-90">
+                8명의 상담사와 함께하는 특별한 여정
+              </p>
             </div>
-            <p className="text-yellow-100 text-sm mt-2">
-              당신의 Why를 찾아가는 여정을 시작해보세요
-            </p>
           </button>
+        </div>
+
+        {/* 상담사 소개 */}
+        <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">상담사 팀</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="text-center p-3">
+              <div className="text-2xl mb-2">🌞</div>
+              <div className="text-sm font-medium text-gray-900">옐로</div>
+              <div className="text-xs text-gray-600">성취 탐구</div>
+            </div>
+            <div className="text-center p-3">
+              <div className="text-2xl mb-2">🦋</div>
+              <div className="text-sm font-medium text-gray-900">비비</div>
+              <div className="text-xs text-gray-600">감정 탐구</div>
+            </div>
+            <div className="text-center p-3">
+              <div className="text-2xl mb-2">🌿</div>
+              <div className="text-sm font-medium text-gray-900">그린</div>
+              <div className="text-xs text-gray-600">꿈 탐구</div>
+            </div>
+            <div className="text-center p-3">
+              <div className="text-2xl mb-2">🌟</div>
+              <div className="text-sm font-medium text-gray-900">지혜</div>
+              <div className="text-xs text-gray-600">Why 도출</div>
+            </div>
+          </div>
         </div>
 
         {/* 티켓 지갑 */}

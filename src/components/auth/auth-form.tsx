@@ -45,13 +45,14 @@ export default function AuthForm({ mode, onSuccess }: AuthFormProps) {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-2xl shadow-lg">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900">
-            {mode === 'login' ? '로그인' : '회원가입'}
+          <div className="text-4xl mb-4">🌟</div>
+          <h2 className="text-2xl font-bold text-gray-900">
+            {mode === 'login' ? '다시 만나서 반가워요' : '처음 뵙겠습니다'}
           </h2>
           <p className="mt-2 text-gray-600">
             {mode === 'login' 
-              ? '계정에 로그인하여 상담을 시작하세요' 
-              : '새 계정을 만들어 상담을 시작하세요'
+              ? '당신의 Why 여정을 계속해보세요' 
+              : '8명의 상담사와 함께 특별한 여정을 시작해보세요'
             }
           </p>
         </div>
@@ -115,15 +116,15 @@ export default function AuthForm({ mode, onSuccess }: AuthFormProps) {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
               {loading ? (
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  처리 중...
+                  잠시만요...
                 </div>
               ) : (
-                mode === 'login' ? '로그인' : '회원가입'
+                mode === 'login' ? '여정 계속하기' : '여정 시작하기'
               )}
             </button>
           </div>
@@ -132,13 +133,13 @@ export default function AuthForm({ mode, onSuccess }: AuthFormProps) {
             <p className="text-sm text-gray-600">
               {mode === 'login' ? (
                 <>
-                  계정이 없으신가요?{' '}
+                  처음 방문이신가요?{' '}
                   <button
                     type="button"
                     onClick={() => window.location.href = '/signup'}
-                    className="font-medium text-indigo-600 hover:text-indigo-500"
+                    className="font-medium text-yellow-600 hover:text-yellow-500"
                   >
-                    회원가입
+                    새 여정 시작하기
                   </button>
                 </>
               ) : (
@@ -147,9 +148,9 @@ export default function AuthForm({ mode, onSuccess }: AuthFormProps) {
                   <button
                     type="button"
                     onClick={() => window.location.href = '/login'}
-                    className="font-medium text-indigo-600 hover:text-indigo-500"
+                    className="font-medium text-yellow-600 hover:text-yellow-500"
                   >
-                    로그인
+                    기존 여정 이어가기
                   </button>
                 </>
               )}

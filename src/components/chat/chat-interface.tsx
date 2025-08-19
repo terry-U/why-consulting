@@ -7,6 +7,8 @@ import CharacterMessage, { UserMessage } from './character-message'
 import { CounselingManager } from '@/lib/counseling-manager'
 import { getCharacter } from '@/lib/characters'
 import { CharacterType } from '@/types/characters'
+import CounselorHeader from './counselor-header'
+import { getCurrentCounselorInfo, getQuestionTitle } from '@/lib/counselor-info'
 
 interface ChatInterfaceProps {
   session: Session
@@ -86,14 +88,36 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
           counselor_id: data.counselor.type,
           created_at: new Date().toISOString()
         }
-        setMessages(prev => [...prev, aiResponse])
-
-        // 다음 단계로 진행해야 하는 경우
-        if (data.shouldAdvance && data.nextPhaseData) {
-          console.log('⏭️ 다음 단계 진행 신호 수신:', data.nextPhaseData)
-          setShowAdvanceButtons(true)
-          setNextPhaseData(data.nextPhaseData)
+        // 타이핑 애니메이션과 함께 메시지 추가
+        const tempMessage: Message = {
+          ...aiResponse,
+          content: '' // 처음에는 빈 내용으로 시작
         }
+        setMessages(prev => [...prev, tempMessage])
+        
+        // 타이핑 애니메이션 시뮬레이션
+        let currentIndex = 0
+        const typingInterval = setInterval(() => {
+          if (currentIndex <= data.response.length) {
+            setMessages(prev => 
+              prev.map(msg => 
+                msg.id === aiResponse.id 
+                  ? { ...msg, content: data.response.slice(0, currentIndex) }
+                  : msg
+              )
+            )
+            currentIndex++
+          } else {
+            clearInterval(typingInterval)
+            
+            // 타이핑 완료 후 다음 단계 진행 신호 처리
+            if (data.shouldAdvance && data.nextPhaseData) {
+              console.log('⏭️ 다음 단계 진행 신호 수신:', data.nextPhaseData)
+              setShowAdvanceButtons(true)
+              setNextPhaseData(data.nextPhaseData)
+            }
+          }
+        }, 30) // 30ms마다 한 글자씩
       } else {
         throw new Error(data.error)
       }
@@ -203,54 +227,25 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
     return 'yellow'
   }
 
+  // 현재 상담사 정보 계산
+  const currentCounselorInfo = useMemo(() => 
+    getCurrentCounselorInfo(session.counseling_phase, session.current_question_index), 
+    [session.counseling_phase, session.current_question_index]
+  )
+  
+  const currentQuestionTitle = useMemo(() => 
+    getQuestionTitle(session.current_question_index), 
+    [session.current_question_index]
+  )
+
   return (
     <div className="flex flex-col h-full">
-      {/* 상담 헤더 */}
-      <div className="bg-white border-b border-gray-200 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div 
-              className="w-8 h-8 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: currentCounselor.color }}
-            >
-              <span className="text-sm">{currentCounselor.emoji}</span>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">{currentCounselor.name}</h3>
-              <p className="text-xs text-gray-600">{currentCounselor.role}</p>
-            </div>
-          </div>
-          
-          {/* 진행률 */}
-          <div className="text-right">
-            <div className="text-sm text-gray-600">진행률</div>
-            <div className="text-lg font-semibold text-gray-900">{Math.round(progress)}%</div>
-          </div>
-        </div>
-        
-        {/* 질문 진행 점들 */}
-        {session.counseling_phase === 'questions' && (
-          <div className="flex justify-center space-x-2 mt-4">
-            {Array.from({ length: 8 }, (_, index) => (
-              <div
-                key={index}
-                className={`w-3 h-3 rounded-full transition-colors ${
-                  index < session.current_question_index 
-                    ? 'bg-green-500' 
-                    : index === session.current_question_index
-                    ? currentCounselor.color === '#FDE047' ? 'bg-yellow-400' :
-                      currentCounselor.color === '#22C55E' ? 'bg-green-400' :
-                      currentCounselor.color === '#A78BFA' ? 'bg-purple-400' : 'bg-gray-400'
-                    : 'bg-gray-300'
-                }`}
-                style={{
-                  backgroundColor: index === session.current_question_index ? currentCounselor.color : undefined
-                }}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      {/* 상담사 헤더 */}
+      <CounselorHeader 
+        counselor={currentCounselorInfo}
+        currentQuestion={currentQuestionTitle}
+        isLoading={isLoading}
+      />
 
       {/* 메시지 목록 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -273,7 +268,7 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
         {/* 로딩 상태 */}
         {isLoading && (
           <CharacterMessage
-            character={currentCounselor}
+            character={getCharacter(getCurrentCounselor() as CharacterType)}
             message=""
             isTyping={true}
           />
@@ -284,30 +279,32 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
 
       {/* 답변 확인 버튼들 */}
       {showAdvanceButtons && nextPhaseData && (
-        <div className="bg-yellow-50 border-t border-yellow-200 p-4">
+        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-t border-yellow-200 p-6">
           <div className="text-center space-y-4">
+            <div className="text-2xl mb-2">✨</div>
             <p className="text-sm text-yellow-800 font-medium">
-              답변이 정리되었습니다. 다음 질문으로 넘어가시겠어요?
+              이 답변이 맞나요?
             </p>
             {nextPhaseData.nextQuestion && (
-              <p className="text-sm text-gray-600">
-                다음 질문: "{nextPhaseData.nextQuestion}"
-              </p>
+              <div className="bg-white/60 backdrop-blur-sm rounded-lg p-3 mt-3">
+                <p className="text-xs text-gray-600 mb-1">다음 질문</p>
+                <p className="text-sm font-medium text-gray-800">"{nextPhaseData.nextQuestion}"</p>
+              </div>
             )}
-            <div className="flex justify-center space-x-4">
+            <div className="flex justify-center space-x-3 mt-6">
               <button
                 onClick={() => handleAdvanceToNext(true)}
                 disabled={isLoading}
-                className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-6 py-2 rounded-full font-medium hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 disabled:opacity-50"
+                className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-8 py-3 rounded-full font-medium hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 disabled:opacity-50 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
-                응, 맞아!
+                네, 맞아요! 🎯
               </button>
               <button
                 onClick={() => handleAdvanceToNext(false)}
                 disabled={isLoading}
-                className="bg-gray-200 text-gray-700 px-6 py-2 rounded-full font-medium hover:bg-gray-300 transition-all duration-200 disabled:opacity-50"
+                className="bg-white text-gray-700 px-8 py-3 rounded-full font-medium hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 border border-gray-200 shadow-sm hover:shadow-md"
               >
-                조금 더 생각해볼게
+                좀 더 생각해볼게요 🤔
               </button>
             </div>
           </div>
@@ -346,7 +343,7 @@ export default function ChatInterface({ session, initialMessages }: ChatInterfac
             disabled={!inputValue.trim() || isLoading}
             className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-xl font-medium hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            전송
+            💬
           </button>
         </div>
         
