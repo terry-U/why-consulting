@@ -26,25 +26,10 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
 
   // 현재 질문 정보
   const currentQuestion = useMemo(() => {
-    console.log('🔍 currentQuestion 계산:', {
-      phase: session.counseling_phase,
-      index: session.current_question_index,
-      questionsLength: COUNSELING_QUESTIONS.length,
-      phaseCheck: session.counseling_phase === 'questions',
-      indexCheck: session.current_question_index > 0,
-      actualPhase: typeof session.counseling_phase,
-      actualIndex: typeof session.current_question_index
-    })
-    
-    // intro 단계이거나 index가 0인 경우 첫 번째 질문으로 처리
-    if ((session.counseling_phase === 'questions' && session.current_question_index > 0) ||
-        (session.counseling_phase === 'intro')) {
-      const questionIndex = session.counseling_phase === 'intro' ? 0 : session.current_question_index - 1
-      const question = COUNSELING_QUESTIONS[questionIndex]
-      console.log('📝 선택된 질문:', question, '(index:', questionIndex, ')')
-      return question
+    if (session.counseling_phase === 'questions' && session.current_question_index >= 1) {
+      const questionIndex = session.current_question_index - 1
+      return COUNSELING_QUESTIONS[questionIndex] || null
     }
-    console.log('❌ 질문 조건 불만족 - phase:', session.counseling_phase, 'index:', session.current_question_index)
     return null
   }, [session.counseling_phase, session.current_question_index])
 
@@ -144,8 +129,6 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
   
   // 성능 최적화: 메모이제이션
   const counselingManager = useMemo(() => new CounselingManager(session), [session])
-  const currentCounselor = useMemo(() => counselingManager.getCurrentCounselor(), [counselingManager])
-  const progress = useMemo(() => counselingManager.getProgress(), [counselingManager])
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
