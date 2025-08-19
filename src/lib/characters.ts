@@ -96,15 +96,15 @@ export const CHARACTERS: Record<CharacterType, Character> = {
 export const COUNSELING_QUESTIONS: CounselingQuestion[] = [
   {
     id: 'q1',
-    text: '최근에 "아, 내가 정말 잘했구나" 하고 느꼈던 순간이 있었나요?',
+    text: '당신이 가장 뿌듯했던 경험은 무엇인가요?',
     counselor: 'yellow',
     phase: 1,
-    helpText: '작은 일이라도 괜찮아요. 스스로 대견했던 그 기분을 떠올려보세요.',
+    helpText: '크고 작은 일 모두 괜찮아요. 그때의 기분을 떠올려보세요.',
     binaryChoices: ['성취감을 느낄 때 vs 인정받을 때', '혼자 해낸 것 vs 함께 이룬 것']
   },
   {
     id: 'q2', 
-    text: '무언가를 하고 나서 마음 깊은 곳에서 "정말 의미 있는 일이었다" 하고 느낀 적이 있나요?',
+    text: '가장 보람 있었던 경험은요?',
     counselor: 'orange',
     phase: 2,
     helpText: '뿌듯함과는 다른, 깊은 만족감을 느꼈던 순간을 말해보세요.',
@@ -112,7 +112,7 @@ export const COUNSELING_QUESTIONS: CounselingQuestion[] = [
   },
   {
     id: 'q3',
-    text: '혹시 "아, 지금 이 순간이 정말 행복하다" 하고 느꼈던 때가 있었나요?',
+    text: '인생에서 가장 좋았던 순간은 언제였나요?',
     counselor: 'bibi',
     phase: 3,
     helpText: '그 순간의 따뜻함을 다시 한번 느껴보세요.',
