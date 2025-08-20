@@ -10,35 +10,20 @@ enabled = true
 site_url = "http://localhost:3000"
 additional_redirect_urls = ["https://your-domain.vercel.app"]
 jwt_expiry = 3600
-refresh_token_rotation_enabled = true
-security_update_password_require_reauthentication = true
 
 [auth.email]
-enable_signup = false  # 이메일 회원가입 비활성화
+enable_signup = false
 double_confirm_changes = true
 enable_confirmations = false
-
-[auth.external.kakao]
-enabled = false  # 기본 카카오는 비활성화 (커스텀 구현 사용)
 
 [db]
 port = 54322
 shadow_port = 54320
 major_version = 15
 
-[functions]
-verify_jwt = false
-
-[edge_functions]
-enabled = true
-
 [storage]
 enabled = true
 file_size_limit = "50MiB"
-s3_region = "us-east-1"
 
 [analytics]
-enabled = false
-
-[inbound_webhooks]
 enabled = false
