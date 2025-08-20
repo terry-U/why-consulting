@@ -69,7 +69,7 @@ export const signInWithKakao = async (): Promise<KakaoAuthResponse> => {
 
     return new Promise((resolve, reject) => {
       window.Kakao.Auth.authorize({
-        redirectUri: `${window.location.origin}/auth/callback`,
+        redirectUri: `${window.location.origin}/auth/kakao-callback`,
         success: (authObj: any) => {
           console.log('✅ Kakao authorization successful')
           resolve({ success: true })
@@ -103,7 +103,7 @@ export const handleKakaoCallback = async (code: string): Promise<KakaoAuthRespon
       },
       body: JSON.stringify({
         code,
-        redirectUri: `${window.location.origin}/auth/callback`
+        redirectUri: `${window.location.origin}/auth/kakao-callback`
       })
     })
 
