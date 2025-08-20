@@ -6,10 +6,10 @@ import { handleKakaoCallback } from '@/lib/auth-kakao'
 import { supabase } from '@/lib/auth'
 
 function KakaoCallbackContent() {
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState('')
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const processCallback = async () => {
@@ -18,13 +18,15 @@ function KakaoCallbackContent() {
         const error = searchParams.get('error')
 
         if (error) {
+          console.error('❌ Kakao OAuth error:', error)
           setError('카카오 로그인이 취소되었습니다.')
           setIsLoading(false)
           return
         }
 
         if (!code) {
-          setError('인증 코드가 없습니다.')
+          console.error('❌ No authorization code received')
+          setError('인증 코드를 받지 못했습니다.')
           setIsLoading(false)
           return
         }
@@ -35,6 +37,7 @@ function KakaoCallbackContent() {
         const result = await handleKakaoCallback(code)
 
         if (!result.success) {
+          console.error('❌ Kakao callback failed:', result.error)
           setError(result.error || '로그인에 실패했습니다.')
           setIsLoading(false)
           return
@@ -44,9 +47,19 @@ function KakaoCallbackContent() {
 
         // Edge Function에서 받은 세션 데이터로 Supabase 세션 설정
         if (result.session) {
+          const accessToken = (result as any).session?.access_token ?? (result as any).session?.properties?.hashed_token
+          const refreshToken = (result as any).session?.refresh_token ?? (result as any).session?.properties?.hashed_token
+
+          if (!accessToken || !refreshToken) {
+            console.error('❌ Missing tokens in session payload:', result.session)
+            setError('세션 토큰이 유효하지 않습니다.')
+            setIsLoading(false)
+            return
+          }
+
           const { error: sessionError } = await supabase.auth.setSession({
-            access_token: result.session.properties.hashed_token,
-            refresh_token: result.session.properties.hashed_token
+            access_token: accessToken,
+            refresh_token: refreshToken
           })
           
           if (sessionError) {
@@ -73,11 +86,10 @@ function KakaoCallbackContent() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-50 to-orange-50">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
-          <p className="text-gray-600 text-lg">카카오 로그인 처리 중...</p>
-          <p className="text-gray-400 text-sm mt-2">잠시만 기다려주세요</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">카카오 로그인 처리 중...</p>
         </div>
       </div>
     )
@@ -85,16 +97,14 @@ function KakaoCallbackContent() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-pink-50">
-        <div className="text-center max-w-md mx-auto p-6">
-          <div className="text-red-500 text-6xl mb-4">😔</div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">로그인 실패</h1>
-          <p className="text-gray-600 mb-6">{error}</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
           <button
             onClick={() => router.push('/auth')}
-            className="bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-3 px-6 rounded-xl transition-colors"
+            className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
           >
-            다시 시도하기
+            다시 시도
           </button>
         </div>
       </div>
@@ -104,14 +114,11 @@ function KakaoCallbackContent() {
   return null
 }
 
-export default function AuthCallback() {
+export default function KakaoCallbackPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-50 to-orange-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
-          <p className="text-gray-600 text-lg">로딩 중...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500"></div>
       </div>
     }>
       <KakaoCallbackContent />

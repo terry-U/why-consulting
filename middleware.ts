@@ -79,7 +79,7 @@ export async function middleware(req: NextRequest) {
 
   // 이미 로그인된 사용자가 인증 페이지에 접근하는 경우
   if (isAuthPath && session) {
-    return NextResponse.redirect(new URL('/', req.url))
+    return NextResponse.redirect(new URL('/home', req.url))
   }
 
   return response

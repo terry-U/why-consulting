@@ -26,8 +26,9 @@ Deno.serve(async (req) => {
     const kakaoClientSecret = Deno.env.get('KAKAO_CLIENT_SECRET')
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
 
-    if (!kakaoClientId || !kakaoClientSecret || !supabaseUrl || !supabaseServiceKey) {
+    if (!kakaoClientId || !kakaoClientSecret || !supabaseUrl || !supabaseServiceKey || !supabaseAnonKey) {
       console.error('❌ Missing environment variables')
       return new Response(
         JSON.stringify({ error: 'Missing required environment variables' }),
@@ -93,6 +94,13 @@ Deno.serve(async (req) => {
         persistSession: false
       }
     })
+    // 공개 키로 인증 세션 발급용 클라이언트
+    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
 
     // 4. 사용자 정보 안전하게 추출
     const userEmail = userData.kakao_account?.email || `kakao_${userData.id}@findmywhy.co`
@@ -128,6 +136,17 @@ Deno.serve(async (req) => {
       }
       
       authUser = userAuthData.user
+      // 기존 사용자 비밀번호 갱신 (세션 발급을 위해 임시 패스워드 설정)
+      const { error: pwdUpdateError } = await supabase.auth.admin.updateUserById(existingUser.id, {
+        password: userPassword
+      })
+      if (pwdUpdateError) {
+        console.error('❌ Password update error:', pwdUpdateError)
+        return new Response(
+          JSON.stringify({ error: 'Failed to update user password', details: pwdUpdateError.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
       console.log('✅ Existing user authenticated:', authUser.id)
     } else {
       // 새 사용자 생성
@@ -171,31 +190,22 @@ Deno.serve(async (req) => {
       console.log('✅ New user created:', authUser.id)
     }
 
-    // 6. 올바른 세션 토큰 생성
-    console.log('🎫 Generating session tokens for user:', authUser.id)
-    const { data: tokenData, error: tokenError } = await supabase.auth.admin.generateLink({
-      type: 'magiclink',
-      email: authUser.email
+    // 6. 실제 세션 토큰 발급 (임시 패스워드로 로그인)
+    console.log('🎫 Signing in to generate session tokens for user:', authUser.id)
+    const { data: signInData, error: signInError } = await authClient.auth.signInWithPassword({
+      email: authUser.email!,
+      password: userPassword
     })
 
-    if (tokenError) {
-      console.error('❌ Token generation error:', tokenError)
+    if (signInError || !signInData.session) {
+      console.error('❌ Sign-in to generate session failed:', signInError)
       return new Response(
-        JSON.stringify({ error: 'Failed to generate session token', details: tokenError.message }),
+        JSON.stringify({ error: 'Failed to generate session token', details: signInError?.message || 'No session' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
     console.log('✅ Session tokens generated successfully')
-
-    // 프로덕션 세션 객체 생성
-    const sessionData = {
-      access_token: tokenData.properties.hashed_token,
-      refresh_token: tokenData.properties.hashed_token,
-      expires_in: tokenData.properties.expires_in || 3600,
-      token_type: 'bearer',
-      user: authUser
-    }
 
     console.log('✅ Authentication successful for user:', authUser.id)
 
@@ -209,7 +219,12 @@ Deno.serve(async (req) => {
           profile_image: profileImage,
           kakao_id: userData.id.toString()
         },
-        session: sessionData
+        session: {
+          access_token: signInData.session.access_token,
+          refresh_token: signInData.session.refresh_token,
+          expires_in: signInData.session.expires_in,
+          token_type: 'bearer'
+        }
       }),
       { 
         status: 200, 
