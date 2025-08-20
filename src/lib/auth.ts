@@ -1,6 +1,9 @@
 import { supabase } from './supabase'
 import { signOutFromKakao } from './auth-kakao'
 
+// Supabase 클라이언트 re-export
+export { supabase }
+
 /**
  * 카카오 로그인 - auth-kakao.ts에서 처리
  * @deprecated 이메일 회원가입은 더 이상 사용하지 않습니다
