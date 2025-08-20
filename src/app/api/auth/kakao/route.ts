@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
     // Edge Function 직접 호출
-    const response = await fetch(`${supabaseUrl}/functions/v1/auth-kakao`, {
+    const edgeFunctionResponse = await fetch(`${supabaseUrl}/functions/v1/auth-kakao`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -27,16 +27,16 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({ code, redirectUri })
     })
 
-    if (!response.ok) {
-      const errorText = await response.text()
+    if (!edgeFunctionResponse.ok) {
+      const errorText = await edgeFunctionResponse.text()
       console.error('❌ Edge Function HTTP error:', errorText)
       return NextResponse.json(
         { error: 'Edge Function call failed', details: errorText },
-        { status: response.status }
+        { status: edgeFunctionResponse.status }
       )
     }
 
-    const data = await response.json()
+    const data = await edgeFunctionResponse.json()
 
     if (!data.success) {
       console.error('❌ Kakao authentication failed:', data.error)
