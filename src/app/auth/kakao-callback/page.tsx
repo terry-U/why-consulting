@@ -58,8 +58,8 @@ function KakaoCallbackContent() {
         }
 
         console.log('✅ Session set successfully, redirecting to home...')
-        // 홈으로 리다이렉트
-        router.replace('/home')
+        // 세션 설정 후 강제 리로드로 middleware 재실행
+        window.location.href = '/home'
 
       } catch (error) {
         console.error('❌ Callback processing error:', error)
