@@ -20,26 +20,33 @@ Deno.serve(async (req) => {
       )
     }
 
+    console.log('🔄 Starting Kakao token exchange...')
+
     // 카카오 토큰 교환
+    const tokenParams = new URLSearchParams({
+      grant_type: 'authorization_code',
+      client_id: Deno.env.get('KAKAO_REST_API_KEY')!,
+      client_secret: Deno.env.get('KAKAO_CLIENT_SECRET')!,
+      redirect_uri: 'https://findmywhy.co/auth/kakao-callback',
+      code: code,
+    })
+
+    console.log('📤 Token exchange params:', Object.fromEntries(tokenParams))
+
     const tokenResponse = await fetch('https://kauth.kakao.com/oauth/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        client_id: Deno.env.get('KAKAO_REST_API_KEY')!,
-        client_secret: Deno.env.get('KAKAO_CLIENT_SECRET')!,
-        redirect_uri: `${Deno.env.get('NEXT_PUBLIC_SITE_URL')}/auth/kakao-callback`,
-        code: code,
-      }),
+      body: tokenParams,
     })
 
-    if (!tokenResponse.ok) {
-      throw new Error(`Token exchange failed: ${tokenResponse.status}`)
-    }
-
     const tokenData = await tokenResponse.json()
+    console.log('📥 Token response:', tokenResponse.status, tokenData)
+
+    if (!tokenResponse.ok) {
+      throw new Error(`Token exchange failed: ${tokenResponse.status} - ${JSON.stringify(tokenData)}`)
+    }
 
     // 카카오 사용자 정보 가져오기
     const userResponse = await fetch('https://kapi.kakao.com/v2/user/me', {
@@ -48,51 +55,68 @@ Deno.serve(async (req) => {
       },
     })
 
+    const userData = await userResponse.json()
+    console.log('👤 User data:', userData)
+
     if (!userResponse.ok) {
-      throw new Error(`User info fetch failed: ${userResponse.status}`)
+      throw new Error(`User info fetch failed: ${userResponse.status} - ${JSON.stringify(userData)}`)
     }
 
-    const userData = await userResponse.json()
-
-    // Supabase 클라이언트 생성
+    // Supabase 클라이언트 생성 (admin)
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    // 사용자 생성 또는 업데이트
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email: userData.kakao_account?.email || `kakao_${userData.id}@placeholder.com`,
-      user_metadata: {
-        full_name: userData.kakao_account?.profile?.nickname || 'Kakao User',
-        avatar_url: userData.kakao_account?.profile?.profile_image_url,
-        provider: 'kakao',
-        kakao_id: userData.id.toString(),
-      },
-      email_confirm: true,
-    })
+    const email = userData.kakao_account?.email || `kakao_${userData.id}@findmywhy.co`
+    const nickname = userData.kakao_account?.profile?.nickname || 'Kakao User'
 
-    if (authError && authError.message !== 'User already registered') {
-      throw new Error(`User creation failed: ${authError.message}`)
+    console.log('📧 Using email:', email)
+
+    // 기존 사용자 확인
+    const { data: existingUser } = await supabase.auth.admin.getUserById(userData.id.toString())
+    
+    let userId: string
+
+    if (existingUser.user) {
+      console.log('✅ Existing user found')
+      userId = existingUser.user.id
+    } else {
+      console.log('🆕 Creating new user...')
+      // 새 사용자 생성
+      const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+        email: email,
+        user_metadata: {
+          full_name: nickname,
+          avatar_url: userData.kakao_account?.profile?.profile_image_url,
+          provider: 'kakao',
+          kakao_id: userData.id.toString(),
+        },
+        email_confirm: true,
+      })
+
+      if (createError) {
+        console.error('❌ User creation error:', createError)
+        throw new Error(`User creation failed: ${createError.message}`)
+      }
+
+      userId = newUser.user.id
+      console.log('✅ New user created:', userId)
     }
 
     // 세션 생성
-    const userId = authData?.user?.id || authError?.message === 'User already registered' 
-      ? (await supabase.from('users').select('id').eq('email', userData.kakao_account?.email || `kakao_${userData.id}@placeholder.com`).single()).data?.id
-      : null
-
-    if (!userId) {
-      throw new Error('Failed to get user ID')
-    }
-
+    console.log('🔐 Generating session...')
     const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
-      email: userData.kakao_account?.email || `kakao_${userData.id}@placeholder.com`,
+      email: email,
     })
 
     if (sessionError) {
+      console.error('❌ Session generation error:', sessionError)
       throw new Error(`Session generation failed: ${sessionError.message}`)
     }
+
+    console.log('✅ Session generated successfully')
 
     return new Response(
       JSON.stringify({ 
@@ -100,8 +124,8 @@ Deno.serve(async (req) => {
         session: sessionData.properties,
         user: {
           id: userId,
-          email: userData.kakao_account?.email || `kakao_${userData.id}@placeholder.com`,
-          full_name: userData.kakao_account?.profile?.nickname || 'Kakao User',
+          email: email,
+          full_name: nickname,
         }
       }),
       { 
@@ -111,7 +135,7 @@ Deno.serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Kakao auth error:', error)
+    console.error('❌ Kakao auth error:', error)
     return new Response(
       JSON.stringify({ 
         error: 'Authentication failed', 
