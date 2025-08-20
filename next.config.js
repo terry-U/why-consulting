@@ -11,6 +11,14 @@ const nextConfig = {
   experimental: {
     // 성능 최적화
     optimizePackageImports: ['@radix-ui/react-icons'],
+  },
+  // Supabase Edge Functions 제외
+  webpack: (config) => {
+    config.module.rules.push({
+      test: /supabase\/functions/,
+      loader: 'ignore-loader'
+    })
+    return config
   }
 }
 
