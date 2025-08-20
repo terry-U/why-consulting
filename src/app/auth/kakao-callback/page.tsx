@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { handleKakaoCallback } from '@/lib/auth-kakao'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/auth'
 
 function KakaoCallbackContent() {
   const router = useRouter()

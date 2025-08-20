@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/auth'
 import { Session, Message } from '@/lib/supabase'
 
 export interface SessionWithHistory extends Session {

@@ -1,10 +1,5 @@
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from './supabase'
 import { signOutFromKakao } from './auth-kakao'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 /**
  * 카카오 로그인 - auth-kakao.ts에서 처리

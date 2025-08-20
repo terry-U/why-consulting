@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/auth'
 import { Message } from '@/lib/supabase'
 
 /**

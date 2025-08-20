@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,27 +13,30 @@ export async function POST(request: NextRequest) {
 
     console.log('🔄 Processing Kakao OAuth callback...')
 
-    // Supabase Edge Function 호출
+    // Supabase Edge Function 직접 호출
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    
-    const supabase = createClient(supabaseUrl, supabaseAnonKey)
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-    // Edge Function 호출
-    const { data, error } = await supabase.functions.invoke('auth-kakao', {
-      body: {
-        code,
-        redirectUri
-      }
+    // Edge Function 직접 호출
+    const response = await fetch(`${supabaseUrl}/functions/v1/auth-kakao`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseServiceKey}`
+      },
+      body: JSON.stringify({ code, redirectUri })
     })
 
-    if (error) {
-      console.error('❌ Edge Function error:', error)
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('❌ Edge Function HTTP error:', errorText)
       return NextResponse.json(
-        { error: 'Authentication failed', details: error.message },
-        { status: 500 }
+        { error: 'Edge Function call failed', details: errorText },
+        { status: response.status }
       )
     }
+
+    const data = await response.json()
 
     if (!data.success) {
       console.error('❌ Kakao authentication failed:', data.error)
