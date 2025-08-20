@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { handleKakaoCallback } from '@/lib/auth-kakao'
-import { createClient } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 
 export default function AuthCallback() {
   const router = useRouter()
@@ -43,7 +43,6 @@ export default function AuthCallback() {
         console.log('✅ Kakao login successful, redirecting...')
 
         // Supabase 세션 새로고침
-        const supabase = createClient()
         const { data: { session } } = await supabase.auth.getSession()
 
         if (session) {
