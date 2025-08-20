@@ -60,18 +60,22 @@ export const initKakaoSDK = (): Promise<void> => {
 }
 
 /**
- * 카카오 로그인 실행
+ * 카카오 로그인 실행 - Authorization Code 방식
  */
 export const signInWithKakao = async (): Promise<KakaoAuthResponse> => {
   try {
     // 카카오 SDK 초기화
     await initKakaoSDK()
 
-    // 카카오 로그인 페이지로 리다이렉트
+    // Authorization Code 방식으로 리다이렉트
     const redirectUri = `${window.location.origin}/auth/kakao-callback`
-    window.Kakao.Auth.authorize({
-      redirectUri: redirectUri
-    })
+    const kakaoClientId = process.env.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY
+    
+    // 직접 카카오 OAuth URL로 리다이렉트
+    const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${kakaoClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code`
+    
+    console.log('🔄 Redirecting to Kakao OAuth:', kakaoAuthUrl)
+    window.location.href = kakaoAuthUrl
 
     return { success: true }
   } catch (error) {
