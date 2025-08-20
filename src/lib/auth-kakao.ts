@@ -67,19 +67,13 @@ export const signInWithKakao = async (): Promise<KakaoAuthResponse> => {
     // 카카오 SDK 초기화
     await initKakaoSDK()
 
-    return new Promise((resolve, reject) => {
-      window.Kakao.Auth.authorize({
-        redirectUri: `${window.location.origin}/auth/kakao-callback`,
-        success: (authObj: any) => {
-          console.log('✅ Kakao authorization successful')
-          resolve({ success: true })
-        },
-        fail: (err: any) => {
-          console.error('❌ Kakao authorization failed:', err)
-          reject({ success: false, error: err.error_description || 'Kakao login failed' })
-        }
-      })
+    // 카카오 로그인 페이지로 리다이렉트
+    const redirectUri = `${window.location.origin}/auth/kakao-callback`
+    window.Kakao.Auth.authorize({
+      redirectUri: redirectUri
     })
+
+    return { success: true }
   } catch (error) {
     console.error('❌ Kakao login error:', error)
     return {

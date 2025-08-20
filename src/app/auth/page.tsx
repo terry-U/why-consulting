@@ -23,16 +23,11 @@ function AuthContent() {
       setAuthError('')
       
       console.log('🔄 Starting Kakao login...')
-      const result = await signInWithKakao()
-      
-      if (!result.success) {
-        setAuthError(result.error || '로그인에 실패했습니다.')
-        setIsLoading(false)
-      }
+      await signInWithKakao()
       // 성공 시 카카오가 자동으로 콜백 페이지로 리다이렉트
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Kakao login error:', error)
-      setAuthError('로그인 중 오류가 발생했습니다.')
+      setAuthError(error?.error || '로그인 중 오류가 발생했습니다.')
       setIsLoading(false)
     }
   }
