@@ -48,20 +48,31 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Kakao authentication successful')
 
-    // 세션 설정을 위한 응답
+    // 세션 설정을 위한 응답 (세션을 포함해 반환)
     const response = NextResponse.json({
       success: true,
       user: data.user,
+      session: data.session,
       redirect: '/home'
     })
 
-    // 세션 쿠키 설정 (선택사항)
+    // 세션 쿠키 설정 - Supabase SSR 미들웨어가 인식 가능한 키로 세팅
     if (data.session?.access_token) {
-      response.cookies.set('supabase-auth-token', data.session.access_token, {
+      response.cookies.set('sb-access-token', data.session.access_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7 // 7일
+        path: '/',
+        maxAge: 60 * 60 * 24 * 7
+      })
+    }
+    if (data.session?.refresh_token) {
+      response.cookies.set('sb-refresh-token', data.session.refresh_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 24 * 30
       })
     }
 

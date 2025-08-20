@@ -15,6 +15,9 @@ export async function middleware(req: NextRequest) {
     {
       cookies: {
         get(name: string) {
+          // Supabase 표준 토큰 쿠키 키 우선 조회
+          if (name === 'sb-access-token') return req.cookies.get('sb-access-token')?.value
+          if (name === 'sb-refresh-token') return req.cookies.get('sb-refresh-token')?.value
           return req.cookies.get(name)?.value
         },
         set(name: string, value: string, options: any) {
@@ -28,11 +31,8 @@ export async function middleware(req: NextRequest) {
               headers: req.headers,
             },
           })
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          })
+          // 표준 키로도 복제 설정
+          response.cookies.set({ name, value, ...options })
         },
         remove(name: string, options: any) {
           req.cookies.set({
@@ -45,11 +45,7 @@ export async function middleware(req: NextRequest) {
               headers: req.headers,
             },
           })
-          response.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
+          response.cookies.set({ name, value: '', ...options })
         },
       },
     }
