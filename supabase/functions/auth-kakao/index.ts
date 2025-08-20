@@ -164,6 +164,86 @@ Deno.serve(async (req) => {
       })
 
       if (signUpError) {
+        // 이미 이메일로 등록된 사용자인 경우 처리 분기
+        if (signUpError.message?.includes('already') || signUpError.message?.includes('registered')) {
+          console.warn('ℹ️ User already registered with this email. Falling back to magiclink session.')
+
+          // users 테이블에서 이메일로 사용자 ID 시도 조회 (있다면 패스워드 갱신 + 패스워드 로그인)
+          const { data: rowByEmail } = await supabase
+            .from('users')
+            .select('id')
+            .eq('email', userEmail)
+            .maybeSingle()
+
+          if (rowByEmail?.id) {
+            // 비밀번호 갱신 후 패스워드로 세션 발급
+            const { error: pwdErr } = await supabase.auth.admin.updateUserById(rowByEmail.id, { password: userPassword })
+            if (pwdErr) {
+              console.error('❌ Password update error (email fallback):', pwdErr)
+            } else {
+              const { data: signInExisting, error: signInExistingErr } = await authClient.auth.signInWithPassword({
+                email: userEmail,
+                password: userPassword
+              })
+              if (!signInExistingErr && signInExisting.session) {
+                return new Response(
+                  JSON.stringify({
+                    success: true,
+                    user: {
+                      id: rowByEmail.id,
+                      email: userEmail,
+                      nickname: nickname,
+                      profile_image: profileImage,
+                      kakao_id: userData.id.toString()
+                    },
+                    session: {
+                      access_token: signInExisting.session.access_token,
+                      refresh_token: signInExisting.session.refresh_token,
+                      expires_in: signInExisting.session.expires_in,
+                      token_type: 'bearer'
+                    }
+                  }),
+                  { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+                )
+              }
+            }
+
+          }
+
+          // 매직링크로 세션 발급 (최후의 수단)
+          const { data: linkData, error: linkErr } = await supabase.auth.admin.generateLink({
+            type: 'magiclink',
+            email: userEmail
+          })
+          if (linkErr) {
+            console.error('❌ Magiclink generation error:', linkErr)
+            return new Response(
+              JSON.stringify({ error: 'Failed to create user', details: signUpError.message }),
+              { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+          }
+
+          return new Response(
+            JSON.stringify({
+              success: true,
+              user: {
+                id: undefined,
+                email: userEmail,
+                nickname: nickname,
+                profile_image: profileImage,
+                kakao_id: userData.id.toString()
+              },
+              session: {
+                access_token: linkData.properties.hashed_token,
+                refresh_token: linkData.properties.hashed_token,
+                expires_in: linkData.properties.expires_in || 3600,
+                token_type: 'bearer'
+              }
+            }),
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+
         console.error('❌ Supabase signup error:', signUpError)
         return new Response(
           JSON.stringify({ error: 'Failed to create user', details: signUpError.message }),
