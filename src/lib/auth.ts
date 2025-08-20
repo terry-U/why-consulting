@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { signOutFromKakao } from './auth-kakao'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -6,48 +7,40 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 /**
- * 이메일과 비밀번호로 회원가입
+ * 카카오 로그인 - auth-kakao.ts에서 처리
+ * @deprecated 이메일 회원가입은 더 이상 사용하지 않습니다
  */
 export async function signUp(email: string, password: string) {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: `${window.location.origin}/auth/callback`
-    }
-  })
-  
-  if (error) {
-    throw new Error(error.message)
-  }
-  
-  return data
+  throw new Error('이메일 회원가입은 지원하지 않습니다. 카카오 로그인을 사용해주세요.')
 }
 
 /**
- * 이메일과 비밀번호로 로그인
+ * 카카오 로그인 - auth-kakao.ts에서 처리  
+ * @deprecated 이메일 로그인은 더 이상 사용하지 않습니다
  */
 export async function signIn(email: string, password: string) {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  })
-  
-  if (error) {
-    throw new Error(error.message)
-  }
-  
-  return data
+  throw new Error('이메일 로그인은 지원하지 않습니다. 카카오 로그인을 사용해주세요.')
 }
 
 /**
- * 로그아웃
+ * 로그아웃 (카카오 + Supabase)
  */
 export async function signOut() {
-  const { error } = await supabase.auth.signOut()
-  
-  if (error) {
-    throw new Error(error.message)
+  try {
+    // 카카오 로그아웃
+    await signOutFromKakao()
+    
+    // Supabase 로그아웃
+    const { error } = await supabase.auth.signOut()
+    
+    if (error) {
+      throw new Error(error.message)
+    }
+    
+    console.log('✅ Logout successful')
+  } catch (error) {
+    console.error('❌ Logout error:', error)
+    throw error
   }
 }
 
