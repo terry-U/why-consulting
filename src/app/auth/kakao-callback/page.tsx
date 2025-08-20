@@ -40,19 +40,26 @@ function KakaoCallbackContent() {
           return
         }
 
-        console.log('✅ Kakao login successful, redirecting...')
+        console.log('✅ Kakao login successful, setting session...')
 
-        // Supabase 세션 새로고침
-        const { data: { session } } = await supabase.auth.getSession()
-
-        if (session) {
-          // 홈으로 리다이렉트
-          router.replace('/home')
-        } else {
-          // 세션이 없으면 다시 로그인 페이지로
-          setError('세션 생성에 실패했습니다.')
-          setIsLoading(false)
+        // Edge Function에서 받은 세션 데이터로 Supabase 세션 설정
+        if (result.session) {
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token: result.session.properties.hashed_token,
+            refresh_token: result.session.properties.hashed_token
+          })
+          
+          if (sessionError) {
+            console.error('❌ Session setting error:', sessionError)
+            setError('세션 설정에 실패했습니다.')
+            setIsLoading(false)
+            return
+          }
         }
+
+        console.log('✅ Session set successfully, redirecting to home...')
+        // 홈으로 리다이렉트
+        router.replace('/home')
 
       } catch (error) {
         console.error('❌ Callback processing error:', error)
