@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, Suspense } from 'react'
+import { useState, useEffect, useRef, Suspense, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 // 온보딩 메시지(기존 스크립트 복원)
@@ -33,6 +33,27 @@ function OnboardingRunner() {
   const afterTypeTimer = useRef<NodeJS.Timeout | null>(null)
   const shrinkTimer = useRef<NodeJS.Timeout | null>(null)
 
+  // 온점 단위 분할(문장 단위 렌더) – 마침표/물음표/느낌표 유지
+  const segments = useMemo(() => {
+    const result: string[] = []
+    ONBOARDING_MESSAGES.forEach((m) => {
+      const matches = m.match(/[^.?!]+[.?!]/g)
+      if (matches && matches.length) {
+        matches.forEach(s => {
+          const trimmed = s.trim()
+          if (trimmed) result.push(trimmed)
+        })
+        // 남는 꼬리 문장이 있으면 추가
+        const tail = m.replace(/[^.?!]+[.?!]/g, '').trim()
+        if (tail) result.push(tail)
+      } else {
+        const t = m.trim()
+        if (t) result.push(t)
+      }
+    })
+    return result
+  }, [])
+
   const finish = () => {
     try { localStorage.setItem('onboarding_seen', 'true') } catch {}
     // 요구사항: 상담 시작 시에는 온보딩을 보여줄 필요 없음 → 기본은 홈으로 복귀
@@ -47,7 +68,7 @@ function OnboardingRunner() {
     // 타이핑 시작
     setText('')
     setIsTyping(true)
-    const content = ONBOARDING_MESSAGES[step]
+    const content = segments[step]
     let i = 0
     typingTimer.current = setInterval(() => {
       i += 1
@@ -60,13 +81,13 @@ function OnboardingRunner() {
           setIsShrinking(true)
           shrinkTimer.current = setTimeout(() => {
             setIsShrinking(false)
-            if (step >= ONBOARDING_MESSAGES.length - 1) {
+            if (step >= segments.length - 1) {
               finish()
             } else {
               setStep(prev => prev + 1)
             }
           }, 260) // 빠르게 줄어듦(조금 느리게)
-        }, 1600) // 잠깐 머무름(조금 느리게)
+        }, 2600) // 잠깐 머무름(조금 더 길게)
       }
     }, 28) // 타자 속도(조금 느리게)
 
