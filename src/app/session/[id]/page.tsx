@@ -41,6 +41,16 @@ export default function SessionPage() {
           return
         }
 
+        // 완료된 상담 또는 요약 상태면 바로 리포트 페이지로 이동
+        if (
+          sessionData.status === 'completed' ||
+          sessionData.counseling_phase === 'summary' ||
+          !!sessionData.generated_why
+        ) {
+          router.replace(`/session/${sessionId}/report`)
+          return
+        }
+
         setSession(sessionData)
 
         // 세션 메시지 가져오기
