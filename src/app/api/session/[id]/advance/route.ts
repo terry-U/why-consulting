@@ -5,19 +5,22 @@ export async function POST(request: Request, context: any) {
   const sessionId = context?.params?.id || new URL(request.url).pathname.split('/').filter(Boolean).slice(-2, -1)[0]
 
   try {
-    const { nextPhase, nextQuestionIndex } = await request.json()
+    const body = await request.json()
+    const nextPhase = body?.nextPhase ?? null
+    const nextQuestionIndex = Number.isFinite(body?.nextQuestionIndex) ? body.nextQuestionIndex : null
 
     console.log('⏭️ 세션 단계 진행:', { sessionId, nextPhase, nextQuestionIndex })
 
     // 세션 상태 업데이트
-    const updateData: Record<string, any> = {
-      counseling_phase: nextPhase
-    }
-    if (Number.isFinite(nextQuestionIndex)) {
-      updateData.current_question_index = nextQuestionIndex
-    }
+    const updateData: Record<string, any> = {}
+    if (nextPhase) updateData.counseling_phase = nextPhase
+    if (typeof nextQuestionIndex === 'number') updateData.current_question_index = nextQuestionIndex
 
     // answers 저장은 추후 안정화 후 재도입
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ success: false, error: '업데이트할 필드가 없습니다.' }, { status: 400 })
+    }
 
     const { error } = await supabaseServer
       .from('sessions')
