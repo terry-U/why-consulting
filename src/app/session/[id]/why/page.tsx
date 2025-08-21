@@ -183,6 +183,5 @@ export default function WhyPage() {
           </div>
         )}
       </div>
-    </div>
   )
 }
