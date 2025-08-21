@@ -179,8 +179,13 @@ export default function HomePage() {
             history={sessions}
             onSelectSession={(sessionId) => {
               const session = sessions.find(s => s.id === sessionId)
-              if (session?.status === 'completed' && session.whyStatement) {
-                router.push(`/session/${sessionId}/why`)
+              // 완료/요약 상태이거나 Why가 생성된 경우엔 보고서로 이동
+              if (
+                session?.status === 'completed' ||
+                session?.counseling_phase === 'summary' ||
+                session?.generated_why
+              ) {
+                router.push(`/session/${sessionId}/report`)
               } else {
                 router.push(`/session/${sessionId}`)
               }
