@@ -37,6 +37,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
   const [showTypingPanel, setShowTypingPanel] = useState(true)
   const [isScrolledUp, setIsScrolledUp] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const [panelOverrideText, setPanelOverrideText] = useState<string | null>(null)
 
   const TYPE_MS = 28
   const WAIT_MS = 2600
@@ -153,10 +154,11 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
           content: '' // 처음에는 빈 내용으로 시작
         }])
         
-        // 온보딩형 문장 단위 타이핑. 타이핑 완료 시 중앙 패널은 사라지고 기록만 남김
+        // 온보딩형 문장 단위 타이핑. 타이핑 완료 후에도 패널 유지
+        setPanelOverrideText(null)
         startTypewriter(data.response, () => {
           setMessages([{ ...aiResponse, content: data.response }])
-          setShowTypingPanel(false)
+          setShowTypingPanel(true)
           console.log('🔍 첫 인사 API 응답:', { shouldAdvance: data.shouldAdvance, nextPhaseData: data.nextPhaseData })
           if (data.shouldAdvance && data.nextPhaseData) {
             console.log('⏭️ 첫 인사에서 진행 신호 수신:', data.nextPhaseData)
@@ -198,6 +200,8 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
     const userMessage = inputValue.trim()
     setInputValue('')
     setIsLoading(true)
+    setPanelOverrideText('')
+    setShowTypingPanel(true)
 
     try {
       // 사용자 메시지를 즉시 UI에 추가
@@ -244,10 +248,11 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
         }
         setMessages(prev => [...prev, tempMessage])
         
-        // 온보딩형 문장 단위 타이핑. 타이핑 완료 시 중앙 패널은 사라지고 기록만 남김
+        // 온보딩형 문장 단위 타이핑. 타이핑 완료 후에도 패널 유지
+        setPanelOverrideText(null)
         startTypewriter(data.response, () => {
           setMessages(prev => prev.map(msg => msg.id === aiResponse.id ? { ...msg, content: data.response } : msg))
-          setShowTypingPanel(false)
+          setShowTypingPanel(true)
           console.log('🔍 API 응답 데이터:', { shouldAdvance: data.shouldAdvance, nextPhaseData: data.nextPhaseData })
           if (data.shouldAdvance && data.nextPhaseData) {
             console.log('⏭️ 다음 단계 진행 신호 수신:', data.nextPhaseData)
@@ -438,7 +443,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
           aria-live="polite"
           className={`max-w-4xl w-full px-6 pt-8 pb-8 mx-auto font-semibold leading-tight select-none transition-all duration-200 ease-out text-left text-3xl md:text-5xl min-h-[5.5rem] md:min-h-[8rem] ${showTypingPanel ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}
         >
-          {typedText || getLatestAssistantText()}
+          {panelOverrideText !== null ? panelOverrideText : (typedText || getLatestAssistantText())}
         </div>
 
         {/* 과거 대화(간결히) */}

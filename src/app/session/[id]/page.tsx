@@ -108,19 +108,13 @@ export default function SessionPage() {
     <div className="min-h-screen">
       <div className="py-6">
         {/* 헤더 */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="mb-2">
           <button
             onClick={() => router.push('/home')}
-            className="text-gray-600 hover:text-gray-900 transition-colors"
+            className="fixed top-4 left-4 z-50 text-gray-600 hover:text-gray-900 transition-colors"
           >
             ← 홈으로 돌아가기
           </button>
-          <div className="text-center">
-            <h1 className="text-xl font-semibold text-gray-900">
-              상담 진행 중
-            </h1>
-          </div>
-          <div></div> {/* 균형을 위한 빈 div */}
         </div>
 
 
