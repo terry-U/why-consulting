@@ -1,9 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase-server'
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = await params
-  const sessionId = resolvedParams.id
+export async function POST(request: Request, context: any) {
+  const sessionId = context?.params?.id || new URL(request.url).pathname.split('/').filter(Boolean).slice(-2, -1)[0]
 
   try {
     const { nextPhase, nextQuestionIndex, userAnswer } = await request.json()
@@ -11,7 +10,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     console.log('⏭️ 세션 단계 진행:', { sessionId, nextPhase, nextQuestionIndex })
 
     // 세션 상태 업데이트
-    const updateData: any = {
+    const updateData: Record<string, any> = {
       counseling_phase: nextPhase,
       current_question_index: nextQuestionIndex
     }
