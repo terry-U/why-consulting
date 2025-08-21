@@ -10,16 +10,11 @@ interface CounselorHeaderProps {
 
 export default function CounselorHeader({ counselor, currentQuestion, isLoading = false }: CounselorHeaderProps) {
   return (
-    <div className="bg-white border-b border-gray-100 px-4 py-3">
+    <div className="bg-white border-b border-gray-200 px-4 py-3">
       <div className="flex items-center justify-between">
         {/* 상담사 정보 */}
         <div className="flex items-center space-x-3">
-          <div 
-            className="w-10 h-10 rounded-full flex items-center justify-center shadow-sm"
-            style={{ 
-              background: `linear-gradient(135deg, ${counselor.gradientFrom}, ${counselor.gradientTo})` 
-            }}
-          >
+          <div className="w-10 h-10 rounded-full border bg-white flex items-center justify-center">
             <span className="text-lg">{counselor.emoji}</span>
           </div>
           <div>
@@ -27,9 +22,9 @@ export default function CounselorHeader({ counselor, currentQuestion, isLoading 
               <h3 className="font-semibold text-gray-900">{counselor.name}</h3>
               {isLoading && (
                 <div className="flex items-center space-x-1">
-                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                  <div className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                  <div className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                  <div className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                 </div>
               )}
             </div>
@@ -45,7 +40,7 @@ export default function CounselorHeader({ counselor, currentQuestion, isLoading 
       </div>
 
       {/* 상담사 설명 */}
-      <div className="mt-3 pt-3 border-t border-gray-50">
+      <div className="mt-3 pt-3 border-t border-gray-100">
         <p className="text-sm text-gray-600 leading-relaxed">
           {counselor.description}
         </p>

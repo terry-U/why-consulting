@@ -33,16 +33,10 @@ export default function WhyCandidates({ candidates, onFinalize }: WhyCandidatesP
   return (
     <div className="max-w-4xl mx-auto p-6">
       {/* 헤더 */}
-      <div className="text-center mb-8">
-        <div className="w-24 h-24 mx-auto bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-4xl mb-4">
-          🌟
-        </div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          당신의 Why를 발견했습니다!
-        </h1>
-        <p className="text-gray-600">
-          아래 후보 중에서 가장 마음에 와 닿는 문장을 선택해주세요
-        </p>
+      <div className="mb-8">
+        <div className="text-4xl mb-3">🌟</div>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">당신의 Why를 발견했습니다!</h1>
+        <p className="text-gray-600">아래 후보 중에서 가장 마음에 와 닿는 문장을 선택해주세요</p>
       </div>
 
       {/* Why 후보들 */}
@@ -51,10 +45,10 @@ export default function WhyCandidates({ candidates, onFinalize }: WhyCandidatesP
           <div
             key={index}
             onClick={() => handleSelectCandidate(candidate)}
-            className={`p-6 rounded-2xl border-2 cursor-pointer transition-all duration-300 ${
+            className={`p-6 rounded-2xl border cursor-pointer transition-all duration-200 ${
               selectedCandidate === candidate.text
-                ? 'border-yellow-500 bg-yellow-50 shadow-lg transform scale-105'
-                : 'border-gray-200 bg-white hover:border-yellow-300 hover:shadow-md'
+                ? 'border-gray-900 bg-white'
+                : 'border-gray-200 bg-white hover:border-gray-400'
             }`}
           >
             <div className="text-center">
@@ -77,10 +71,8 @@ export default function WhyCandidates({ candidates, onFinalize }: WhyCandidatesP
 
         {/* 직접 작성 옵션 */}
         <div
-          className={`p-6 rounded-2xl border-2 cursor-pointer transition-all duration-300 ${
-            showCustom
-              ? 'border-purple-500 bg-purple-50 shadow-lg'
-              : 'border-gray-200 bg-white hover:border-purple-300 hover:shadow-md'
+          className={`p-6 rounded-2xl border cursor-pointer transition-all duration-200 ${
+            showCustom ? 'border-gray-900 bg-white' : 'border-gray-200 bg-white hover:border-gray-400'
           }`}
           onClick={() => setShowCustom(true)}
         >
@@ -98,13 +90,13 @@ export default function WhyCandidates({ candidates, onFinalize }: WhyCandidatesP
                   value={customWhy}
                   onChange={(e) => setCustomWhy(e.target.value)}
                   placeholder="당신만의 Why 문장을 작성해주세요..."
-                  className="w-full p-4 border border-gray-300 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="input resize-none"
                   rows={3}
                 />
                 <button
                   onClick={handleCustomSubmit}
                   disabled={!customWhy.trim()}
-                  className="mt-3 px-6 py-2 bg-purple-500 text-white rounded-full font-medium hover:bg-purple-600 transition-colors disabled:opacity-50"
+                  className="mt-3 btn btn-primary text-white"
                 >
                   이 문장으로 선택
                 </button>
@@ -116,14 +108,10 @@ export default function WhyCandidates({ candidates, onFinalize }: WhyCandidatesP
 
       {/* 선택된 Why 문장 확인 */}
       {selectedCandidate && (
-        <div className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white p-6 rounded-2xl mb-8">
+        <div className="border border-gray-200 bg-white p-6 rounded-2xl mb-8">
           <h3 className="text-xl font-bold text-center mb-3">선택하신 Why 문장</h3>
-          <p className="text-2xl font-medium text-center mb-4">
-            "{selectedCandidate}"
-          </p>
-          <p className="text-yellow-100 text-center text-sm">
-            말없이 고개가 끄덕여지면, 그 문장이 맞아요.
-          </p>
+          <p className="text-2xl font-medium text-center mb-4">"{selectedCandidate}"</p>
+          <p className="text-gray-500 text-center text-sm">말없이 고개가 끄덕여지면, 그 문장이 맞아요.</p>
         </div>
       )}
 
@@ -132,7 +120,7 @@ export default function WhyCandidates({ candidates, onFinalize }: WhyCandidatesP
         <button
           onClick={handleFinalize}
           disabled={!selectedCandidate}
-          className="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xl font-semibold py-4 px-12 rounded-full hover:from-green-600 hover:to-emerald-600 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn btn-primary text-white text-lg font-semibold px-10 py-4 rounded-full disabled:opacity-50"
         >
           이 문장으로 확정하기
         </button>
