@@ -372,62 +372,68 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
     return 'yellow'
   }
 
+  // 최신 상담사 문장 (온보딩 스타일 표시용)
+  const getLatestAssistantText = useCallback(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'assistant') return messages[i].content || ''
+    }
+    return ''
+  }, [messages])
+
   
 
   return (
     <div className="flex flex-col h-full">
-      {/* 현재 질문 헤더 - 미니멀 */}
+      {/* 상단 프레임: 질문 텍스트를 좌측 고정 영역에 미니멀 표시 */}
       {currentQuestion && (
-        <div className="border-b border-gray-200 p-4 bg-white">
-          <div className="max-w-3xl mx-auto">
+        <div className="border-b border-gray-200 bg-white">
+          <div className="max-w-4xl w-full px-6 py-4 mx-auto">
             <p className="text-xs text-gray-500 mb-1">질문 {session.current_question_index}/8</p>
-            <p className="text-base font-semibold text-gray-900">{currentQuestion.text}</p>
+            <p className="text-base font-semibold text-gray-900 text-left">{currentQuestion.text}</p>
           </div>
         </div>
       )}
-      
-      {/* 메시지 목록 */}
-      <div
-        className="flex-1 overflow-y-auto p-4 space-y-4 bg-white"
-        onClick={() => {
-          // 온보딩처럼 클릭 시 타이핑 또는 대기 스킵
-          if (isTyping && typingIntervalRef.current) {
-            const seg = segments[segmentIndex] || ''
-            setTypedText([...segments.slice(0, segmentIndex), seg].join(' '))
-            clearInterval(typingIntervalRef.current)
-            setIsTyping(false)
-          } else if (!isTyping && waitingTimeoutRef.current) {
-            clearTimeout(waitingTimeoutRef.current)
-            setSegmentIndex(prev => Math.min(prev + 1, Math.max(segments.length - 1, 0)))
-          }
-        }}
-      >
-        {messages.map((message) => {
-          if (message.role === 'user') {
-            return <UserMessage key={message.id} message={message.content} />
-          } else {
-            const character = getCharacter((message.counselor_id as CharacterType) || 'main')
-            return (
-              <CharacterMessage
-                key={message.id}
-                character={character}
-                message={message.content}
-                showTypingEffect={false}
-              />
-            )
-          }
-        })}
-        
-        {/* 로딩 상태 */}
-        {isLoading && (
-          <CharacterMessage
-            character={getCharacter(getCurrentCounselor() as CharacterType)}
-            message=""
-            isTyping={true}
-          />
-        )}
-        
-        <div ref={messagesEndRef} />
+
+      {/* 온보딩형 메인 메시지 영역 (상담사 최신 메시지를 온보딩 스타일로 렌더) */}
+      <div className="flex-1 overflow-y-auto bg-white">
+        <div
+          role="button"
+          onClick={() => {
+            if (isTyping && typingIntervalRef.current) {
+              const seg = segments[segmentIndex] || ''
+              setTypedText([...segments.slice(0, segmentIndex), seg].join(' '))
+              clearInterval(typingIntervalRef.current)
+              setIsTyping(false)
+            } else if (!isTyping && waitingTimeoutRef.current) {
+              clearTimeout(waitingTimeoutRef.current)
+              setSegmentIndex(prev => Math.min(prev + 1, Math.max(segments.length - 1, 0)))
+            }
+          }}
+          aria-live="polite"
+          className="max-w-4xl w-full px-6 pt-8 pb-8 mx-auto font-semibold leading-tight select-none transition-all duration-200 ease-out text-left text-3xl md:text-5xl min-h-[5.5rem] md:min-h-[8rem]"
+        >
+          {typedText || getLatestAssistantText()}
+        </div>
+
+        {/* 과거 대화(간결히) */}
+        <div className="max-w-4xl w-full px-6 pb-16 mx-auto space-y-3">
+          {messages.slice(0, -1).map((message) => {
+            if (message.role === 'user') {
+              return <UserMessage key={message.id} message={message.content} />
+            } else {
+              const character = getCharacter((message.counselor_id as CharacterType) || 'main')
+              return (
+                <CharacterMessage
+                  key={message.id}
+                  character={character}
+                  message={message.content}
+                  showTypingEffect={false}
+                />
+              )
+            }
+          })}
+          <div ref={messagesEndRef} />
+        </div>
       </div>
 
       {/* 답변 확인 버튼들 - 전체 화면 */}
@@ -484,34 +490,29 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
         </div>
       )}
 
-      {/* 입력 영역 */}
-      <div className="bg-white border-t border-gray-200 p-4">
-        <div className="max-w-3xl mx-auto">
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <textarea
-                ref={inputRef}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="솔직한 마음을 편하게 말해주세요..."
-                className="input resize-none"
-                rows={3}
-                disabled={isLoading || isTyping}
-              />
-            </div>
-            <button
-              onClick={handleSendMessage}
-              disabled={!inputValue.trim() || isLoading || isTyping}
-              className="btn btn-primary text-white"
-            >
-              💬
-            </button>
-          </div>
-          <div className="mt-2 text-xs text-gray-500 text-center">
-            Enter로 전송 • Shift+Enter로 줄바꿈
-          </div>
+      {/* 하단 고정 바 (온보딩 스타일) */}
+      <div className="fixed bottom-0 left-0 right-0 px-4 py-3 border-t border-gray-200 bg-white/90 backdrop-blur-md">
+        <div className="max-w-4xl mx-auto flex items-end gap-3">
+          <textarea
+            ref={inputRef}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="솔직한 마음을 편하게 말해주세요..."
+            className="input resize-none flex-1"
+            rows={2}
+            disabled={isLoading || isTyping}
+          />
+          <button
+            onClick={handleSendMessage}
+            disabled={!inputValue.trim() || isLoading || isTyping}
+            className="btn btn-primary text-white px-4"
+            aria-label="메시지 전송"
+          >
+            💬
+          </button>
         </div>
+        <div className="mt-2 text-[11px] text-gray-500 text-center">Enter 전송 • Shift+Enter 줄바꿈</div>
       </div>
     </div>
   )
