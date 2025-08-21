@@ -14,19 +14,30 @@ export async function POST(request: Request, context: any) {
     // 세션 상태 업데이트
     const updateData: Record<string, any> = {}
     const allowedPhases = new Set(['questions', 'summary', 'completed'])
+
+    // DB 제약 회피: summary로의 전환은 DB에는 questions/8로 유지
+    let phaseForDb: 'questions' | 'summary' | 'completed' | null = null
     if (nextPhase && allowedPhases.has(nextPhase)) {
-      updateData.counseling_phase = nextPhase
+      phaseForDb = nextPhase as any
     }
-    if (typeof nextQuestionIndex === 'number') {
-      let idx = nextQuestionIndex
-      if (updateData.counseling_phase === 'questions') {
-        // 1~8 범위로 보정
-        if (!Number.isFinite(idx) || idx < 1) idx = 1
-        if (idx > 8) idx = 8
-      } else if (updateData.counseling_phase === 'summary' || updateData.counseling_phase === 'completed') {
-        idx = 0
+
+    if (phaseForDb === 'summary') {
+      updateData.counseling_phase = 'questions'
+      updateData.current_question_index = 8
+    } else {
+      if (phaseForDb) {
+        updateData.counseling_phase = phaseForDb
       }
-      updateData.current_question_index = idx
+      if (typeof nextQuestionIndex === 'number') {
+        let idx = nextQuestionIndex
+        if (updateData.counseling_phase === 'questions') {
+          if (!Number.isFinite(idx) || idx < 1) idx = 1
+          if (idx > 8) idx = 8
+        } else if (updateData.counseling_phase === 'completed') {
+          idx = 0
+        }
+        updateData.current_question_index = idx
+      }
     }
 
     // answers 저장은 추후 안정화 후 재도입
@@ -48,7 +59,7 @@ export async function POST(request: Request, context: any) {
       )
     }
 
-    console.log('✅ 세션 단계 진행 완료')
+    console.log('✅ 세션 단계 진행 완료', { updateData })
     return NextResponse.json({
       success: true,
       message: '다음 단계로 진행되었습니다.'
