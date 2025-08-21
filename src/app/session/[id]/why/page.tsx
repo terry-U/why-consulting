@@ -118,10 +118,10 @@ export default function WhyPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-100 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-600 mx-auto mb-4"></div>
-          <p className="text-lg text-gray-700">당신의 Why를 생성하는 중...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto mb-4"></div>
+          <p className="text-lg text-gray-600">당신의 Why를 생성하는 중...</p>
           <p className="text-sm text-gray-500 mt-2">잠시만 기다려주세요</p>
         </div>
       </div>
@@ -131,30 +131,30 @@ export default function WhyPage() {
   if (finalWhy && candidates.length === 0) {
     // 최종 확정된 상태
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="max-w-2xl mx-auto text-center p-8">
-          <div className="w-32 h-32 mx-auto bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center text-6xl mb-8 animate-pulse">
+          <div className="neo w-32 h-32 mx-auto rounded-full flex items-center justify-center text-6xl mb-8">
             ✨
           </div>
           
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">
+          <h1 className="text-3xl font-bold mb-6">
             축하합니다! 🎉
           </h1>
           
-          <div className="bg-white p-8 rounded-2xl shadow-lg mb-8">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">당신의 Why</h2>
-            <p className="text-2xl font-medium text-gray-900 leading-relaxed">
+          <div className="card p-8 mb-8">
+            <h2 className="text-xl font-semibold mb-4">당신의 Why</h2>
+            <p className="text-2xl font-medium leading-relaxed">
               "{finalWhy}"
             </p>
           </div>
           
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-500 mb-6">
             이 문장을 마음에 새기고 더 당신다운 삶을 살아가세요
           </p>
           
           <button
             onClick={() => router.push('/home')}
-            className="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-lg font-semibold py-4 px-8 rounded-full hover:from-green-600 hover:to-emerald-600 transition-all duration-300 shadow-lg hover:shadow-xl"
+            className="btn btn-primary text-white text-lg font-semibold py-4 px-8 rounded-full"
           >
             홈으로 돌아가기
           </button>
@@ -164,8 +164,8 @@ export default function WhyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-100">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen">
+      <div className="ui-container py-8">
         {/* 뒤로가기 버튼 */}
         <button
           onClick={() => router.push(`/session/${sessionId}`)}
@@ -183,10 +183,10 @@ export default function WhyPage() {
         ) : (
           <div className="text-center py-16">
             <div className="text-4xl mb-4">⏳</div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            <h2 className="text-xl font-semibold mb-2">
               Why 문장을 생성하는 중입니다
             </h2>
-            <p className="text-gray-600">
+            <p className="text-gray-500">
               조금만 더 기다려주세요...
             </p>
           </div>

@@ -68,20 +68,20 @@ function OnboardingContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50 flex items-center justify-center relative">
+    <div className="min-h-screen flex items-center justify-center relative">
       {/* 메인 온보딩 화면 */}
       <div className="max-w-4xl mx-auto px-6 text-center">
         {/* 심볼 영역 - 피크민/젤다 스타일 */}
         <div className="mb-12">
-          <div className="w-48 h-48 mx-auto bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-8xl shadow-2xl transform hover:scale-105 transition-transform duration-300">
+          <div className="neo w-48 h-48 mx-auto rounded-full flex items-center justify-center text-8xl transform hover:scale-105 transition-transform duration-300">
             🌟
           </div>
         </div>
 
         {/* 메시지 영역 */}
         <div className="mb-12">
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 md:p-12 shadow-xl max-w-2xl mx-auto">
-            <p className="text-xl md:text-2xl text-gray-800 leading-relaxed font-medium">
+          <div className="card p-8 md:p-12 max-w-2xl mx-auto">
+            <p className="text-xl md:text-2xl leading-relaxed font-medium">
               {ONBOARDING_MESSAGES[currentStep]}
             </p>
           </div>
@@ -109,7 +109,7 @@ function OnboardingContent() {
           {/* 다음 버튼 */}
           <button
             onClick={handleNext}
-            className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-lg font-semibold py-4 px-12 rounded-full hover:from-yellow-600 hover:to-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+            className="btn btn-primary text-white text-lg font-semibold py-4 px-12 rounded-full"
           >
             {isLastStep ? '준비 됐어!' : '다음'}
           </button>
@@ -138,18 +138,18 @@ function OnboardingContent() {
       {/* 티켓 지급 모달 */}
       {showTicketModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-2xl">
+          <div className="card p-8 max-w-md w-full text-center">
             <div className="text-6xl mb-4">🎟️</div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">
+            <h3 className="text-2xl font-bold mb-4">
               상담권 10장 지급!
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-500 mb-6">
               충분한 시간을 가지고<br />
               자신을 탐색해보세요
             </p>
             <button
               onClick={closeTicketModal}
-              className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-semibold py-3 px-8 rounded-full hover:from-yellow-600 hover:to-orange-600 transition-all duration-300"
+              className="btn btn-primary text-white font-semibold py-3 px-8 rounded-full"
             >
               확인
             </button>
