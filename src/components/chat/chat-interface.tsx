@@ -134,8 +134,6 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
     const userMessage = inputValue.trim()
     setInputValue('')
     setIsLoading(true)
-    setPanelOverrideText('')
-    setShowTypingPanel(true)
 
     try {
       // 사용자 메시지를 즉시 UI에 추가
