@@ -27,85 +27,14 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const typingControllerRef = useRef<null | (() => void)>(null)
-
-  // 온보딩형 타이핑 상태
-  const [typedText, setTypedText] = useState('')
-  const [segments, setSegments] = useState<string[]>([])
-  const [segmentIndex, setSegmentIndex] = useState(0)
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const waitingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const [showTypingPanel, setShowTypingPanel] = useState(true)
   const [isScrolledUp, setIsScrolledUp] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
-  const [panelOverrideText, setPanelOverrideText] = useState<string | null>(null)
-
-  const TYPE_MS = 28
-  const WAIT_MS = 2600
-
-  const splitIntoSentences = useCallback((content: string) => {
-    const result: string[] = []
-    const matches = content.match(/[^.?!]+[.?!]/g)
-    if (matches && matches.length) {
-      matches.forEach(s => { const t = s.trim(); if (t) result.push(t) })
-      const tail = content.replace(/[^.?!]+[.?!]/g, '').trim()
-      if (tail) result.push(tail)
-    } else {
-      const t = content.trim(); if (t) result.push(t)
-    }
-    return result
-  }, [])
-
   const clearTypingTimers = useCallback(() => {
     if (typingIntervalRef.current) clearInterval(typingIntervalRef.current)
     if (waitingTimeoutRef.current) clearTimeout(waitingTimeoutRef.current)
   }, [])
-
-  const startTypewriter = useCallback((content: string, onComplete?: () => void) => {
-    // 패널용 텍스트는 [ANSWER_READY] 블록을 숨김
-    const sanitizeForTyping = (raw: string) => {
-      try {
-        // **[ANSWER_READY]** ... **[ANSWER_READY]** 구간 제거
-        const removed = raw.replace(/\*\*\[ANSWER_READY\]\*\*[\s\S]*?\*\*\[ANSWER_READY\]\*\*/g, '')
-        return removed
-      } catch {
-        return raw
-      }
-    }
-    const display = sanitizeForTyping(content)
-    clearTypingTimers()
-    const segs = splitIntoSentences(display)
-    setSegments(segs)
-    setSegmentIndex(0)
-    setTypedText('')
-    setIsTyping(true)
-    setShowTypingPanel(true)
-
-    const typeSegment = (idx: number) => {
-      const current = segs[idx] || ''
-      let i = 0
-      typingIntervalRef.current = setInterval(() => {
-        i += 1
-        const before = segs.slice(0, idx).join(' ')
-        const currentTyped = current.slice(0, i)
-        setTypedText(before ? `${before} ${currentTyped}` : currentTyped)
-        if (i >= current.length) {
-          if (typingIntervalRef.current) clearInterval(typingIntervalRef.current)
-          setIsTyping(false)
-          if (idx >= segs.length - 1) {
-            waitingTimeoutRef.current = setTimeout(() => { if (onComplete) onComplete() }, 0)
-          } else {
-            waitingTimeoutRef.current = setTimeout(() => {
-              setSegmentIndex(prev => prev + 1)
-              setIsTyping(true)
-              typeSegment(idx + 1)
-            }, WAIT_MS)
-          }
-        }
-      }, TYPE_MS)
-    }
-
-    typeSegment(0)
-  }, [WAIT_MS, TYPE_MS, clearTypingTimers, splitIntoSentences])
 
   // 현재 질문 정보
   const currentQuestion = useMemo(() => {
@@ -154,20 +83,25 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
           content: '' // 처음에는 빈 내용으로 시작
         }])
         
-        // 온보딩형 문장 단위 타이핑. 타이핑 완료 후에도 패널 유지
-        setPanelOverrideText(null)
-        startTypewriter(data.response, () => {
-          setMessages([{ ...aiResponse, content: data.response }])
-          setShowTypingPanel(true)
-          console.log('🔍 첫 인사 API 응답:', { shouldAdvance: data.shouldAdvance, nextPhaseData: data.nextPhaseData })
-          if (data.shouldAdvance && data.nextPhaseData) {
-            console.log('⏭️ 첫 인사에서 진행 신호 수신:', data.nextPhaseData)
-            setShowAdvanceButtons(true)
-            setNextPhaseData(data.nextPhaseData)
+        // 일반 채팅 타이핑: 한 글자씩 빠르게 출력 후 완료
+        let i = 0
+        const full = data.response
+        const finishTyping = () => { i = full.length + 1 }
+        typingControllerRef.current = finishTyping
+        const tempId = aiResponse.id
+        typingIntervalRef.current = setInterval(() => {
+          if (i <= full.length) {
+            const display = full.slice(0, i)
+            setMessages([{ ...aiResponse, id: tempId, content: display }])
+            i++
           } else {
+            if (typingIntervalRef.current) clearInterval(typingIntervalRef.current)
+            typingControllerRef.current = null
+            setMessages([{ ...aiResponse, id: tempId, content: full }])
+            setIsTyping(false)
             setTimeout(() => { inputRef.current?.focus() }, 100)
           }
-        })
+        }, 16)
       }
     } catch (error) {
       console.error('첫 인사 오류:', error)
@@ -248,20 +182,30 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
         }
         setMessages(prev => [...prev, tempMessage])
         
-        // 온보딩형 문장 단위 타이핑. 타이핑 완료 후에도 패널 유지
-        setPanelOverrideText(null)
-        startTypewriter(data.response, () => {
-          setMessages(prev => prev.map(msg => msg.id === aiResponse.id ? { ...msg, content: data.response } : msg))
-          setShowTypingPanel(true)
-          console.log('🔍 API 응답 데이터:', { shouldAdvance: data.shouldAdvance, nextPhaseData: data.nextPhaseData })
-          if (data.shouldAdvance && data.nextPhaseData) {
-            console.log('⏭️ 다음 단계 진행 신호 수신:', data.nextPhaseData)
-            setShowAdvanceButtons(true)
-            setNextPhaseData(data.nextPhaseData)
+        // 일반 채팅 타이핑(응답): 한 글자씩 출력 후 완료
+        let i = 0
+        const full = data.response
+        const tempId = aiResponse.id
+        const finishTyping = () => { i = full.length + 1 }
+        typingControllerRef.current = finishTyping
+        typingIntervalRef.current = setInterval(() => {
+          if (i <= full.length) {
+            const display = full.slice(0, i)
+            setMessages(prev => prev.map(msg => msg.id === tempId ? { ...msg, content: display } : msg))
+            i++
           } else {
+            if (typingIntervalRef.current) clearInterval(typingIntervalRef.current)
+            typingControllerRef.current = null
+            setMessages(prev => prev.map(msg => msg.id === tempId ? { ...msg, content: full } : msg))
+            setIsTyping(false)
             setTimeout(() => { inputRef.current?.focus() }, 100)
+            console.log('🔍 API 응답 데이터:', { shouldAdvance: data.shouldAdvance, nextPhaseData: data.nextPhaseData })
+            if (data.shouldAdvance && data.nextPhaseData) {
+              setShowAdvanceButtons(true)
+              setNextPhaseData(data.nextPhaseData)
+            }
           }
-        })
+        }, 16)
       } else {
         throw new Error(data.error)
       }
@@ -425,34 +369,10 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
         </div>
       )}
 
-      {/* 온보딩형 메인 메시지 영역 (상담사 최신 메시지를 온보딩 스타일로 렌더) */}
+      {/* 메인 메시지 영역 (일반 채팅 표시) */}
       <div className="flex-1 overflow-y-auto bg-transparent" ref={scrollRef} onScroll={handleScroll}>
-        <div
-          role="button"
-          onClick={() => {
-            if (isTyping && typingIntervalRef.current) {
-              const seg = segments[segmentIndex] || ''
-              setTypedText([...segments.slice(0, segmentIndex), seg].join(' '))
-              clearInterval(typingIntervalRef.current)
-              setIsTyping(false)
-            } else if (!isTyping && waitingTimeoutRef.current) {
-              clearTimeout(waitingTimeoutRef.current)
-              setSegmentIndex(prev => Math.min(prev + 1, Math.max(segments.length - 1, 0)))
-            }
-          }}
-          aria-live="polite"
-          className={`max-w-4xl w-full px-6 pt-8 pb-8 mx-auto font-semibold leading-tight select-none transition-all duration-200 ease-out text-left text-3xl md:text-5xl min-h-[5.5rem] md:min-h-[8rem] ${showTypingPanel ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}
-        >
-          {panelOverrideText !== null ? panelOverrideText : (typedText || getLatestAssistantText())}
-        </div>
-
-        {/* 과거 대화(간결히) */}
         <div className="max-w-4xl w-full px-6 pb-32 mx-auto space-y-3">
-          {messages.map((message, idx) => {
-            // 최상단 타이핑 패널에 이미 최신 assistant를 보여주므로,
-            // 여기서는 assistant 최신 한 개는 숨김
-            const isLatestAssistant = (idx === messages.length - 1) && message.role === 'assistant'
-            if (isLatestAssistant) return null
+          {messages.map((message) => {
             if (message.role === 'user') {
               return <UserMessage key={message.id} message={message.content} />
             } else {
