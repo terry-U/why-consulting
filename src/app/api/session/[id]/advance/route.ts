@@ -21,13 +21,13 @@ export async function POST(request: Request, context: any) {
 
     const { error } = await supabaseServer
       .from('sessions')
-      .update(updateData)
+      .update(updateData as any)
       .eq('id', sessionId)
 
     if (error) {
       console.error('❌ 세션 상태 업데이트 실패:', error)
       return NextResponse.json(
-        { success: false, error: '세션 상태 업데이트에 실패했습니다.', details: error.message },
+        { success: false, error: '세션 상태 업데이트에 실패했습니다.', details: (error as any).message || JSON.stringify(error) },
         { status: 500 }
       )
     }
