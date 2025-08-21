@@ -5,7 +5,7 @@ export async function POST(request: Request, context: any) {
   const sessionId = context?.params?.id || new URL(request.url).pathname.split('/').filter(Boolean).slice(-2, -1)[0]
 
   try {
-    const { nextPhase, nextQuestionIndex, userAnswer } = await request.json()
+    const { nextPhase, nextQuestionIndex } = await request.json()
 
     console.log('⏭️ 세션 단계 진행:', { sessionId, nextPhase, nextQuestionIndex })
 
@@ -17,20 +17,7 @@ export async function POST(request: Request, context: any) {
       updateData.current_question_index = nextQuestionIndex
     }
 
-    // 사용자 답변이 있다면 answers에 저장
-    if (userAnswer && nextQuestionIndex > 0) {
-      const { data: session } = await supabaseServer
-        .from('sessions')
-        .select('answers')
-        .eq('id', sessionId)
-        .single()
-
-      const currentAnswers = session?.answers || {}
-      updateData.answers = {
-        ...currentAnswers,
-        [`q${nextQuestionIndex - 1}`]: userAnswer
-      }
-    }
+    // answers 저장은 추후 안정화 후 재도입
 
     const { error } = await supabaseServer
       .from('sessions')
