@@ -13,8 +13,21 @@ export async function POST(request: Request, context: any) {
 
     // 세션 상태 업데이트
     const updateData: Record<string, any> = {}
-    if (nextPhase) updateData.counseling_phase = nextPhase
-    if (typeof nextQuestionIndex === 'number') updateData.current_question_index = nextQuestionIndex
+    const allowedPhases = new Set(['questions', 'summary', 'completed'])
+    if (nextPhase && allowedPhases.has(nextPhase)) {
+      updateData.counseling_phase = nextPhase
+    }
+    if (typeof nextQuestionIndex === 'number') {
+      let idx = nextQuestionIndex
+      if (updateData.counseling_phase === 'questions') {
+        // 1~8 범위로 보정
+        if (!Number.isFinite(idx) || idx < 1) idx = 1
+        if (idx > 8) idx = 8
+      } else if (updateData.counseling_phase === 'summary' || updateData.counseling_phase === 'completed') {
+        idx = 0
+      }
+      updateData.current_question_index = idx
+    }
 
     // answers 저장은 추후 안정화 후 재도입
 
