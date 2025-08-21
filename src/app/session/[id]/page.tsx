@@ -66,10 +66,10 @@ export default function SessionPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-100 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">상담 세션을 불러오는 중...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600 mx-auto mb-4"></div>
+          <p className="text-gray-500">상담 세션을 불러오는 중...</p>
         </div>
       </div>
     )
@@ -77,15 +77,15 @@ export default function SessionPage() {
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-100 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-4xl mb-4">❌</div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          <h2 className="text-xl font-semibold mb-2">
             세션을 찾을 수 없습니다
           </h2>
           <button
             onClick={() => router.push('/home')}
-            className="text-yellow-600 hover:text-yellow-700 underline"
+            className="underline text-gray-600 hover:text-gray-800"
           >
             홈으로 돌아가기
           </button>
@@ -95,8 +95,8 @@ export default function SessionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-100">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="min-h-screen">
+      <div className="ui-container py-6 max-w-4xl">
         {/* 헤더 */}
         <div className="flex items-center justify-between mb-8">
           <button
@@ -116,7 +116,7 @@ export default function SessionPage() {
 
 
         {/* 상담 인터페이스 영역 */}
-        <div className="bg-white rounded-2xl shadow-lg h-[600px] overflow-hidden">
+        <div className="card h-[600px] overflow-hidden">
           <ChatInterface 
             session={session} 
             initialMessages={messages}

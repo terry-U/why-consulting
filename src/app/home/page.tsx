@@ -81,11 +81,12 @@ export default function HomePage() {
   }
 
   return (
-    <ResponsiveLayout className="bg-gradient-to-br from-yellow-50 to-orange-100">
+    <ResponsiveLayout>
+    <ResponsiveLayout>
         {/* 헤더 */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">
+            <h1 className="text-xl font-semibold">
               다시 만나서 반가워요 😊
             </h1>
             <p className="text-gray-500 text-sm mt-1">
@@ -94,7 +95,7 @@ export default function HomePage() {
           </div>
           <button
             onClick={handleLogout}
-            className="text-gray-400 hover:text-gray-600 text-sm px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+            className="icon-btn text-gray-500"
           >
             로그아웃
           </button>
@@ -104,12 +105,12 @@ export default function HomePage() {
         <div className="mb-8">
           <button
             onClick={handleNewSession}
-            className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-semibold py-8 px-6 rounded-3xl hover:from-yellow-600 hover:to-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+            className="w-full btn btn-primary py-8 px-6 text-white font-semibold rounded-3xl"
           >
             <div className="text-center">
               <div className="text-3xl mb-3">🌟</div>
               <div className="text-xl mb-2">새로운 Why 찾기</div>
-              <p className="text-yellow-100 text-sm opacity-90">
+              <p className="text-gray-200 text-sm opacity-90">
                 8명의 상담사와 함께하는 특별한 여정
               </p>
             </div>
@@ -117,7 +118,7 @@ export default function HomePage() {
         </div>
 
         {/* 상담사 소개 */}
-        <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 mb-8">
+        <div className="card p-6 mb-8">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">상담사 팀</h3>
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center p-3">
@@ -144,11 +145,11 @@ export default function HomePage() {
         </div>
 
         {/* 티켓 지갑 */}
-        <div className="bg-white rounded-2xl p-6 mb-8 shadow-sm">
+        <div className="card p-6 mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">상담권</h3>
-              <p className="text-gray-600 text-sm">남은 상담 횟수</p>
+              <h3 className="text-lg font-semibold">상담권</h3>
+              <p className="text-gray-500 text-sm">남은 상담 횟수</p>
             </div>
             <div className="text-right">
               <div className="text-2xl font-bold text-yellow-600">10장</div>
@@ -185,17 +186,17 @@ export default function HomePage() {
           />
           
           {sessions.length === 0 && (
-            <div className="bg-white rounded-2xl p-8 text-center shadow-sm">
+            <div className="card p-8 text-center">
               <div className="text-4xl mb-4">🌱</div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <h3 className="text-lg font-semibold mb-2">
                 첫 상담을 시작해볼까요?
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-500 mb-6">
                 8개의 질문을 통해 당신만의 Why를 발견해보세요
               </p>
               <button
                 onClick={handleNewSession}
-                className="bg-yellow-500 text-white px-6 py-3 rounded-full font-medium hover:bg-yellow-600 transition-colors"
+                className="btn btn-primary text-white px-6 py-3 rounded-full font-medium"
               >
                 첫 상담 시작하기
               </button>

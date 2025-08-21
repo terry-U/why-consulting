@@ -33,8 +33,8 @@ function AuthContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-100">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen">
+      <div className="py-4">
         {/* 뒤로가기 버튼 */}
         <button
           onClick={() => router.push('/')}
@@ -46,8 +46,8 @@ function AuthContent() {
         {/* 오류 메시지 */}
         {authError && (
           <div className="max-w-md mx-auto mb-6">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <div className="text-sm text-red-700">
+            <div className="card p-4">
+              <div className="text-sm text-red-600">
                 {authError}
               </div>
             </div>
@@ -56,12 +56,12 @@ function AuthContent() {
 
         {/* 카카오 로그인 */}
         <div className="max-w-md mx-auto">
-          <div className="bg-white rounded-2xl shadow-lg p-8">
+          <div className="card p-8">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">
+              <h1 className="text-3xl font-bold mb-2">
                 Why Consulting
               </h1>
-              <p className="text-gray-600">
+              <p className="text-gray-500">
                 나만의 Why를 발견하는 여정
               </p>
             </div>
@@ -70,7 +70,7 @@ function AuthContent() {
             <button
               onClick={handleKakaoLogin}
               disabled={isLoading}
-              className="w-full bg-[#FEE500] hover:bg-[#FDD800] text-[#3C1E1E] font-medium py-4 px-6 rounded-xl transition-colors flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full btn bg-[#FEE500] hover:bg-[#FDD800] text-[#3C1E1E] font-medium py-4 px-6 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <>
