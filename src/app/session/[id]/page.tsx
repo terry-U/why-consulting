@@ -106,7 +106,7 @@ export default function SessionPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="ui-container py-6 max-w-4xl">
+      <div className="py-6">
         {/* 헤더 */}
         <div className="flex items-center justify-between mb-8">
           <button
@@ -125,10 +125,10 @@ export default function SessionPage() {
 
 
 
-        {/* 상담 인터페이스 영역 */}
-        <div className="card h-[600px] overflow-hidden">
-          <ChatInterface 
-            session={session} 
+        {/* 상담 인터페이스 영역 (프레임 제거, 전체 화면 높이) */}
+        <div className="h-[calc(100vh-120px)]">
+          <ChatInterface
+            session={session}
             initialMessages={messages}
             onSessionUpdate={(updatedSession) => setSession(updatedSession)}
           />

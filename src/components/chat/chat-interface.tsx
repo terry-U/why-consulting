@@ -409,7 +409,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
   
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-transparent">
       {/* 상단 프레임: 질문 텍스트를 좌측 고정 영역에 미니멀 표시 */}
       {currentQuestion && (
         <div className="border-b border-transparent bg-transparent">
