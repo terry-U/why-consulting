@@ -1,19 +1,30 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --primary: #2563eb;
+  /* Minimal / Neumorphism tokens (light) */
+  --background: #eef2f7; /* soft gray canvas */
+  --surface: #f5f7fb;    /* elevated cards */
+  --foreground: #0f172a;
+  --muted: #6b7280;
+
+  --primary: #111827;    /* near-black for minimal contrast */
   --primary-foreground: #ffffff;
-  --secondary: #f1f5f9;
+  --secondary: #e7ebf2;
   --secondary-foreground: #0f172a;
-  --destructive: #dc2626;
+  --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --accent: #f1f5f9;
+  --accent: #e7ebf2;
   --accent-foreground: #0f172a;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #2563eb;
+  --border: #e5e9f0;
+  --input: #e5e9f0;
+  --ring: #111827;
+
+  /* Neumorphism shadows */
+  --shadow-dark: #d0d6e0;  /* bottom-right */
+  --shadow-light: #ffffff;  /* top-left */
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 10px;
 }
 
 @theme inline {
@@ -36,26 +47,33 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --primary: #3b82f6;
-    --primary-foreground: #ffffff;
-    --secondary: #1e293b;
-    --secondary-foreground: #f1f5f9;
-    --destructive: #dc2626;
+    /* Minimal / Neumorphism tokens (dark) */
+    --background: #0b0e14;
+    --surface: #0d121a;
+    --foreground: #e5e7eb;
+    --muted: #9ca3af;
+
+    --primary: #e5e7eb;
+    --primary-foreground: #0b0e14;
+    --secondary: #11161f;
+    --secondary-foreground: #e5e7eb;
+    --destructive: #ef4444;
     --destructive-foreground: #ffffff;
-    --accent: #1e293b;
-    --accent-foreground: #f1f5f9;
-    --border: #334155;
-    --input: #334155;
-    --ring: #3b82f6;
+    --accent: #11161f;
+    --accent-foreground: #e5e7eb;
+    --border: #182230;
+    --input: #182230;
+    --ring: #e5e7eb;
+
+    --shadow-dark: #06080c;
+    --shadow-light: #141923;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
 }
 
 * {
@@ -100,8 +118,78 @@ body {
   button:focus-visible, 
   input:focus-visible, 
   textarea:focus-visible {
-    outline: 2px solid #3b82f6;
+    outline: 2px solid var(--ring);
     outline-offset: 2px;
+  }
+}
+
+/* ---------- Minimal / Neumorphism Components ---------- */
+@layer components {
+  .ui-container {
+    max-width: 1120px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .neo {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
+  }
+
+  .neo-pressed {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    box-shadow: inset 6px 6px 12px var(--shadow-dark), inset -6px -6px 12px var(--shadow-light);
+  }
+
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--foreground);
+    box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+    transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); transform: translateY(0); }
+
+  .btn-primary { background: var(--primary); color: var(--primary-foreground); box-shadow: none; }
+  .btn-secondary { background: var(--surface); }
+
+  .icon-btn {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--surface);
+    box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+  }
+
+  .input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--input);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    color: var(--foreground);
+    box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+  }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 12px; border-radius: 9999px;
+    background: var(--surface); color: var(--muted);
+    box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
   }
 }
 
