@@ -106,7 +106,7 @@ export default function SessionPage() {
 
   return (
     <div className="h-screen overflow-hidden">
-      <div className="py-0 h-full">
+      <div className="h-full">
         {/* 헤더 */}
         <div className="fixed top-4 left-4 z-50 pointer-events-auto">
           <button

@@ -12,7 +12,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <body className="ui-container py-8">
+      <body className="ui-container">
         {children}
       </body>
     </html>
