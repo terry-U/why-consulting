@@ -35,6 +35,17 @@ export default function HomePage() {
       return
     }
 
+    // 최초 로그인 한 번만 온보딩 자동 표시 (로컬 디바이스 기준)
+    try {
+      const seen = typeof window !== 'undefined' && localStorage.getItem('onboarding_seen') === 'true'
+      if (!seen) {
+        router.push('/onboarding')
+        return
+      }
+    } catch (e) {
+      // localStorage 접근 불가 시 무시
+    }
+
     const loadUserData = async () => {
       try {
         // 사용자 상담 히스토리 가져오기
@@ -65,7 +76,8 @@ export default function HomePage() {
       if (!user) return
       
       const newSession = await createNewSession(user.id)
-      router.push(`/onboarding?sessionId=${newSession.id}`)
+      // 요구사항: 상담 시작 시에는 온보딩을 보여주지 않고 바로 세션으로 이동
+      router.push(`/session/${newSession.id}`)
     } catch (error) {
       console.error('새 세션 생성 오류:', error)
       alert('새 상담을 시작할 수 없습니다. 다시 시도해주세요.')
