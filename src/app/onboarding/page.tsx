@@ -29,6 +29,7 @@ function OnboardingRunner() {
   const [text, setText] = useState('')
   const [isTyping, setIsTyping] = useState(true)
   const [isShrinking, setIsShrinking] = useState(false)
+  const [showTicket, setShowTicket] = useState(false)
   const typingTimer = useRef<NodeJS.Timeout | null>(null)
   const afterTypeTimer = useRef<NodeJS.Timeout | null>(null)
   const shrinkTimer = useRef<NodeJS.Timeout | null>(null)
@@ -54,6 +55,10 @@ function OnboardingRunner() {
     return result
   }, [])
 
+  const TYPE_MS = 28
+  const WAIT_MS = 2600
+  const SHRINK_MS = 260
+
   const finish = () => {
     try { localStorage.setItem('onboarding_seen', 'true') } catch {}
     // 요구사항: 상담 시작 시에는 온보딩을 보여줄 필요 없음 → 기본은 홈으로 복귀
@@ -64,10 +69,35 @@ function OnboardingRunner() {
     }
   }
 
+  const clearTimers = () => {
+    if (typingTimer.current) clearInterval(typingTimer.current)
+    if (afterTypeTimer.current) clearTimeout(afterTypeTimer.current)
+    if (shrinkTimer.current) clearTimeout(shrinkTimer.current)
+  }
+
+  const startWaitAndShrink = (isFinal: boolean) => {
+    afterTypeTimer.current = setTimeout(() => {
+      setIsShrinking(true)
+      shrinkTimer.current = setTimeout(() => {
+        setIsShrinking(false)
+        if (isFinal) {
+          // 마지막은 사용자 CTA로 진행
+          return
+        }
+        if (step >= segments.length - 1) {
+          finish()
+        } else {
+          setStep(prev => prev + 1)
+        }
+      }, SHRINK_MS)
+    }, WAIT_MS)
+  }
+
   useEffect(() => {
     // 타이핑 시작
     setText('')
     setIsTyping(true)
+    setShowTicket(false)
     const content = segments[step]
     let i = 0
     typingTimer.current = setInterval(() => {
@@ -76,53 +106,113 @@ function OnboardingRunner() {
       if (i >= content.length) {
         if (typingTimer.current) clearInterval(typingTimer.current)
         setIsTyping(false)
+        const isTicket = content.includes('상담권을 10장')
+        const isFinal = content.includes('준비 됐나요')
+        if (isTicket) {
+          // 사용자 확인 필요
+          setShowTicket(true)
+          return
+        }
         // 잠깐 머물렀다가 빠르게 축소
-        afterTypeTimer.current = setTimeout(() => {
-          setIsShrinking(true)
-          shrinkTimer.current = setTimeout(() => {
-            setIsShrinking(false)
-            if (step >= segments.length - 1) {
-              finish()
-            } else {
-              setStep(prev => prev + 1)
-            }
-          }, 260) // 빠르게 줄어듦(조금 느리게)
-        }, 2600) // 잠깐 머무름(조금 더 길게)
+        startWaitAndShrink(isFinal)
       }
-    }, 28) // 타자 속도(조금 느리게)
+    }, TYPE_MS)
 
     return () => {
-      if (typingTimer.current) clearInterval(typingTimer.current)
-      if (afterTypeTimer.current) clearTimeout(afterTypeTimer.current)
-      if (shrinkTimer.current) clearTimeout(shrinkTimer.current)
+      clearTimers()
     }
   }, [step])
 
+  const handleAdvanceClick = () => {
+    if (showTicket) return
+    const content = segments[step]
+    const isFinal = content.includes('준비 됐나요')
+    if (isTyping) {
+      // 타이핑 스킵 → 즉시 완성 후 대기 시작
+      if (typingTimer.current) clearInterval(typingTimer.current)
+      setText(content)
+      setIsTyping(false)
+      if (content.includes('상담권을 10장')) {
+        setShowTicket(true)
+        return
+      }
+      clearTimers()
+      startWaitAndShrink(isFinal)
+    } else if (!isShrinking) {
+      // 대기 중 → 다음 문장으로
+      clearTimers()
+      setIsShrinking(true)
+      shrinkTimer.current = setTimeout(() => {
+        setIsShrinking(false)
+        if (isFinal) return
+        if (step >= segments.length - 1) finish()
+        else setStep(prev => prev + 1)
+      }, 180)
+    }
+  }
+
   return (
-    <div className="min-h-screen ui-container flex items-center justify-center">
-      <div className="max-w-4xl w-full px-6">
-        {/* 상단 액션 */}
-        <div className="flex justify-end mb-8">
+    <div className="min-h-screen ui-container">
+      <div className="max-w-4xl w-full px-6 pt-24 pb-24 mx-auto">
+        {/* 메인 메시지 */}
+        <div
+          role="button"
+          onClick={handleAdvanceClick}
+          aria-live="polite"
+          className={`font-semibold leading-tight select-none transition-all duration-200 ease-out ${
+            isShrinking ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
+          } ${isTyping ? 'tracking-normal' : 'tracking-tight'} text-left text-3xl md:text-5xl min-h-[5.5rem] md:min-h-[8rem]`}
+        >
+          {text}
+        </div>
+      </div>
+
+      {/* 하단 고정 바 */}
+      <div className="fixed bottom-0 left-0 right-0 px-6 py-4">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
           <button
             onClick={finish}
             className="text-gray-500 hover:text-gray-700 text-sm underline"
           >
             건너뛰기
           </button>
-        </div>
-
-        {/* 중앙 메시지 */}
-        <div className="flex items-center justify-center">
-          <div
-            aria-live="polite"
-            className={`text-center font-semibold leading-tight select-none transition-all duration-200 ease-out ${
-              isShrinking ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
-            } ${isTyping ? 'tracking-normal' : 'tracking-tight'} text-3xl md:text-5xl`}
-          >
-            {text}
-          </div>
+          {segments[step] && segments[step].includes('준비 됐나요') && !isTyping && (
+            <button
+              onClick={finish}
+              className="btn btn-primary text-white font-semibold px-6 py-3 rounded-full"
+            >
+              준비됐어요!
+            </button>
+          )}
         </div>
       </div>
+
+      {/* 티켓 지급 모달 (미니멀) */}
+      {showTicket && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="card p-8 max-w-md w-full">
+            <h3 className="text-2xl font-bold mb-3">상담권 10장 지급</h3>
+            <p className="text-gray-600 mb-6">여유 있게 반복 상담을 진행하실 수 있도록 준비했어요.</p>
+            <div className="flex justify-end">
+              <button
+                onClick={() => {
+                  setShowTicket(false)
+                  // 모달 닫힘 후 바로 다음으로 진행
+                  setIsShrinking(true)
+                  shrinkTimer.current = setTimeout(() => {
+                    setIsShrinking(false)
+                    if (step >= segments.length - 1) finish()
+                    else setStep(prev => prev + 1)
+                  }, 200)
+                }}
+                className="btn btn-primary text-white px-5 py-2 rounded-full"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
