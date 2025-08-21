@@ -448,7 +448,11 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
 
         {/* 과거 대화(간결히) */}
         <div className="max-w-4xl w-full px-6 pb-32 mx-auto space-y-3">
-          {messages.slice(0, -1).map((message) => {
+          {messages.map((message, idx) => {
+            // 최상단 타이핑 패널에 이미 최신 assistant를 보여주므로,
+            // 여기서는 assistant 최신 한 개는 숨김
+            const isLatestAssistant = (idx === messages.length - 1) && message.role === 'assistant'
+            if (isLatestAssistant) return null
             if (message.role === 'user') {
               return <UserMessage key={message.id} message={message.content} />
             } else {
