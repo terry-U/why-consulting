@@ -4,9 +4,8 @@ import { OpenAI } from 'openai'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
-export async function GET(_req: Request, context: { params: { id: string } }) {
-  const { params } = context
-  const sessionId = params.id
+export async function GET(req: Request, context: any) {
+  const sessionId = context?.params?.id || new URL(req.url).pathname.split('/').filter(Boolean).pop()
   if (!sessionId) {
     return NextResponse.json({ success: false, error: 'sessionId가 필요합니다' }, { status: 400 })
   }
