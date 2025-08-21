@@ -365,18 +365,18 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
 
   return (
     <div className="flex flex-col h-full">
-      {/* 현재 질문 헤더 */}
+      {/* 현재 질문 헤더 - 미니멀 */}
       {currentQuestion && (
-        <div className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white p-4 shadow-sm">
-          <div className="text-center">
-            <p className="text-sm opacity-90 mb-1">질문 {session.current_question_index}/8</p>
-            <p className="font-medium text-lg">{currentQuestion.text}</p>
+        <div className="border-b border-gray-200 p-4 bg-white">
+          <div className="max-w-3xl mx-auto">
+            <p className="text-xs text-gray-500 mb-1">질문 {session.current_question_index}/8</p>
+            <p className="text-base font-semibold text-gray-900">{currentQuestion.text}</p>
           </div>
         </div>
       )}
       
       {/* 메시지 목록 */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white">
         {messages.map((message) => {
           if (message.role === 'user') {
             return <UserMessage key={message.id} message={message.content} />
@@ -410,51 +410,47 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
         <div className="fixed inset-0 bg-white z-50 flex flex-col">
           <div className="flex-1 p-6 overflow-y-auto">
             <div className="max-w-2xl mx-auto">
-              <div className="text-center mb-8">
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                  답변이 정리되었나요?
-                </h3>
-                <p className="text-gray-600">
-                  확인해주시면 다음 질문으로 넘어갑니다
-                </p>
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">답변 확인</h3>
+                <p className="text-sm text-gray-600">현재 질문과 방금 정리된 한 줄을 확인해주세요.</p>
               </div>
-              
+
               {/* 현재 질문 */}
               {currentQuestion && (
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
-                  <p className="text-sm text-blue-700 mb-2">현재 질문</p>
-                  <p className="text-lg font-medium text-gray-800">"{currentQuestion.text}"</p>
+                <div className="border border-gray-200 rounded-xl p-6 mb-6 bg-white">
+                  <p className="text-xs text-gray-500 mb-2">현재 질문</p>
+                  <p className="text-lg font-medium text-gray-900">"{currentQuestion.text}"</p>
                 </div>
               )}
-              
+
               {/* 마지막에 하이라이트 된 답변 */}
               {messages.length > 0 && (() => {
                 const lastMessage = messages[messages.length - 1];
                 const answerReadyMatch = lastMessage.content.match(/\*\*\[ANSWER_READY\]\*\*(.*?)\*\*\[ANSWER_READY\]\*\*/);
                 return answerReadyMatch ? (
-                  <div className="bg-green-50 border border-green-200 rounded-xl p-6 mb-8">
-                    <p className="text-sm text-green-700 mb-2">내 답변</p>
-                    <p className="text-lg text-gray-800 leading-relaxed">💡 {answerReadyMatch[1]}</p>
+                  <div className="border border-gray-200 rounded-xl p-6 mb-8 bg-white">
+                    <p className="text-xs text-gray-500 mb-2">내 답변</p>
+                    <p className="text-xl text-gray-900 leading-relaxed">💡 {answerReadyMatch[1]}</p>
                   </div>
                 ) : null;
               })()}
             </div>
           </div>
-          
+
           {/* 하단 버튼 영역 */}
           <div className="border-t border-gray-200 p-6 bg-white">
-            <div className="max-w-md mx-auto flex justify-center space-x-4">
+            <div className="max-w-md mx-auto flex justify-center gap-3">
               <button
                 onClick={() => handleAdvanceToNext(true)}
                 disabled={isLoading}
-                className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-10 py-4 rounded-full font-medium hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 disabled:opacity-50 shadow-lg hover:shadow-xl transform hover:scale-105 text-lg"
+                className="btn btn-primary text-white px-8 py-3 rounded-full text-base disabled:opacity-50"
               >
                 네, 맞아요! 🎯
               </button>
               <button
                 onClick={() => handleAdvanceToNext(false)}
                 disabled={isLoading}
-                className="bg-white text-gray-700 px-10 py-4 rounded-full font-medium hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 border border-gray-200 shadow-sm hover:shadow-md text-lg"
+                className="btn px-8 py-3 rounded-full text-base disabled:opacity-50"
               >
                 좀 더 생각해볼게요 🤔
               </button>
@@ -465,30 +461,31 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
 
       {/* 입력 영역 */}
       <div className="bg-white border-t border-gray-200 p-4">
-        <div className="flex space-x-3">
-          <div className="flex-1">
-            <textarea
-              ref={inputRef}
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="솔직한 마음을 편하게 말해주세요..."
-              className="w-full p-3 border border-gray-300 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-              rows={3}
-              disabled={isLoading}
-            />
+        <div className="max-w-3xl mx-auto">
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <textarea
+                ref={inputRef}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="솔직한 마음을 편하게 말해주세요..."
+                className="input resize-none"
+                rows={3}
+                disabled={isLoading}
+              />
+            </div>
+            <button
+              onClick={handleSendMessage}
+              disabled={!inputValue.trim() || isLoading}
+              className="btn btn-primary text-white"
+            >
+              💬
+            </button>
           </div>
-          <button
-            onClick={handleSendMessage}
-            disabled={!inputValue.trim() || isLoading}
-            className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-xl font-medium hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            💬
-          </button>
-        </div>
-        
-        <div className="mt-2 text-xs text-gray-500 text-center">
-          Enter로 전송 • Shift+Enter로 줄바꿈
+          <div className="mt-2 text-xs text-gray-500 text-center">
+            Enter로 전송 • Shift+Enter로 줄바꿈
+          </div>
         </div>
       </div>
     </div>
