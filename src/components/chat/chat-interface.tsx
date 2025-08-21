@@ -34,6 +34,9 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
   const [segmentIndex, setSegmentIndex] = useState(0)
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const waitingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [showTypingPanel, setShowTypingPanel] = useState(true)
+  const [isScrolledUp, setIsScrolledUp] = useState(false)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   const TYPE_MS = 28
   const WAIT_MS = 2600
@@ -63,6 +66,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
     setSegmentIndex(0)
     setTypedText('')
     setIsTyping(true)
+    setShowTypingPanel(true)
 
     const typeSegment = (idx: number) => {
       const current = segs[idx] || ''
@@ -138,9 +142,10 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
           content: '' // 처음에는 빈 내용으로 시작
         }])
         
-        // 온보딩형 문장 단위 타이핑
+        // 온보딩형 문장 단위 타이핑. 타이핑 완료 시 중앙 패널은 사라지고 기록만 남김
         startTypewriter(data.response, () => {
           setMessages([{ ...aiResponse, content: data.response }])
+          setShowTypingPanel(false)
           console.log('🔍 첫 인사 API 응답:', { shouldAdvance: data.shouldAdvance, nextPhaseData: data.nextPhaseData })
           if (data.shouldAdvance && data.nextPhaseData) {
             console.log('⏭️ 첫 인사에서 진행 신호 수신:', data.nextPhaseData)
@@ -228,9 +233,10 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
         }
         setMessages(prev => [...prev, tempMessage])
         
-        // 온보딩형 문장 단위 타이핑
+        // 온보딩형 문장 단위 타이핑. 타이핑 완료 시 중앙 패널은 사라지고 기록만 남김
         startTypewriter(data.response, () => {
           setMessages(prev => prev.map(msg => msg.id === aiResponse.id ? { ...msg, content: data.response } : msg))
+          setShowTypingPanel(false)
           console.log('🔍 API 응답 데이터:', { shouldAdvance: data.shouldAdvance, nextPhaseData: data.nextPhaseData })
           if (data.shouldAdvance && data.nextPhaseData) {
             console.log('⏭️ 다음 단계 진행 신호 수신:', data.nextPhaseData)
@@ -380,13 +386,22 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
     return ''
   }, [messages])
 
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
+    const atBottom = distanceFromBottom <= 8
+    setIsScrolledUp(!atBottom)
+    setShowTypingPanel(atBottom)
+  }, [])
+
   
 
   return (
     <div className="flex flex-col h-full">
       {/* 상단 프레임: 질문 텍스트를 좌측 고정 영역에 미니멀 표시 */}
       {currentQuestion && (
-        <div className="border-b border-gray-200 bg-white">
+        <div className="border-b border-transparent bg-transparent">
           <div className="max-w-4xl w-full px-6 py-4 mx-auto">
             <p className="text-xs text-gray-500 mb-1">질문 {session.current_question_index}/8</p>
             <p className="text-base font-semibold text-gray-900 text-left">{currentQuestion.text}</p>
@@ -395,7 +410,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
       )}
 
       {/* 온보딩형 메인 메시지 영역 (상담사 최신 메시지를 온보딩 스타일로 렌더) */}
-      <div className="flex-1 overflow-y-auto bg-white">
+      <div className="flex-1 overflow-y-auto bg-transparent" ref={scrollRef} onScroll={handleScroll}>
         <div
           role="button"
           onClick={() => {
@@ -410,13 +425,13 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
             }
           }}
           aria-live="polite"
-          className="max-w-4xl w-full px-6 pt-8 pb-8 mx-auto font-semibold leading-tight select-none transition-all duration-200 ease-out text-left text-3xl md:text-5xl min-h-[5.5rem] md:min-h-[8rem]"
+          className={`max-w-4xl w-full px-6 pt-8 pb-8 mx-auto font-semibold leading-tight select-none transition-all duration-200 ease-out text-left text-3xl md:text-5xl min-h-[5.5rem] md:min-h-[8rem] ${showTypingPanel ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}
         >
           {typedText || getLatestAssistantText()}
         </div>
 
         {/* 과거 대화(간결히) */}
-        <div className="max-w-4xl w-full px-6 pb-16 mx-auto space-y-3">
+        <div className="max-w-4xl w-full px-6 pb-32 mx-auto space-y-3">
           {messages.slice(0, -1).map((message) => {
             if (message.role === 'user') {
               return <UserMessage key={message.id} message={message.content} />
@@ -491,7 +506,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
       )}
 
       {/* 하단 고정 바 (온보딩 스타일) */}
-      <div className="fixed bottom-0 left-0 right-0 px-4 py-3 border-t border-gray-200 bg-white/90 backdrop-blur-md">
+      <div className={`fixed bottom-0 left-0 right-0 px-4 py-3 border-t ${isScrolledUp ? 'border-gray-300 bg-white/70' : 'border-transparent bg-transparent'} backdrop-blur-md transition-colors`}>
         <div className="max-w-4xl mx-auto flex items-end gap-3">
           <textarea
             ref={inputRef}
@@ -512,7 +527,22 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
             💬
           </button>
         </div>
-        <div className="mt-2 text-[11px] text-gray-500 text-center">Enter 전송 • Shift+Enter 줄바꿈</div>
+        <div className="mt-2 text-[11px] text-gray-500 text-center">
+          {isScrolledUp ? (
+            <button
+              onClick={() => {
+                const el = scrollRef.current
+                if (!el) return
+                el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+              }}
+              className="underline"
+            >
+              맨 아래로
+            </button>
+          ) : (
+            <>Enter 전송 • Shift+Enter 줄바꿈</>
+          )}
+        </div>
       </div>
     </div>
   )
