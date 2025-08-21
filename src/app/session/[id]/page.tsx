@@ -108,14 +108,12 @@ export default function SessionPage() {
     <div className="min-h-screen">
       <div className="py-6">
         {/* 헤더 */}
-        <div className="mb-2">
-          <button
-            onClick={() => router.push('/home')}
-            className="fixed top-4 left-4 z-50 text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            ← 홈으로 돌아가기
-          </button>
-        </div>
+        <button
+          onClick={() => router.push('/home')}
+          className="fixed top-4 left-4 z-50 text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          ← 홈으로 돌아가기
+        </button>
 
 
 

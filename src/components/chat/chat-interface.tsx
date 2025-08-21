@@ -358,7 +358,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
     <div className="flex flex-col h-full bg-transparent">
       {/* 상단 프레임: 질문 텍스트를 좌측 고정 영역에 미니멀 표시 */}
       {currentQuestion && (
-        <div className="border-b border-transparent bg-transparent">
+        <div className="border-b border-transparent bg-transparent sticky top-0 z-40">
           <div className="max-w-4xl w-full px-6 py-4 mx-auto">
             <p className="text-xs text-gray-500 mb-1">질문 {session.current_question_index}/8</p>
             <p className="text-base font-semibold text-gray-900 text-left">{currentQuestion.text}</p>
@@ -442,8 +442,8 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
         </div>
       )}
 
-      {/* 하단 고정 바 (온보딩 스타일) */}
-      <div className={`fixed bottom-0 left-0 right-0 px-4 py-3 border-t ${isScrolledUp ? 'border-gray-300 bg-white/70' : 'border-transparent bg-transparent'} backdrop-blur-md transition-colors`}>
+      {/* 하단 고정 바: 스크롤 업 시 숨김 */}
+      <div className={`fixed bottom-0 left-0 right-0 px-4 py-3 border-t border-gray-200 bg-white/70 backdrop-blur-md transition-all duration-200 ${isScrolledUp ? 'opacity-0 pointer-events-none translate-y-2' : 'opacity-100'}`}>
         <div className="max-w-4xl mx-auto flex items-end gap-3">
           <textarea
             ref={inputRef}
@@ -464,23 +464,24 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
             💬
           </button>
         </div>
-        <div className="mt-2 text-[11px] text-gray-500 text-center">
-          {isScrolledUp ? (
-            <button
-              onClick={() => {
-                const el = scrollRef.current
-                if (!el) return
-                el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
-              }}
-              className="underline"
-            >
-              맨 아래로
-            </button>
-          ) : (
-            <>Enter 전송 • Shift+Enter 줄바꿈</>
-          )}
-        </div>
+        {!isScrolledUp && (
+          <div className="mt-2 text-[11px] text-gray-500 text-center">Enter 전송 • Shift+Enter 줄바꿈</div>
+        )}
       </div>
+
+      {/* 스크롤 업 시 떠있는 맨 아래로 버튼 */}
+      {isScrolledUp && (
+        <button
+          onClick={() => {
+            const el = scrollRef.current
+            if (!el) return
+            el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+          }}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 btn px-4 py-2 rounded-full"
+        >
+          맨 아래로
+        </button>
+      )}
     </div>
   )
 }
