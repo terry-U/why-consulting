@@ -82,7 +82,6 @@ export default function HomePage() {
 
   return (
     <ResponsiveLayout>
-    <ResponsiveLayout>
         {/* 헤더 */}
         <div className="flex justify-between items-center mb-6">
           <div>
