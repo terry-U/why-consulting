@@ -131,41 +131,36 @@ export default function WhyPage() {
   if (finalWhy && candidates.length === 0) {
     // 최종 확정된 상태
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="max-w-2xl mx-auto text-center p-8">
-          <div className="neo w-32 h-32 mx-auto rounded-full flex items-center justify-center text-6xl mb-8">
-            ✨
-          </div>
-          
-          <h1 className="text-3xl font-bold mb-6">
-            축하합니다! 🎉
-          </h1>
-          
+      <div className="min-h-screen ui-container py-16">
+        <div className="max-w-2xl mx-auto text-center">
+          <div className="text-6xl mb-8">✨</div>
+          <h1 className="text-3xl font-bold mb-6">축하합니다! 🎉</h1>
           <div className="card p-8 mb-8">
             <h2 className="text-xl font-semibold mb-4">당신의 Why</h2>
-            <p className="text-2xl font-medium leading-relaxed">
-              "{finalWhy}"
-            </p>
+            <p className="text-2xl font-medium leading-relaxed">"{finalWhy}"</p>
           </div>
-          
-          <p className="text-gray-500 mb-6">
-            이 문장을 마음에 새기고 더 당신다운 삶을 살아가세요
-          </p>
-          
-          <button
-            onClick={() => router.push('/home')}
-            className="btn btn-primary text-white text-lg font-semibold py-4 px-8 rounded-full"
-          >
-            홈으로 돌아가기
-          </button>
+          <p className="text-gray-500 mb-8">이 문장을 마음에 새기고 더 당신다운 삶을 살아가세요</p>
+          <div className="flex items-center justify-center gap-3">
+            <button
+              onClick={() => router.push(`/session/${sessionId}/report`)}
+              className="btn btn-primary text-white text-lg font-semibold py-4 px-8 rounded-full"
+            >
+              보고서 보기
+            </button>
+            <button
+              onClick={() => router.push('/home')}
+              className="btn text-lg font-semibold py-4 px-8 rounded-full"
+            >
+              홈으로 돌아가기
+            </button>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen">
-      <div className="ui-container py-8">
+    <div className="min-h-screen ui-container py-12">
         {/* 뒤로가기 버튼 */}
         <button
           onClick={() => router.push(`/session/${sessionId}`)}
@@ -183,12 +178,8 @@ export default function WhyPage() {
         ) : (
           <div className="text-center py-16">
             <div className="text-4xl mb-4">⏳</div>
-            <h2 className="text-xl font-semibold mb-2">
-              Why 문장을 생성하는 중입니다
-            </h2>
-            <p className="text-gray-500">
-              조금만 더 기다려주세요...
-            </p>
+            <h2 className="text-xl font-semibold mb-2">Why 문장을 생성하는 중입니다</h2>
+            <p className="text-gray-500">조금만 더 기다려주세요...</p>
           </div>
         )}
       </div>
