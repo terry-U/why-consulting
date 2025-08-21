@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Message, Session } from '@/lib/supabase'
 // import { getSessionMessages } from '@/lib/messages' // 현재 사용하지 않음
 import CharacterMessage, { UserMessage } from './character-message'
+import { useRouter } from 'next/navigation'
 
 import { getCharacter, COUNSELING_QUESTIONS } from '@/lib/characters'
 import { CharacterType } from '@/types/characters'
@@ -16,6 +17,7 @@ interface ChatInterfaceProps {
 }
 
 export default function ChatInterface({ session, initialMessages, onSessionUpdate }: ChatInterfaceProps) {
+  const router = useRouter()
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -288,6 +290,14 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
             onSessionUpdate(updatedSession)
           }
           
+          // 요약 단계면 즉시 리포트 화면으로 이동
+          if (nextPhaseData.nextPhase === 'summary') {
+            setShowAdvanceButtons(false)
+            setNextPhaseData(null)
+            router.push(`/session/${session.id}/report`)
+            return
+          }
+
           // 채팅창 비우기
           setMessages([])
           
