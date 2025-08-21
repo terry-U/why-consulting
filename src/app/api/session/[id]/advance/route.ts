@@ -11,8 +11,10 @@ export async function POST(request: Request, context: any) {
 
     // 세션 상태 업데이트
     const updateData: Record<string, any> = {
-      counseling_phase: nextPhase,
-      current_question_index: nextQuestionIndex
+      counseling_phase: nextPhase
+    }
+    if (Number.isFinite(nextQuestionIndex)) {
+      updateData.current_question_index = nextQuestionIndex
     }
 
     // 사용자 답변이 있다면 answers에 저장
@@ -38,7 +40,7 @@ export async function POST(request: Request, context: any) {
     if (error) {
       console.error('❌ 세션 상태 업데이트 실패:', error)
       return NextResponse.json(
-        { success: false, error: '세션 상태 업데이트에 실패했습니다.' },
+        { success: false, error: '세션 상태 업데이트에 실패했습니다.', details: error.message },
         { status: 500 }
       )
     }
