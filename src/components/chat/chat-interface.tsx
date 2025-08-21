@@ -60,8 +60,19 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
   }, [])
 
   const startTypewriter = useCallback((content: string, onComplete?: () => void) => {
+    // 패널용 텍스트는 [ANSWER_READY] 블록을 숨김
+    const sanitizeForTyping = (raw: string) => {
+      try {
+        // **[ANSWER_READY]** ... **[ANSWER_READY]** 구간 제거
+        const removed = raw.replace(/\*\*\[ANSWER_READY\]\*\*[\s\S]*?\*\*\[ANSWER_READY\]\*\*/g, '')
+        return removed
+      } catch {
+        return raw
+      }
+    }
+    const display = sanitizeForTyping(content)
     clearTypingTimers()
-    const segs = splitIntoSentences(content)
+    const segs = splitIntoSentences(display)
     setSegments(segs)
     setSegmentIndex(0)
     setTypedText('')
