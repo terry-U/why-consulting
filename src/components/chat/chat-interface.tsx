@@ -21,10 +21,12 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isTyping, setIsTyping] = useState(false)
   const [showAdvanceButtons, setShowAdvanceButtons] = useState(false)
   const [nextPhaseData, setNextPhaseData] = useState<any>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const typingControllerRef = useRef<null | (() => void)>(null)
 
   // 현재 질문 정보
   const currentQuestion = useMemo(() => {
@@ -39,6 +41,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
   const handleFirstCounselorGreeting = useCallback(async () => {
     try {
       setIsLoading(true)
+      setIsTyping(true)
       
       // 빈 메시지로 API 호출하여 상담사가 먼저 말하게 함
       const response = await fetch('/api/chat', {
@@ -74,6 +77,8 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
         
         // 타이핑 애니메이션 시뮬레이션
         let currentIndex = 0
+        const finishTyping = () => { currentIndex = data.response.length + 1 }
+        typingControllerRef.current = finishTyping
         const typingInterval = setInterval(() => {
           if (currentIndex <= data.response.length) {
             // [ANSWER_READY] 태그를 임시로 숨기고 타이핑
@@ -92,6 +97,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
             currentIndex++
           } else {
             clearInterval(typingInterval)
+            typingControllerRef.current = null
             
             // 타이핑 완료 후 전체 내용 표시
             setMessages([{
@@ -111,6 +117,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
                 inputRef.current?.focus()
               }, 100)
             }
+            setIsTyping(false)
           }
         }, 30)
       }
@@ -174,6 +181,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
       const data = await response.json()
 
       if (data.success) {
+        setIsTyping(true)
         const aiResponse: Message = {
           id: `ai-${Date.now()}`,
           session_id: session.id,
@@ -192,6 +200,8 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
         
         // 타이핑 애니메이션 시뮬레이션
         let currentIndex = 0
+        const finishTyping = () => { currentIndex = data.response.length + 1 }
+        typingControllerRef.current = finishTyping
         const typingInterval = setInterval(() => {
           if (currentIndex <= data.response.length) {
             // [ANSWER_READY] 태그를 임시로 숨기고 타이핑
@@ -214,6 +224,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
             currentIndex++
           } else {
             clearInterval(typingInterval)
+            typingControllerRef.current = null
             
             // 타이핑 완료 후 전체 내용 표시
             setMessages(prev => 
@@ -237,6 +248,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
                 inputRef.current?.focus()
               }, 100)
             }
+            setIsTyping(false)
           }
         }, 30) // 30ms마다 한 글자씩
       } else {
@@ -386,7 +398,12 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
       )}
       
       {/* 메시지 목록 */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white">
+      <div
+        className="flex-1 overflow-y-auto p-4 space-y-4 bg-white"
+        onClick={() => {
+          if (typingControllerRef.current) typingControllerRef.current()
+        }}
+      >
         {messages.map((message) => {
           if (message.role === 'user') {
             return <UserMessage key={message.id} message={message.content} />
@@ -482,12 +499,12 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
                 placeholder="솔직한 마음을 편하게 말해주세요..."
                 className="input resize-none"
                 rows={3}
-                disabled={isLoading}
+                disabled={isLoading || isTyping}
               />
             </div>
             <button
               onClick={handleSendMessage}
-              disabled={!inputValue.trim() || isLoading}
+              disabled={!inputValue.trim() || isLoading || isTyping}
               className="btn btn-primary text-white"
             >
               💬
