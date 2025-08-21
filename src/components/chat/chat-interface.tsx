@@ -367,7 +367,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
       )}
 
       {/* 메인 메시지 영역 (일반 채팅 표시) */}
-      <div className="flex-1 overflow-y-auto bg-transparent" ref={scrollRef} onScroll={handleScroll}>
+      <div className="flex-1 overflow-y-auto bg-transparent" ref={scrollRef} onScroll={handleScroll} style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="max-w-4xl w-full px-6 pb-32 mx-auto space-y-3">
           {messages.map((message) => {
             if (message.role === 'user') {
@@ -442,8 +442,8 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
         </div>
       )}
 
-      {/* 하단 고정 바: 스크롤 업 시 숨김 */}
-      <div className={`fixed bottom-0 left-0 right-0 px-4 py-3 border-t border-gray-200 bg-white/70 backdrop-blur-md transition-all duration-200 ${isScrolledUp ? 'opacity-0 pointer-events-none translate-y-2' : 'opacity-100'}`}>
+      {/* 하단 고정 바: 스크롤 업 시 숨김 (바깥 레이아웃 영향 없도록) */}
+      <div className={`fixed bottom-0 left-0 right-0 px-4 py-3 border-t border-gray-200 bg-white/70 backdrop-blur-md transition-transform transition-opacity duration-200 will-change-transform ${isScrolledUp ? 'opacity-0 pointer-events-none translate-y-2' : 'opacity-100 translate-y-0'}`}>
         <div className="max-w-4xl mx-auto flex items-end gap-3">
           <textarea
             ref={inputRef}

@@ -105,8 +105,8 @@ export default function SessionPage() {
   }
 
   return (
-    <div className="min-h-screen">
-      <div className="py-6">
+    <div className="h-screen overflow-hidden">
+      <div className="py-0 h-full">
         {/* 헤더 */}
         <button
           onClick={() => router.push('/home')}
@@ -117,8 +117,8 @@ export default function SessionPage() {
 
 
 
-        {/* 상담 인터페이스 영역 (프레임 제거, 전체 화면 높이) */}
-        <div className="h-[calc(100vh-120px)]">
+        {/* 상담 인터페이스 영역 (단일 스크롤 영역 확보) */}
+        <div className="h-full overflow-hidden">
           <ChatInterface
             session={session}
             initialMessages={messages}
