@@ -108,12 +108,14 @@ export default function SessionPage() {
     <div className="h-screen overflow-hidden">
       <div className="py-0 h-full">
         {/* 헤더 */}
-        <button
-          onClick={() => router.push('/home')}
-          className="fixed top-4 left-4 z-50 text-gray-600 hover:text-gray-900 transition-colors"
-        >
-          ← 홈으로 돌아가기
-        </button>
+        <div className="fixed top-4 left-4 z-50 pointer-events-auto">
+          <button
+            onClick={() => router.push('/home')}
+            className="text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            ← 홈으로 돌아가기
+          </button>
+        </div>
 
 
 

@@ -356,18 +356,17 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
 
   return (
     <div className="flex flex-col h-full bg-transparent">
-      {/* 상단 프레임: 질문 텍스트를 좌측 고정 영역에 미니멀 표시 */}
-      {currentQuestion && (
-        <div className="border-b border-transparent bg-transparent sticky top-0 z-40">
-          <div className="max-w-4xl w-full px-6 py-4 mx-auto">
-            <p className="text-xs text-gray-500 mb-1">질문 {session.current_question_index}/8</p>
-            <p className="text-base font-semibold text-gray-900 text-left">{currentQuestion.text}</p>
-          </div>
-        </div>
-      )}
-
-      {/* 메인 메시지 영역 (일반 채팅 표시) */}
+      {/* 메인 스크롤 영역: 헤더+히스토리 모두 한 컨테이너에서 스크롤 */}
       <div className="flex-1 overflow-y-auto bg-transparent" ref={scrollRef} onScroll={handleScroll} style={{ WebkitOverflowScrolling: 'touch' }}>
+        {/* 상단 질문 헤더 - 스크롤 컨테이너 안에서 sticky */}
+        {currentQuestion && (
+          <div className="border-b border-transparent bg-transparent sticky top-0 z-40">
+            <div className="max-w-4xl w-full px-6 py-4 mx-auto bg-transparent">
+              <p className="text-xs text-gray-500 mb-1">질문 {session.current_question_index}/8</p>
+              <p className="text-base font-semibold text-gray-900 text-left">{currentQuestion.text}</p>
+            </div>
+          </div>
+        )}
         <div className="max-w-4xl w-full px-6 pb-32 mx-auto space-y-3">
           {messages.map((message) => {
             if (message.role === 'user') {
