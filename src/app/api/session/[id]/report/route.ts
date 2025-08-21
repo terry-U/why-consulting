@@ -1,13 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase-server'
 import { OpenAI } from 'openai'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(_req: Request, context: { params: { id: string } }) {
+  const { params } = context
   const sessionId = params.id
   if (!sessionId) {
     return NextResponse.json({ success: false, error: 'sessionId가 필요합니다' }, { status: 400 })
