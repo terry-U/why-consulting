@@ -28,6 +28,69 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const typingControllerRef = useRef<null | (() => void)>(null)
 
+  // 온보딩형 타이핑 상태
+  const [typedText, setTypedText] = useState('')
+  const [segments, setSegments] = useState<string[]>([])
+  const [segmentIndex, setSegmentIndex] = useState(0)
+  const typingIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const waitingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  const TYPE_MS = 28
+  const WAIT_MS = 2600
+
+  const splitIntoSentences = useCallback((content: string) => {
+    const result: string[] = []
+    const matches = content.match(/[^.?!]+[.?!]/g)
+    if (matches && matches.length) {
+      matches.forEach(s => { const t = s.trim(); if (t) result.push(t) })
+      const tail = content.replace(/[^.?!]+[.?!]/g, '').trim()
+      if (tail) result.push(tail)
+    } else {
+      const t = content.trim(); if (t) result.push(t)
+    }
+    return result
+  }, [])
+
+  const clearTypingTimers = useCallback(() => {
+    if (typingIntervalRef.current) clearInterval(typingIntervalRef.current)
+    if (waitingTimeoutRef.current) clearTimeout(waitingTimeoutRef.current)
+  }, [])
+
+  const startTypewriter = useCallback((content: string, onComplete?: () => void) => {
+    clearTypingTimers()
+    const segs = splitIntoSentences(content)
+    setSegments(segs)
+    setSegmentIndex(0)
+    setTypedText('')
+    setIsTyping(true)
+
+    const typeSegment = (idx: number) => {
+      const current = segs[idx] || ''
+      let i = 0
+      typingIntervalRef.current = setInterval(() => {
+        i += 1
+        const before = segs.slice(0, idx).join(' ')
+        const currentTyped = current.slice(0, i)
+        setTypedText(before ? `${before} ${currentTyped}` : currentTyped)
+        if (i >= current.length) {
+          if (typingIntervalRef.current) clearInterval(typingIntervalRef.current)
+          setIsTyping(false)
+          if (idx >= segs.length - 1) {
+            waitingTimeoutRef.current = setTimeout(() => { if (onComplete) onComplete() }, 0)
+          } else {
+            waitingTimeoutRef.current = setTimeout(() => {
+              setSegmentIndex(prev => prev + 1)
+              setIsTyping(true)
+              typeSegment(idx + 1)
+            }, WAIT_MS)
+          }
+        }
+      }, TYPE_MS)
+    }
+
+    typeSegment(0)
+  }, [WAIT_MS, TYPE_MS, clearTypingTimers, splitIntoSentences])
+
   // 현재 질문 정보
   const currentQuestion = useMemo(() => {
     if (session.counseling_phase === 'questions' && session.current_question_index >= 1) {
@@ -75,51 +138,18 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
           content: '' // 처음에는 빈 내용으로 시작
         }])
         
-        // 타이핑 애니메이션 시뮬레이션
-        let currentIndex = 0
-        const finishTyping = () => { currentIndex = data.response.length + 1 }
-        typingControllerRef.current = finishTyping
-        const typingInterval = setInterval(() => {
-          if (currentIndex <= data.response.length) {
-            // [ANSWER_READY] 태그를 임시로 숨기고 타이핑
-            let displayText = data.response.slice(0, currentIndex)
-            
-            // 타이핑 중에는 [ANSWER_READY] 태그 숨김
-            if (displayText.includes('**[ANSWER_READY]**') && currentIndex < data.response.length) {
-              const beforeAnswerReady = displayText.split('**[ANSWER_READY]**')[0]
-              displayText = beforeAnswerReady
-            }
-            
-            setMessages([{
-              ...aiResponse,
-              content: displayText
-            }])
-            currentIndex++
+        // 온보딩형 문장 단위 타이핑
+        startTypewriter(data.response, () => {
+          setMessages([{ ...aiResponse, content: data.response }])
+          console.log('🔍 첫 인사 API 응답:', { shouldAdvance: data.shouldAdvance, nextPhaseData: data.nextPhaseData })
+          if (data.shouldAdvance && data.nextPhaseData) {
+            console.log('⏭️ 첫 인사에서 진행 신호 수신:', data.nextPhaseData)
+            setShowAdvanceButtons(true)
+            setNextPhaseData(data.nextPhaseData)
           } else {
-            clearInterval(typingInterval)
-            typingControllerRef.current = null
-            
-            // 타이핑 완료 후 전체 내용 표시
-            setMessages([{
-              ...aiResponse,
-              content: data.response
-            }])
-            
-            // 타이핑 완료 후 다음 단계 진행 신호 처리
-            console.log('🔍 첫 인사 API 응답:', { shouldAdvance: data.shouldAdvance, nextPhaseData: data.nextPhaseData })
-            if (data.shouldAdvance && data.nextPhaseData) {
-              console.log('⏭️ 첫 인사에서 진행 신호 수신:', data.nextPhaseData)
-              setShowAdvanceButtons(true)
-              setNextPhaseData(data.nextPhaseData)
-            } else {
-              // 포커스 설정
-              setTimeout(() => {
-                inputRef.current?.focus()
-              }, 100)
-            }
-            setIsTyping(false)
+            setTimeout(() => { inputRef.current?.focus() }, 100)
           }
-        }, 30)
+        })
       }
     } catch (error) {
       console.error('첫 인사 오류:', error)
@@ -198,59 +228,18 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
         }
         setMessages(prev => [...prev, tempMessage])
         
-        // 타이핑 애니메이션 시뮬레이션
-        let currentIndex = 0
-        const finishTyping = () => { currentIndex = data.response.length + 1 }
-        typingControllerRef.current = finishTyping
-        const typingInterval = setInterval(() => {
-          if (currentIndex <= data.response.length) {
-            // [ANSWER_READY] 태그를 임시로 숨기고 타이핑
-            let displayText = data.response.slice(0, currentIndex)
-            
-            // 타이핑 중에는 [ANSWER_READY] 태그 숨김
-            if (displayText.includes('**[ANSWER_READY]**') && currentIndex < data.response.length) {
-              // 아직 타이핑 중이면 [ANSWER_READY] 부분은 표시하지 않음
-              const beforeAnswerReady = displayText.split('**[ANSWER_READY]**')[0]
-              displayText = beforeAnswerReady
-            }
-            
-            setMessages(prev => 
-              prev.map(msg => 
-                msg.id === aiResponse.id 
-                  ? { ...msg, content: displayText }
-                  : msg
-              )
-            )
-            currentIndex++
+        // 온보딩형 문장 단위 타이핑
+        startTypewriter(data.response, () => {
+          setMessages(prev => prev.map(msg => msg.id === aiResponse.id ? { ...msg, content: data.response } : msg))
+          console.log('🔍 API 응답 데이터:', { shouldAdvance: data.shouldAdvance, nextPhaseData: data.nextPhaseData })
+          if (data.shouldAdvance && data.nextPhaseData) {
+            console.log('⏭️ 다음 단계 진행 신호 수신:', data.nextPhaseData)
+            setShowAdvanceButtons(true)
+            setNextPhaseData(data.nextPhaseData)
           } else {
-            clearInterval(typingInterval)
-            typingControllerRef.current = null
-            
-            // 타이핑 완료 후 전체 내용 표시
-            setMessages(prev => 
-              prev.map(msg => 
-                msg.id === aiResponse.id 
-                  ? { ...msg, content: data.response }
-                  : msg
-              )
-            )
-            
-            // 타이핑 완료 후 다음 단계 진행 신호 처리
-            console.log('🔍 API 응답 데이터:', { shouldAdvance: data.shouldAdvance, nextPhaseData: data.nextPhaseData })
-            if (data.shouldAdvance && data.nextPhaseData) {
-              console.log('⏭️ 다음 단계 진행 신호 수신:', data.nextPhaseData)
-              setShowAdvanceButtons(true)
-              setNextPhaseData(data.nextPhaseData)
-            } else {
-              console.log('❌ 진행 신호 없음 - shouldAdvance:', data.shouldAdvance, 'nextPhaseData:', data.nextPhaseData)
-              // 포커스 설정
-              setTimeout(() => {
-                inputRef.current?.focus()
-              }, 100)
-            }
-            setIsTyping(false)
+            setTimeout(() => { inputRef.current?.focus() }, 100)
           }
-        }, 30) // 30ms마다 한 글자씩
+        })
       } else {
         throw new Error(data.error)
       }
@@ -401,7 +390,16 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
       <div
         className="flex-1 overflow-y-auto p-4 space-y-4 bg-white"
         onClick={() => {
-          if (typingControllerRef.current) typingControllerRef.current()
+          // 온보딩처럼 클릭 시 타이핑 또는 대기 스킵
+          if (isTyping && typingIntervalRef.current) {
+            const seg = segments[segmentIndex] || ''
+            setTypedText([...segments.slice(0, segmentIndex), seg].join(' '))
+            clearInterval(typingIntervalRef.current)
+            setIsTyping(false)
+          } else if (!isTyping && waitingTimeoutRef.current) {
+            clearTimeout(waitingTimeoutRef.current)
+            setSegmentIndex(prev => Math.min(prev + 1, Math.max(segments.length - 1, 0)))
+          }
         }}
       >
         {messages.map((message) => {
