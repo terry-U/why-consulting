@@ -350,7 +350,6 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
     const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
     const atBottom = distanceFromBottom <= 8
     setIsScrolledUp(!atBottom)
-    setShowTypingPanel(atBottom)
   }, [])
 
   
