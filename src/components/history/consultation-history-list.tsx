@@ -71,7 +71,7 @@ export default function ConsultationHistoryList({
         {history.map((session) => (
           <div 
             key={session.id}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+            className="bg-white rounded-xl border border-gray-200 overflow-hidden"
           >
             {/* 기본 정보 */}
             <div 
@@ -122,18 +122,16 @@ export default function ConsultationHistoryList({
               
               {/* Why 문장 (완료된 경우) */}
               {session.whyStatement && (
-                <div className="mt-3 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
-                  <p className="text-sm font-medium text-gray-700 mb-1">도출된 Why:</p>
+                <div className="mt-3 p-3 rounded-lg border border-gray-200 bg-white">
+                  <p className="text-sm font-medium text-gray-600 mb-1">도출된 Why</p>
                   <p className="text-gray-900 font-medium">"{session.whyStatement}"</p>
                 </div>
               )}
               
               {/* 마지막 메시지 (진행 중인 경우) */}
               {!session.whyStatement && session.lastMessage && (
-                <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-600 truncate">
-                    💬 {session.lastMessage}
-                  </p>
+                <div className="mt-3 p-3 rounded-lg border border-gray-200 bg-white">
+                  <p className="text-sm text-gray-700 truncate">💬 {session.lastMessage}</p>
                 </div>
               )}
             </div>

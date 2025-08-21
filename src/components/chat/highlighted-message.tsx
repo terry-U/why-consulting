@@ -28,11 +28,8 @@ export default function HighlightedMessage({ content }: HighlightedMessageProps)
       } else {
         // [ANSWER_READY] 내용 - 하이라이트
         result.push(
-          <div
-            key={`highlight-${i}`}
-            className="bg-yellow-100 border border-yellow-300 rounded-lg p-3 my-2 inline-block"
-          >
-            <span className="text-yellow-800 font-medium">💡 {parts[i]}</span>
+          <div key={`highlight-${i}`} className="inline-block my-2">
+            <span className="px-2 py-1 rounded-full bg-gray-100 text-gray-900 border border-gray-200">💡 {parts[i]}</span>
           </div>
         )
       }
