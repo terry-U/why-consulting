@@ -14,16 +14,19 @@ const counselors = {
     persona: '밝고 따뜻한 에너지로 사용자의 성취 경험을 깊이 탐구하는 상담사',
     systemPrompt: `당신은 "옐로"라는 이름의 상담사입니다. 🌞 경험 수집가로서 "뿌듯했던 경험"을 구체적으로 모아 핵심 감정 동기를 찾습니다.
 
+먼저 자기소개를 해주세요. 내담자가 마음을 놓고 자연스럽게 속마음을 털어놓을 수 있도록 상담을 열어주세요.
+
 당신은 내담자의 Why를 찾기 위해 위 질문을 하는 상담사입니다.
 내담자의 뿌듯한 경험을 2~3개 아주 구체적으로 수집하는 것이 목적입니다.
 자연스럽게 뿌듯했던 경험을 물어보시고, 아주 구체적으로 완성될 수 있게 질문을 이어가서 기억의 조각을 맞춰 경험들을 완성해주세요.
-
-먼저 자기소개를 해주세요. 내담자가 마음을 놓고 자연스럽게 속마음을 털어놓을 수 있도록 상담을 열어주세요.
 
     공통 규칙(모든 응답에 적용):
 - 한 번에 하나의 질문만. 2~4문장으로 말하고 마지막 1문장만 질문, 혹은 대화를 이어갈 수 있는 추임새, 거드는 말.
 - 직전 3개 응답과 유사한 표현/구조 반복 금지. 호기심 어린, 따뜻한 톤.
 - 기계적인 표현 금지. 내담자가 이야기를 이어갈 수 있도록 친한 사람처럼 행동하세요.
+- 나의 말에 경청하는 자세로 대화에 임하세요.
+- 다정한 말투를 사용하세요.
+- 반드시 존댓말을 사용하세요.
 
 1. 질문 단계
     1. 보통 언제 뿌듯한지
@@ -604,7 +607,7 @@ export async function POST(request: NextRequest) {
     // OpenAI API 호출
     const modelId = process.env.OPENAI_CHAT_MODEL || 'gpt-4o'
     const temperature = Number(process.env.OPENAI_TEMPERATURE ?? 0.6)
-    const maxTokens = Number(process.env.OPENAI_MAX_TOKENS ?? 900)
+    const maxTokens = Number(process.env.OPENAI_MAX_TOKENS ?? 1800)
     const topP = Number(process.env.OPENAI_TOP_P ?? 1)
     const freqPenalty = Number(process.env.OPENAI_FREQUENCY_PENALTY ?? 0.15)
     const presPenalty = Number(process.env.OPENAI_PRESENCE_PENALTY ?? 0.1)
@@ -650,16 +653,30 @@ export async function POST(request: NextRequest) {
         aiResponse = completion.choices[0]?.message?.content || ''
       }
     } else {
-      const completion = await openai.chat.completions.create({
-        model: modelId,
-        messages: openaiMessages,
-        temperature,
-        max_tokens: maxTokens,
-        top_p: topP,
-        frequency_penalty: freqPenalty,
-        presence_penalty: presPenalty,
-      })
-      aiResponse = completion.choices[0]?.message?.content || ''
+      // Chat Completions 경로 (gpt-4o). 토큰 초과 에러 시 단계적 축소 재시도
+      const requestOnce = async (tokens: number) => {
+        const completion = await openai.chat.completions.create({
+          model: modelId,
+          messages: openaiMessages,
+          temperature,
+          max_tokens: tokens,
+          top_p: topP,
+          frequency_penalty: freqPenalty,
+          presence_penalty: presPenalty,
+        })
+        return completion.choices[0]?.message?.content || ''
+      }
+      try {
+        aiResponse = await requestOnce(maxTokens)
+      } catch (e: any) {
+        console.warn('ℹ️ max_tokens 재시도(1):', e?.message)
+        try {
+          aiResponse = await requestOnce(Math.floor(maxTokens * 0.6))
+        } catch (e2: any) {
+          console.warn('ℹ️ max_tokens 재시도(2):', e2?.message)
+          aiResponse = await requestOnce(Math.floor(maxTokens * 0.4))
+        }
+      }
     }
 
     if (!aiResponse) {
