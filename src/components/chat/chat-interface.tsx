@@ -361,18 +361,10 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
         <div className="max-w-4xl w-full px-6 pb-32 mx-auto space-y-3">
           {messages.map((message) => {
             if (message.role === 'user') {
-              return (
-                <div key={message.id} className="rounded-2xl border border-white/30 bg-white/60 backdrop-blur-md shadow-sm p-3">
-                  <UserMessage message={message.content} />
-                </div>
-              )
+              return <UserMessage key={message.id} message={message.content} />
             } else {
               const character = getCharacter((message.counselor_id as CharacterType) || 'main')
-              return (
-                <div key={message.id} className="rounded-2xl border border-white/30 bg-white/60 backdrop-blur-md shadow-sm p-3">
-                  <CharacterMessage character={character} message={message.content} showTypingEffect={false} />
-                </div>
-              )
+              return <CharacterMessage key={message.id} character={character} message={message.content} showTypingEffect={false} />
             }
           })}
           <div ref={messagesEndRef} />

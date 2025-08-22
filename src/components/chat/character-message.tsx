@@ -58,8 +58,8 @@ export default function CharacterMessage({
           <span className="font-semibold text-gray-900 mr-1">{character.name}</span>
         </div>
 
-        {/* 메시지 내용 - 불필요한 말풍선 클래스 제거, 부모에서 카드 스타일 래핑 */}
-        <div>
+        {/* 메시지 내용 - 글래스 말풍선 유지 */}
+        <div className="p-4 rounded-2xl border border-white/30 bg-white/60 backdrop-blur-md shadow-sm">
           {isTyping ? (
             <div className="flex items-center space-x-1">
               <div className="flex space-x-1">
@@ -92,7 +92,7 @@ export function UserMessage({ message }: UserMessageProps) {
   return (
     <div className="flex items-start mb-6 justify-end">
       <div className="max-w-[80%]">
-        <div className="p-4 rounded-2xl border border-gray-200 bg-white">
+        <div className="p-4 rounded-2xl border border-white/30 bg-white/60 backdrop-blur-md shadow-sm">
           <div className="text-gray-900 leading-relaxed">
             {message}
           </div>
