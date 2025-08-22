@@ -51,15 +51,15 @@ export default function CharacterMessage({
         <span className="text-lg">{character.emoji}</span>
       </div>
 
-      {/* 메시지 영역 */}
+      {/* 메시지 영역 (스타일은 부모에서 래핑) */}
       <div className="flex-1 max-w-[80%]">
         {/* 캐릭터 이름 */}
         <div className="mb-2 text-sm text-gray-600">
           <span className="font-semibold text-gray-900 mr-1">{character.name}</span>
         </div>
 
-        {/* 메시지 내용 */}
-        <div className="p-4 rounded-2xl border border-gray-200 bg-white">
+        {/* 메시지 내용 - 불필요한 말풍선 클래스 제거, 부모에서 카드 스타일 래핑 */}
+        <div>
           {isTyping ? (
             <div className="flex items-center space-x-1">
               <div className="flex space-x-1">

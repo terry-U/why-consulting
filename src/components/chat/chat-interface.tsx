@@ -370,11 +370,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
               const character = getCharacter((message.counselor_id as CharacterType) || 'main')
               return (
                 <div key={message.id} className="rounded-2xl border border-white/30 bg-white/60 backdrop-blur-md shadow-sm p-3">
-                  <CharacterMessage
-                    character={character}
-                    message={message.content}
-                    showTypingEffect={false}
-                  />
+                  <CharacterMessage character={character} message={message.content} showTypingEffect={false} />
                 </div>
               )
             }
