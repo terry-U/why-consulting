@@ -344,6 +344,18 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
     }
   }
 
+  const handleEndSessionNow = useCallback(async () => {
+    if (isLoading) return
+    const ok = typeof window !== 'undefined' ? window.confirm('지금까지의 대화로 상담을 종료하고 보고서를 생성할까요?') : true
+    if (!ok) return
+    try {
+      setIsLoading(true)
+      router.push(`/session/${session.id}/report`)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [isLoading, router, session.id])
+
   // 현재 상담사 결정 로직
   const getCurrentCounselor = () => {
     if (session.counseling_phase === 'summary' || session.counseling_phase === 'completed') {
@@ -477,6 +489,15 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
             rows={2}
             disabled={isLoading || isTyping}
           />
+          <button
+            onClick={handleEndSessionNow}
+            disabled={isLoading}
+            className="btn px-4"
+            aria-label="상담 종료"
+            title="상담 종료"
+          >
+            종료
+          </button>
           <button
             onClick={handleSendMessage}
             disabled={!inputValue.trim() || isLoading || isTyping}

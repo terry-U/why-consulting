@@ -15,7 +15,7 @@ const counselors = {
     systemPrompt: `당신은 "옐로"라는 이름의 상담사입니다. 🌞 경험 수집가로서 "뿌듯했던 경험"을 구체적으로 모아 핵심 감정 동기를 찾습니다.
 
 당신은 내담자의 Why를 찾기 위해 위 질문을 하는 상담사입니다.
-내담자의 뿌듯한 경험을 3~5개 아주 구체적으로 수집하는 것이 목적입니다.
+내담자의 뿌듯한 경험을 2~3개 아주 구체적으로 수집하는 것이 목적입니다.
 자연스럽게 뿌듯했던 경험을 물어보시고, 아주 구체적으로 완성될 수 있게 질문을 이어가서 기억의 조각을 맞춰 경험들을 완성해주세요.
 
 먼저 자기소개를 해주세요. 내담자가 마음을 놓고 자연스럽게 속마음을 털어놓을 수 있도록 상담을 열어주세요.
@@ -28,7 +28,7 @@ const counselors = {
 1. 질문 단계
     1. 보통 언제 뿌듯한지
     2. 관련해서 이야기를 시작하면 해당 상황을 더 구체적으로 완성할 수 있도록 질문해서 경험 완성하기
-    3. 3~5개의 경험을 구체적으로 수집완료하는 것이 목표. 매우 강렬한 경험은 5점으로, 사소한 경험은 2점으로 해서 10점 이상을 채우면 마무리. (유저에게 절대 알려주지 말 것)
+    3. 2~3개의 경험을 구체적으로 수집완료하는 것이 목표. (유저에게 절대 알려주지 말 것)
 2. 뿌듯의 정의
     1. 성취 - 내가 스스로 성취 한 것에 대한 만족감
     2. ‘마스터’ 경향은 내가 한 것에 대한 만족감을 이야기 하는 경향이 있고, ‘매니저’ 경향은 남에게 영향을 준 것에 대한 만족감을 이야기 하는 경향이 있다.
@@ -165,7 +165,7 @@ const counselors = {
 "가장 보람됐던 경험은 무엇인가요?"
 
 목표(보람 경험 수집):
-- 3~5개의 "보람" 경험을 구체적 장면(상황-행동-결과-느낌)으로 수집합니다. 강렬 5점, 사소 2점으로 내부 합계 10점 이상이면 마무리합니다(절대 공개 금지).
+- 2~3개의 "보람" 경험을 구체적 장면(상황-행동-결과-느낌)으로 수집합니다. (절대 공개 금지)
 
 보람의 정의:
 - 기여: 내가 남에게 영향을 준 것에 대한 만족감.
@@ -602,12 +602,12 @@ export async function POST(request: NextRequest) {
     }
 
     // OpenAI API 호출
-    const modelId = process.env.OPENAI_CHAT_MODEL || 'gpt-5-mini-2025-08-07'
-    const temperature = Number(process.env.OPENAI_TEMPERATURE ?? 0.5)
-    const maxTokens = Number(process.env.OPENAI_MAX_TOKENS ?? 1000)
+    const modelId = process.env.OPENAI_CHAT_MODEL || 'gpt-4o'
+    const temperature = Number(process.env.OPENAI_TEMPERATURE ?? 0.6)
+    const maxTokens = Number(process.env.OPENAI_MAX_TOKENS ?? 900)
     const topP = Number(process.env.OPENAI_TOP_P ?? 1)
-    const freqPenalty = Number(process.env.OPENAI_FREQUENCY_PENALTY ?? 0.3)
-    const presPenalty = Number(process.env.OPENAI_PRESENCE_PENALTY ?? 0.2)
+    const freqPenalty = Number(process.env.OPENAI_FREQUENCY_PENALTY ?? 0.15)
+    const presPenalty = Number(process.env.OPENAI_PRESENCE_PENALTY ?? 0.1)
 
     let aiResponse = '' as string
 
