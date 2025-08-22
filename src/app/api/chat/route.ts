@@ -623,10 +623,11 @@ export async function POST(request: NextRequest) {
         const resp: any = await (openai as any).responses.create({
           model: modelId,
           input: responsesInput,
-          temperature,
+          // GPT-5 Responses 일부 모델은 temperature/top_p 미지원 → 제외
           max_output_tokens: maxTokens,
-          top_p: topP,
-          reasoning_effort: process.env.OPENAI_REASONING_EFFORT || undefined,
+          ...(process.env.OPENAI_REASONING_EFFORT
+            ? { reasoning_effort: process.env.OPENAI_REASONING_EFFORT }
+            : {}),
         } as any)
         aiResponse = (resp && (resp.output_text || resp.content?.[0]?.text || resp.choices?.[0]?.message?.content)) || ''
       } catch (e) {
