@@ -384,23 +384,25 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
               return <UserMessage key={message.id} message={message.content} />
             } else {
               const character = getCharacter((message.counselor_id as CharacterType) || 'main')
-              // 타이핑 중인 메시지는 별도의 말풍선(점 3개)로 표시하고, 본문은 숨긴다
-              if (isTyping && typingMessageIdRef.current === message.id) {
-                return null
-              }
               return <CharacterMessage key={message.id} character={character} message={message.content} showTypingEffect={false} />
             }
           })}
           {/* 상담사 타이핑 표시 말풍선 */}
-          {isTyping && typingMessageIdRef.current && (
-            <CharacterMessage
-              key={`${typingMessageIdRef.current}-typing`}
-              character={getCharacter(typingCounselorRef.current)}
-              message=""
-              isTyping={true}
-              showTypingEffect={false}
-            />
-          )}
+          {(() => {
+            if (!isTyping || !typingMessageIdRef.current) return null
+            const inProgress = messages.find(m => m.id === typingMessageIdRef.current)
+            const hasStarted = !!(inProgress && inProgress.content && inProgress.content.length > 0)
+            if (hasStarted) return null
+            return (
+              <CharacterMessage
+                key={`${typingMessageIdRef.current}-typing`}
+                character={getCharacter(typingCounselorRef.current)}
+                message=""
+                isTyping={true}
+                showTypingEffect={false}
+              />
+            )
+          })()}
           <div ref={messagesEndRef} />
         </div>
       </div>
