@@ -378,7 +378,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
             <div className="max-w-2xl mx-auto">
               <div className="mb-8">
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">답변 확인</h3>
-                <p className="text-sm text-gray-600">현재 질문과 방금 정리된 한 줄을 확인해주세요.</p>
+                <p className="text-sm text-gray-600">현재 질문과 방금 정리된 내용을 확인해주세요.</p>
               </div>
 
               {/* 현재 질문 */}
@@ -392,11 +392,11 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
               {/* 마지막에 하이라이트 된 답변 */}
               {messages.length > 0 && (() => {
                 const lastMessage = messages[messages.length - 1];
-                const answerReadyMatch = lastMessage.content.match(/\*\*\[ANSWER_READY\]\*\*(.*?)\*\*\[ANSWER_READY\]\*\*/);
+                const answerReadyMatch = lastMessage.content.match(/\*\*\[ANSWER_READY\]\*\*([\s\S]*?)\*\*\[ANSWER_READY\]\*\*/);
                 return answerReadyMatch ? (
                   <div className="border border-gray-200 rounded-xl p-6 mb-8 bg-white">
                     <p className="text-xs text-gray-500 mb-2">내 답변</p>
-                    <p className="text-xl text-gray-900 leading-relaxed">💡 {answerReadyMatch[1]}</p>
+                    <div className="text-xl text-gray-900 leading-relaxed whitespace-pre-line">💡 {answerReadyMatch[1]}</div>
                   </div>
                 ) : null;
               })()}
