@@ -139,6 +139,12 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
     const userMessage = inputValue.trim()
     setInputValue('')
     setIsLoading(true)
+    // 사용자가 전송하는 즉시 상담사 타이핑 말풍선 표시
+    try {
+      setIsTyping(true)
+      typingMessageIdRef.current = `typing-${Date.now()}`
+      typingCounselorRef.current = (getCurrentCounselor() as CharacterType) || 'main'
+    } catch {}
 
     try {
       // 사용자 메시지를 즉시 UI에 추가
@@ -221,6 +227,11 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
       alert('메시지 전송에 실패했습니다.')
     } finally {
       setIsLoading(false)
+      if (typingControllerRef.current === null && typingIntervalRef.current === null) {
+        // 실패 등으로 응답이 오지 않은 경우 타이핑 말풍선 정리
+        setIsTyping(false)
+        typingMessageIdRef.current = null
+      }
     }
   }
 
