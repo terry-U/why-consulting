@@ -576,7 +576,7 @@ export async function POST(request: NextRequest) {
       .select('*')
       .eq('session_id', sessionId)
       .order('created_at', { ascending: true })
-      .limit(20) // 최근 20개 메시지만
+      // 전체 히스토리를 전송하기 위해 제한 제거
 
     // OpenAI 메시지 형식으로 변환
     const openaiMessages = [

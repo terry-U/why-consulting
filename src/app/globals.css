@@ -45,30 +45,7 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Minimal / Neumorphism tokens (dark) */
-    --background: #0b0e14;
-    --surface: #0d121a;
-    --foreground: #e5e7eb;
-    --muted: #9ca3af;
-
-    --primary: #e5e7eb;
-    --primary-foreground: #0b0e14;
-    --secondary: #11161f;
-    --secondary-foreground: #e5e7eb;
-    --destructive: #ef4444;
-    --destructive-foreground: #ffffff;
-    --accent: #11161f;
-    --accent-foreground: #e5e7eb;
-    --border: #182230;
-    --input: #182230;
-    --ring: #e5e7eb;
-
-    --shadow-dark: #06080c;
-    --shadow-light: #141923;
-  }
-}
+/* 다크 선호 무시: 항상 라이트 토큰 유지 (다크 토큰 비활성화) */
 
 body {
   background: var(--background);
