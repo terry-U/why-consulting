@@ -7,8 +7,8 @@ interface HighlightedMessageProps {
 export default function HighlightedMessage({ content }: HighlightedMessageProps) {
   // [ANSWER_READY] 태그를 찾아서 하이라이트 처리
   const processContent = (text: string) => {
-    // **[ANSWER_READY]** 패턴을 찾아서 처리
-    const answerReadyRegex = /\*\*\[ANSWER_READY\]\*\*(.*?)\*\*\[ANSWER_READY\]\*\*/g
+    // **[ANSWER_READY]** 패턴을 찾아서 처리 (줄바꿈 포함)
+    const answerReadyRegex = /\*\*\[ANSWER_READY\]\*\*([\s\S]*?)\*\*\[ANSWER_READY\]\*\*/g
     
     if (!answerReadyRegex.test(text)) {
       // [ANSWER_READY] 태그가 없으면 일반 텍스트로 반환
@@ -29,7 +29,7 @@ export default function HighlightedMessage({ content }: HighlightedMessageProps)
         // [ANSWER_READY] 내용 - 하이라이트
         result.push(
           <div key={`highlight-${i}`} className="inline-block my-2">
-            <span className="px-2 py-1 rounded-full bg-gray-100 text-gray-900 border border-gray-200">💡 {parts[i]}</span>
+            <span className="px-2 py-1 rounded-2xl bg-gray-100 text-gray-900 border border-gray-200 whitespace-pre-wrap">💡 {parts[i]}</span>
           </div>
         )
       }

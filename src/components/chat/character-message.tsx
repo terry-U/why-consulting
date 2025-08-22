@@ -70,7 +70,7 @@ export default function CharacterMessage({
               <span className="text-gray-500 text-sm ml-2">생각하는 중…</span>
             </div>
           ) : (
-            <div className="text-gray-900 leading-relaxed">
+            <div className="text-gray-900 leading-relaxed whitespace-pre-wrap">
               <HighlightedMessage content={displayedText} />
               {showTypingEffect && !isComplete && (
                 <span className="inline-block w-2 h-5 bg-gray-300 ml-1 animate-pulse"></span>
@@ -93,7 +93,7 @@ export function UserMessage({ message }: UserMessageProps) {
     <div className="flex items-start mb-6 justify-end">
       <div className="max-w-[80%]">
         <div className="p-4 rounded-2xl border border-white/30 bg-white/60 backdrop-blur-md shadow-sm">
-          <div className="text-gray-900 leading-relaxed">
+          <div className="text-gray-900 leading-relaxed whitespace-pre-wrap">
             {message}
           </div>
         </div>

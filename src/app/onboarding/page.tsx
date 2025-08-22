@@ -161,7 +161,7 @@ function OnboardingRunner() {
           aria-live="polite"
           className={`font-semibold leading-tight select-none transition-all duration-200 ease-out ${
             isShrinking ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
-          } ${isTyping ? 'tracking-normal' : 'tracking-tight'} text-left text-3xl md:text-5xl min-h-[5.5rem] md:min-h-[8rem]`}
+          } tracking-tight text-left text-3xl md:text-5xl min-h-[5.5rem] md:min-h-[8rem]`}
         >
           {text}
         </div>
