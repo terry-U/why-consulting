@@ -603,10 +603,13 @@ export async function POST(request: NextRequest) {
 
     // OpenAI API 호출
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: process.env.OPENAI_CHAT_MODEL || 'gpt-5-fast',
       messages: openaiMessages,
-      temperature: 0.7,
-      max_tokens: 1000,
+      temperature: Number(process.env.OPENAI_TEMPERATURE ?? 0.5),
+      max_tokens: Number(process.env.OPENAI_MAX_TOKENS ?? 1000),
+      top_p: Number(process.env.OPENAI_TOP_P ?? 1),
+      frequency_penalty: Number(process.env.OPENAI_FREQUENCY_PENALTY ?? 0.3),
+      presence_penalty: Number(process.env.OPENAI_PRESENCE_PENALTY ?? 0.2),
     })
 
     const aiResponse = completion.choices[0]?.message?.content
