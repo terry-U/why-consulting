@@ -614,12 +614,17 @@ export async function POST(request: NextRequest) {
     if (modelId.startsWith('gpt-5')) {
       try {
         // Responses API 입력 스키마로 변환
-        const responsesInput = openaiMessages.map(m => ({
-          role: m.role,
-          content: [
-            { type: 'text', text: String((m as any).content || '') }
-          ]
-        }))
+        const responsesInput = openaiMessages.map(m => {
+          const role = (m.role as any) || 'user'
+          const isAssistant = role === 'assistant'
+          const contentType = isAssistant ? 'output_text' : 'input_text'
+          return {
+            role,
+            content: [
+              { type: contentType, text: String((m as any).content || '') }
+            ]
+          }
+        })
         const resp: any = await (openai as any).responses.create({
           model: modelId,
           input: responsesInput,
@@ -636,7 +641,8 @@ export async function POST(request: NextRequest) {
           model: modelId,
           messages: openaiMessages,
           temperature,
-          max_tokens: maxTokens,
+          // GPT-5 계열은 max_tokens 대신 max_completion_tokens 사용
+          max_completion_tokens: maxTokens as any,
           top_p: topP,
           frequency_penalty: freqPenalty,
           presence_penalty: presPenalty,
