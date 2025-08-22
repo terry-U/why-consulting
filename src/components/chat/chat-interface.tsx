@@ -360,8 +360,8 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
       <div className="flex-1 overflow-y-auto bg-transparent" ref={scrollRef} onScroll={handleScroll} style={{ WebkitOverflowScrolling: 'touch' }}>
         {/* 상단 질문 헤더 - 스크롤 컨테이너 안에서 sticky */}
         {currentQuestion && (
-          <div className="border-b border-transparent bg-transparent sticky top-0 z-40">
-            <div className="max-w-4xl w-full px-6 py-4 mx-auto bg-transparent">
+          <div className="sticky top-0 z-40">
+            <div className="max-w-4xl w-full px-6 py-4 mx-auto rounded-xl border border-white/30 bg-white/60 backdrop-blur-md shadow-sm">
               <p className="text-xs text-gray-500 mb-1">질문 {session.current_question_index}/8</p>
               <p className="text-base font-semibold text-gray-900 text-left">{currentQuestion.text}</p>
             </div>
@@ -370,16 +370,21 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
         <div className="max-w-4xl w-full px-6 pb-32 mx-auto space-y-3">
           {messages.map((message) => {
             if (message.role === 'user') {
-              return <UserMessage key={message.id} message={message.content} />
+              return (
+                <div key={message.id} className="rounded-2xl border border-white/30 bg-white/60 backdrop-blur-md shadow-sm p-3">
+                  <UserMessage message={message.content} />
+                </div>
+              )
             } else {
               const character = getCharacter((message.counselor_id as CharacterType) || 'main')
               return (
-                <CharacterMessage
-                  key={message.id}
-                  character={character}
-                  message={message.content}
-                  showTypingEffect={false}
-                />
+                <div key={message.id} className="rounded-2xl border border-white/30 bg-white/60 backdrop-blur-md shadow-sm p-3">
+                  <CharacterMessage
+                    character={character}
+                    message={message.content}
+                    showTypingEffect={false}
+                  />
+                </div>
               )
             }
           })}
@@ -442,7 +447,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
       )}
 
       {/* 하단 고정 바: 스크롤 업 시 숨김 (바깥 레이아웃 영향 없도록) */}
-      <div className={`fixed bottom-0 left-0 right-0 px-4 py-3 border-t border-gray-200 bg-white/70 backdrop-blur-md transition-transform transition-opacity duration-200 will-change-transform ${isScrolledUp ? 'opacity-0 pointer-events-none translate-y-2' : 'opacity-100 translate-y-0'}`}>
+      <div className={`fixed bottom-0 left-0 right-0 px-4 py-3 border-t border-white/30 bg-white/60 backdrop-blur-md transition-transform transition-opacity duration-200 will-change-transform ${isScrolledUp ? 'opacity-0 pointer-events-none translate-y-2' : 'opacity-100 translate-y-0'}`}>
         <div className="max-w-4xl mx-auto flex items-end gap-3">
           <textarea
             ref={inputRef}
