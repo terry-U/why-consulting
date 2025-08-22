@@ -602,17 +602,45 @@ export async function POST(request: NextRequest) {
     }
 
     // OpenAI API 호출
-    const completion = await openai.chat.completions.create({
-      model: process.env.OPENAI_CHAT_MODEL || 'gpt-5-fast',
-      messages: openaiMessages,
-      temperature: Number(process.env.OPENAI_TEMPERATURE ?? 0.5),
-      max_tokens: Number(process.env.OPENAI_MAX_TOKENS ?? 1000),
-      top_p: Number(process.env.OPENAI_TOP_P ?? 1),
-      frequency_penalty: Number(process.env.OPENAI_FREQUENCY_PENALTY ?? 0.3),
-      presence_penalty: Number(process.env.OPENAI_PRESENCE_PENALTY ?? 0.2),
-    })
+    const modelId = process.env.OPENAI_CHAT_MODEL || 'gpt-5-fast'
+    const temperature = Number(process.env.OPENAI_TEMPERATURE ?? 0.5)
+    const maxTokens = Number(process.env.OPENAI_MAX_TOKENS ?? 1000)
+    const topP = Number(process.env.OPENAI_TOP_P ?? 1)
+    const freqPenalty = Number(process.env.OPENAI_FREQUENCY_PENALTY ?? 0.3)
+    const presPenalty = Number(process.env.OPENAI_PRESENCE_PENALTY ?? 0.2)
 
-    const aiResponse = completion.choices[0]?.message?.content
+    let aiResponse = '' as string
+
+    if (modelId.startsWith('gpt-5')) {
+      // GPT-5 계열은 Responses API 사용
+      const inputText = openaiMessages
+        .map(m => `${m.role.toUpperCase()}: ${typeof m.content === 'string' ? m.content : ''}`)
+        .join('\n\n')
+      const resp: any = await (openai as any).responses.create({
+        model: modelId,
+        input: inputText,
+        temperature,
+        max_output_tokens: maxTokens,
+        top_p: topP,
+        frequency_penalty: freqPenalty,
+        presence_penalty: presPenalty,
+        // 선택: 추론 노력을 낮춰 응답을 빠르고 공손하게
+        reasoning: process.env.OPENAI_REASONING_EFFORT ? { effort: process.env.OPENAI_REASONING_EFFORT } : undefined,
+      })
+      aiResponse = (resp && (resp.output_text || resp.content?.[0]?.text || resp.choices?.[0]?.message?.content)) || ''
+    } else {
+      // 기존 호환: Chat Completions API
+      const completion = await openai.chat.completions.create({
+        model: modelId,
+        messages: openaiMessages,
+        temperature,
+        max_tokens: maxTokens,
+        top_p: topP,
+        frequency_penalty: freqPenalty,
+        presence_penalty: presPenalty,
+      })
+      aiResponse = completion.choices[0]?.message?.content || ''
+    }
 
     if (!aiResponse) {
       return NextResponse.json(
