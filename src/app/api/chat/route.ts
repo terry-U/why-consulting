@@ -612,22 +612,35 @@ export async function POST(request: NextRequest) {
     let aiResponse = '' as string
 
     if (modelId.startsWith('gpt-5')) {
-      // GPT-5 계열은 Responses API 사용
-      const inputText = openaiMessages
-        .map(m => `${m.role.toUpperCase()}: ${typeof m.content === 'string' ? m.content : ''}`)
-        .join('\n\n')
-      const resp: any = await (openai as any).responses.create({
-        model: modelId,
-        input: inputText,
-        temperature,
-        max_output_tokens: maxTokens,
-        top_p: topP,
-        frequency_penalty: freqPenalty,
-        presence_penalty: presPenalty,
-        // 선택: 추론 노력을 낮춰 응답을 빠르고 공손하게
-        reasoning: process.env.OPENAI_REASONING_EFFORT ? { effort: process.env.OPENAI_REASONING_EFFORT } : undefined,
-      })
-      aiResponse = (resp && (resp.output_text || resp.content?.[0]?.text || resp.choices?.[0]?.message?.content)) || ''
+      // GPT-5 계열: 우선 Responses API 시도, 실패 시 Chat Completions로 폴백
+      try {
+        const inputText = openaiMessages
+          .map(m => `${m.role.toUpperCase()}: ${typeof m.content === 'string' ? m.content : ''}`)
+          .join('\n\n')
+        const resp: any = await (openai as any).responses.create({
+          model: modelId,
+          input: inputText,
+          temperature,
+          max_output_tokens: maxTokens,
+          // 일부 파라미터는 Responses API에서 제한될 수 있어 최소 구성만 사용
+          top_p: topP,
+          // 공식 문서: reasoning_effort 사용 (옵션)
+          reasoning_effort: process.env.OPENAI_REASONING_EFFORT || undefined,
+        } as any)
+        aiResponse = (resp && (resp.output_text || resp.content?.[0]?.text || resp.choices?.[0]?.message?.content)) || ''
+      } catch (e) {
+        console.error('GPT-5 Responses API 오류, Chat Completions로 폴백:', e)
+        const completion = await openai.chat.completions.create({
+          model: modelId,
+          messages: openaiMessages,
+          temperature,
+          max_tokens: maxTokens,
+          top_p: topP,
+          frequency_penalty: freqPenalty,
+          presence_penalty: presPenalty,
+        })
+        aiResponse = completion.choices[0]?.message?.content || ''
+      }
     } else {
       // 기존 호환: Chat Completions API
       const completion = await openai.chat.completions.create({
