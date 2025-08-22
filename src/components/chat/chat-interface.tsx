@@ -29,6 +29,8 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
   const typingControllerRef = useRef<null | (() => void)>(null)
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const waitingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const typingMessageIdRef = useRef<string | null>(null)
+  const typingCounselorRef = useRef<CharacterType>('main')
   const [isScrolledUp, setIsScrolledUp] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const clearTypingTimers = useCallback(() => {
@@ -89,6 +91,8 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
         const finishTyping = () => { i = full.length + 1 }
         typingControllerRef.current = finishTyping
         const tempId = aiResponse.id
+        typingMessageIdRef.current = tempId
+        typingCounselorRef.current = (data.counselor.type as CharacterType) || 'main'
         typingIntervalRef.current = setInterval(() => {
           if (i <= full.length) {
             const display = full.slice(0, i)
@@ -99,6 +103,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
             typingControllerRef.current = null
             setMessages([{ ...aiResponse, id: tempId, content: full }])
             setIsTyping(false)
+            typingMessageIdRef.current = null
             setTimeout(() => { inputRef.current?.focus() }, 100)
           }
         }, 16)
@@ -186,6 +191,9 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
         const tempId = aiResponse.id
         const finishTyping = () => { i = full.length + 1 }
         typingControllerRef.current = finishTyping
+        const tempCounselor = (data.counselor.type as CharacterType) || 'main'
+        typingMessageIdRef.current = tempId
+        typingCounselorRef.current = tempCounselor
         typingIntervalRef.current = setInterval(() => {
           if (i <= full.length) {
             const display = full.slice(0, i)
@@ -196,6 +204,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
             typingControllerRef.current = null
             setMessages(prev => prev.map(msg => msg.id === tempId ? { ...msg, content: full } : msg))
             setIsTyping(false)
+            typingMessageIdRef.current = null
             setTimeout(() => { inputRef.current?.focus() }, 100)
             console.log('🔍 API 응답 데이터:', { shouldAdvance: data.shouldAdvance, nextPhaseData: data.nextPhaseData })
             if (data.shouldAdvance && data.nextPhaseData) {
@@ -364,9 +373,23 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
               return <UserMessage key={message.id} message={message.content} />
             } else {
               const character = getCharacter((message.counselor_id as CharacterType) || 'main')
+              // 타이핑 중인 메시지는 별도의 말풍선(점 3개)로 표시하고, 본문은 숨긴다
+              if (isTyping && typingMessageIdRef.current === message.id) {
+                return null
+              }
               return <CharacterMessage key={message.id} character={character} message={message.content} showTypingEffect={false} />
             }
           })}
+          {/* 상담사 타이핑 표시 말풍선 */}
+          {isTyping && typingMessageIdRef.current && (
+            <CharacterMessage
+              key={`${typingMessageIdRef.current}-typing`}
+              character={getCharacter(typingCounselorRef.current)}
+              message=""
+              isTyping={true}
+              showTypingEffect={false}
+            />
+          )}
           <div ref={messagesEndRef} />
         </div>
       </div>
