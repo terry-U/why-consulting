@@ -617,7 +617,7 @@ export async function POST(request: NextRequest) {
         const responsesInput = openaiMessages.map(m => ({
           role: m.role,
           content: [
-            { type: 'input_text', text: String((m as any).content || '') }
+            { type: 'text', text: String((m as any).content || '') }
           ]
         }))
         const resp: any = await (openai as any).responses.create({
