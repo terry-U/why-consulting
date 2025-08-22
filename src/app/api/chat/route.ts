@@ -602,24 +602,58 @@ export async function POST(request: NextRequest) {
     }
 
     // OpenAI API 호출
-    const modelId = process.env.OPENAI_CHAT_MODEL || 'gpt-4o'
+    const modelId = process.env.OPENAI_CHAT_MODEL || 'gpt-5-mini-2025-08-07'
     const temperature = Number(process.env.OPENAI_TEMPERATURE ?? 0.5)
     const maxTokens = Number(process.env.OPENAI_MAX_TOKENS ?? 1000)
     const topP = Number(process.env.OPENAI_TOP_P ?? 1)
     const freqPenalty = Number(process.env.OPENAI_FREQUENCY_PENALTY ?? 0.3)
     const presPenalty = Number(process.env.OPENAI_PRESENCE_PENALTY ?? 0.2)
 
-    // 안정화: 전버전(Chat Completions) 경로로 강제 사용
-    const completion = await openai.chat.completions.create({
-      model: modelId,
-      messages: openaiMessages,
-      temperature,
-      max_tokens: maxTokens,
-      top_p: topP,
-      frequency_penalty: freqPenalty,
-      presence_penalty: presPenalty,
-    })
-    const aiResponse = completion.choices[0]?.message?.content || ''
+    let aiResponse = '' as string
+
+    if (modelId.startsWith('gpt-5')) {
+      try {
+        // Responses API 입력 스키마로 변환
+        const responsesInput = openaiMessages.map(m => ({
+          role: m.role,
+          content: [
+            { type: 'input_text', text: String((m as any).content || '') }
+          ]
+        }))
+        const resp: any = await (openai as any).responses.create({
+          model: modelId,
+          input: responsesInput,
+          temperature,
+          max_output_tokens: maxTokens,
+          top_p: topP,
+          reasoning_effort: process.env.OPENAI_REASONING_EFFORT || undefined,
+        } as any)
+        aiResponse = (resp && (resp.output_text || resp.content?.[0]?.text || resp.choices?.[0]?.message?.content)) || ''
+      } catch (e) {
+        console.error('GPT-5 Responses API 오류, Chat Completions로 폴백:', e)
+        const completion = await openai.chat.completions.create({
+          model: modelId,
+          messages: openaiMessages,
+          temperature,
+          max_tokens: maxTokens,
+          top_p: topP,
+          frequency_penalty: freqPenalty,
+          presence_penalty: presPenalty,
+        })
+        aiResponse = completion.choices[0]?.message?.content || ''
+      }
+    } else {
+      const completion = await openai.chat.completions.create({
+        model: modelId,
+        messages: openaiMessages,
+        temperature,
+        max_tokens: maxTokens,
+        top_p: topP,
+        frequency_penalty: freqPenalty,
+        presence_penalty: presPenalty,
+      })
+      aiResponse = completion.choices[0]?.message?.content || ''
+    }
 
     if (!aiResponse) {
       return NextResponse.json(
