@@ -49,15 +49,24 @@ export default function CharacterMessage({
     return () => clearInterval(typingInterval)
   }, [message, showTypingEffect])
 
+  const from = (character as any)?.gradientFrom || '#60a5fa'
+  const to = (character as any)?.gradientTo || '#a78bfa'
+
   return (
-    <div className="flex items-start mb-10">
-      {/* 캐릭터 아바타 */}
-      <div className="w-10 h-10 rounded-full border bg-white flex items-center justify-center mr-3 shadow-sm">
-        <span className="text-lg">{character.emoji}</span>
+    <div className="flex flex-col md:flex-row items-start mb-10">
+      {/* 캐릭터 아바타 (모바일에서는 텍스트 위) */}
+      <div className="w-12 h-12 rounded-full border bg-white/0 flex items-center justify-center md:mr-3 mb-2 md:mb-0 overflow-hidden relative">
+        <div
+          className="absolute inset-0 rounded-full avatar-shape"
+          style={{
+            background: `linear-gradient(135deg, ${from}, ${to})`
+          }}
+        />
+        <div className="relative w-8 h-8 rounded-lg bg-white/10 mix-blend-overlay" />
       </div>
 
-      {/* 메시지 영역: 말풍선 제거, 대형 타이포그래피 */}
-      <div className="flex-1 max-w-[85%]">
+      {/* 메시지 영역: 모바일 좌측 밀착, 데스크탑 기존 너비 */}
+      <div className="flex-1 max-w-full md:max-w-[85%]">
         <div className="mb-3 text-sm text-blue-700/80 font-medium flex items-center gap-2">
           <span>{character.name}</span>
           {emotion && (
@@ -100,7 +109,7 @@ export function UserMessage({ message, timestamp }: UserMessageProps) {
     <div className="flex items-start mb-10 justify-end">
       <div className="max-w-[85%]">
         <div className="mb-2 text-sm text-purple-700/80 font-medium text-right">나</div>
-        <div className="text-gray-900 leading-relaxed whitespace-pre-wrap text-base md:text-lg text-right">
+        <div className="text-gray-900 leading-relaxed whitespace-pre-wrap text-base md:text-lg text-right md:text-right">
           {message}
         </div>
         {timestamp && (
