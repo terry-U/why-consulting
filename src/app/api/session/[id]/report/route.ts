@@ -66,9 +66,9 @@ export async function GET(req: Request, context: any) {
       }
     }
 
-    // 4) 선행 조건: 2~5 타입은 my_why 보고서가 이미 있어야 함
+    // 4) 선행 조건: 2~5 타입은 my_why 보고서가 이미 있어야 함 → 없으면 일시 보류(202)
     if (type !== 'my_why' && !whyReportContent) {
-      return NextResponse.json({ success: false, error: '먼저 My Why 보고서를 생성해 주세요' }, { status: 400 })
+      return NextResponse.json({ success: false, pending: true, error: 'My Why 생성 대기 중' }, { status: 202 })
     }
 
     // Helpers

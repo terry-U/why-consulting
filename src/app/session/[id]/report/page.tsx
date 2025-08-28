@@ -31,7 +31,10 @@ export default function ReportPage() {
     const fetchReport = async (t: ReportType) => {
       const res = await fetch(`/api/session/${sessionId}/report?type=${t}`)
       const data = await res.json()
-      if (!data.success) throw new Error(data.error)
+      if (!data.success) {
+        if (res.status === 202 && data.pending) return null
+        throw new Error(data.error)
+      }
       return data.report as ReportData
     }
 
@@ -46,12 +49,18 @@ export default function ReportPage() {
 
         // 2) 5개 모두 확보 (이미 존재 시 즉시 반환)
         const types: ReportType[] = ['my_why','value_map','style_pattern','master_manager_spectrum','fit_triggers']
-        const results = await Promise.all(types.map(t => fetchReport(t)))
+        // 재시도 로직: why 완료 후 2~5가 준비될 때까지 짧게 폴링
+        let results: Array<ReportData | null> = []
+        for (let attempt = 0; attempt < 6; attempt++) {
+          results = await Promise.all(types.map(t => fetchReport(t)))
+          if (results.every(Boolean)) break
+          await new Promise(r => setTimeout(r, 1200))
+        }
 
-        setAllReady(true)
+        setAllReady(results.every(Boolean))
         // 초기 표시는 현재 activeType 기준
         const idx = types.indexOf(activeType)
-        setReport(results[idx] || results[0])
+        setReport((results[idx] as ReportData) || (results[0] as ReportData))
       } catch (e: any) {
         setError(e?.message || '보고서 생성에 실패했습니다')
       } finally {
