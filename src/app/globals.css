@@ -115,9 +115,9 @@ body {
 }
 
 @keyframes gradientShift {
-  0% { background-position: 50% -140px, 78% 240px, 0 0; filter: hue-rotate(0deg); }
-  50% { background-position: 55% -80px, 72% 180px, 0 0; filter: hue-rotate(25deg); }
-  100% { background-position: 45% -160px, 22% 260px, 0 0; filter: hue-rotate(-25deg); }
+  0% { background-position: 50% -140px, 78% 240px, 0 0; }
+  50% { background-position: 55% -80px, 72% 180px, 0 0; }
+  100% { background-position: 45% -160px, 22% 260px, 0 0; }
 }
 
 /* 아바타 기하학 애니메이션 */
