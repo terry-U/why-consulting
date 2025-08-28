@@ -13,7 +13,7 @@ type StylePattern = { communicationStyle?: string[]; decisionPatterns?: string[]
 type MasterManager = { position?: 'Master'|'Manager'|'Hybrid'; score?: number; explanation?: string }
 type FitTriggers = { bestFit?: string[]; antiFit?: string[]; positiveTriggers?: string[]; negativeTriggers?: string[] }
 
-type ReportData = MyWhy | ValueMap | StylePattern | MasterManager | FitTriggers
+type ReportData = MyWhy | ValueMap | StylePattern | MasterManager | FitTriggers | { markdown?: string }
 
 export default function ReportPage() {
   const params = useParams()
@@ -72,45 +72,20 @@ export default function ReportPage() {
         )
       }
       case 'value_map': {
-        const r = report as ValueMap
-        return (
-          <div className="grid md:grid-cols-3 gap-6">
-            <Section title="핵심 가치" items={r.coreValues} icon="💎" />
-            <Section title="보조 가치" items={r.supportingValues} icon="🔗" />
-            <Section title="가치 충돌" items={r.conflicts} icon="⚠️" />
-          </div>
-        )
+        const md = (report as any)?.markdown as string | undefined
+        return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown>{md || ''}</ReactMarkdown></div>
       }
       case 'style_pattern': {
-        const r = report as StylePattern
-        return (
-          <div className="grid md:grid-cols-3 gap-6">
-            <Section title="커뮤니케이션" items={r.communicationStyle} icon="🗣️" />
-            <Section title="의사결정 패턴" items={r.decisionPatterns} icon="🧭" />
-            <Section title="스트레스 반응" items={r.stressResponses} icon="💢" />
-          </div>
-        )
+        const md = (report as any)?.markdown as string | undefined
+        return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown>{md || ''}</ReactMarkdown></div>
       }
       case 'master_manager_spectrum': {
-        const r = report as MasterManager
-        return (
-          <div className="card p-6">
-            <div className="text-5xl mb-3">⚖️</div>
-            <div className="text-lg">위치: <span className="font-semibold">{r.position || '-'}</span> {typeof r.score === 'number' && <span className="text-gray-500">(score: {r.score})</span>}</div>
-            {r.explanation && <p className="mt-2 text-gray-700 whitespace-pre-wrap">{r.explanation}</p>}
-          </div>
-        )
+        const md = (report as any)?.markdown as string | undefined
+        return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown>{md || ''}</ReactMarkdown></div>
       }
       case 'fit_triggers': {
-        const r = report as FitTriggers
-        return (
-          <div className="grid md:grid-cols-2 gap-6">
-            <Section title="잘 맞는 환경" items={r.bestFit} icon="✅" />
-            <Section title="맞지 않는 환경" items={r.antiFit} icon="⛔" />
-            <Section title="긍정 트리거" items={r.positiveTriggers} icon="➕" />
-            <Section title="부정 트리거" items={r.negativeTriggers} icon="➖" />
-          </div>
-        )
+        const md = (report as any)?.markdown as string | undefined
+        return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown>{md || ''}</ReactMarkdown></div>
       }
       default:
         return null
