@@ -24,6 +24,8 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
   const [isTyping, setIsTyping] = useState(false)
   const [showAdvanceButtons, setShowAdvanceButtons] = useState(false)
   const [nextPhaseData, setNextPhaseData] = useState<any>(null)
+  const [showWrapUpModal, setShowWrapUpModal] = useState(false)
+  const [wrapUpSummary, setWrapUpSummary] = useState<string>('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const typingControllerRef = useRef<null | (() => void)>(null)
@@ -45,6 +47,19 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
       return COUNSELING_QUESTIONS[questionIndex] || null
     }
     return null
+  }, [session.counseling_phase, session.current_question_index])
+
+  // 현재 상담사 결정 로직 (콜백으로 정의하여 의존성 관리)
+  const getCurrentCounselor = useCallback(() => {
+    if (session.counseling_phase === 'summary' || session.counseling_phase === 'completed') {
+      return 'main'
+    }
+    const questionIndex = session.current_question_index
+    if (questionIndex >= 1 && questionIndex <= 8) {
+      const question = COUNSELING_QUESTIONS[questionIndex - 1]
+      return question.counselor
+    }
+    return 'yellow'
   }, [session.counseling_phase, session.current_question_index])
 
   // 첫 상담사 인사 함수
@@ -344,32 +359,83 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
     }
   }
 
-  const handleEndSessionNow = useCallback(async () => {
-    if (isLoading) return
-    const ok = typeof window !== 'undefined' ? window.confirm('지금까지의 대화로 상담을 종료하고 보고서를 생성할까요?') : true
-    if (!ok) return
-    try {
-      setIsLoading(true)
-      router.push(`/session/${session.id}/report`)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [isLoading, router, session.id])
+  const buildWrapUpSummary = useCallback(() => {
+    // 최근 대화(현재 상담사 중심으로)에서 핵심 문장 몇 개를 모아 간단 요약 생성
+    const maxItems = 6
+    const recent = [...messages].slice(-maxItems)
+    const bullets = recent
+      .map(m => `${m.role === 'user' ? '🙍‍♂️' : '🤖'} ${String(m.content || '').trim()}`)
+      .filter(Boolean)
+    const text = bullets.join('\n')
+    return text.length > 0 ? text : '대화 요약을 생성할 내용이 충분하지 않습니다. 자유롭게 다음 질문으로 진행하셔도 좋습니다.'
+  }, [messages])
 
-  // 현재 상담사 결정 로직
-  const getCurrentCounselor = () => {
-    if (session.counseling_phase === 'summary' || session.counseling_phase === 'completed') {
-      return 'main'
+  const handleOpenWrapUp = useCallback(() => {
+    const sum = buildWrapUpSummary()
+    setWrapUpSummary(sum)
+    setShowWrapUpModal(true)
+  }, [buildWrapUpSummary])
+
+  const handleWrapUpDecision = useCallback(async (goNext: boolean) => {
+    if (goNext) {
+      try {
+        setIsLoading(true)
+        // 다음 질문으로 진행 (요약 단계로 가지 않음)
+        const nextIdx = Math.min((session.current_question_index || 1) + 1, 8)
+        const response = await fetch(`/api/session/${session.id}/advance`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nextPhase: 'questions', nextQuestionIndex: nextIdx })
+        })
+        const data = await response.json()
+        if (data.success) {
+          if (onSessionUpdate) {
+            onSessionUpdate({ ...session, counseling_phase: 'questions', current_question_index: nextIdx } as Session)
+          }
+          // 대화 비우고 다음 상담사 인사
+          setMessages([])
+          setShowWrapUpModal(false)
+          handleFirstCounselorGreeting()
+        } else {
+          throw new Error(data.error)
+        }
+      } catch (e) {
+        console.error('다음 질문 진행 오류:', e)
+        alert('다음 질문으로 진행하지 못했습니다.')
+      } finally {
+        setIsLoading(false)
+      }
+    } else {
+      // 아직 이야기 남음 → 현재 상담사 격려 메시지 요청
+      try {
+        setIsLoading(true)
+        const currentCounselor = getCurrentCounselor()
+        const response = await fetch(`/api/session/${session.id}/encourage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ counselorType: currentCounselor })
+        })
+        const data = await response.json()
+        if (data.success) {
+          const encouragementMessage: Message = {
+            id: `encouragement-${Date.now()}`,
+            session_id: session.id,
+            user_id: session.user_id,
+            role: 'assistant',
+            content: data.message,
+            counselor_id: getCurrentCounselor(),
+            created_at: new Date().toISOString()
+          }
+          setMessages(prev => [...prev, encouragementMessage])
+        }
+      } finally {
+        setIsLoading(false)
+        setShowWrapUpModal(false)
+      }
     }
-    
-    // questions 단계에서는 질문 인덱스에 따라 결정
-    const questionIndex = session.current_question_index
-    if (questionIndex >= 1 && questionIndex <= 8) {
-      const question = COUNSELING_QUESTIONS[questionIndex - 1]
-      return question.counselor
-    }
-    return 'yellow'
-  }
+  }, [session, onSessionUpdate, getCurrentCounselor, handleFirstCounselorGreeting])
+
+  
 
   // 최신 상담사 문장 (온보딩 스타일 표시용)
   const getLatestAssistantText = useCallback(() => {
@@ -490,13 +556,13 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
             disabled={isLoading || isTyping}
           />
           <button
-            onClick={handleEndSessionNow}
+            onClick={handleOpenWrapUp}
             disabled={isLoading}
             className="btn px-4"
-            aria-label="상담 종료"
-            title="상담 종료"
+            aria-label="대화 마무리"
+            title="대화 마무리"
           >
-            종료
+            마무리
           </button>
           <button
             onClick={handleSendMessage}
@@ -524,6 +590,35 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
         >
           맨 아래로
         </button>
+      )}
+
+      {/* 대화 마무리 모달 */}
+      {showWrapUpModal && (
+        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full mx-4 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">대화 요약</h3>
+            <div className="border border-gray-200 rounded-xl p-4 bg-white mb-4 max-h-64 overflow-auto whitespace-pre-line text-gray-800 text-sm">
+              {wrapUpSummary}
+            </div>
+            <p className="text-sm text-gray-700 mb-4">충분히 대화한 것 같나요? 충분하다면 다음 질문으로 넘어갑시다.</p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => handleWrapUpDecision(false)}
+                disabled={isLoading}
+                className="btn px-4 py-2 rounded-full"
+              >
+                아직 할 이야기가 남았어요
+              </button>
+              <button
+                onClick={() => handleWrapUpDecision(true)}
+                disabled={isLoading}
+                className="btn btn-primary text-white px-4 py-2 rounded-full"
+              >
+                예, 다음 질문으로
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
