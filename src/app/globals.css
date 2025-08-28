@@ -81,7 +81,15 @@
 /* 다크 선호 무시: 항상 라이트 토큰 유지 (다크 토큰 비활성화) */
 
 body {
-  background: var(--background);
+  /* 전역 배경: 은은한 라디얼 그라디언트가 천천히 이동/색 변환 */
+  background:
+    radial-gradient(1200px 600px at 50% -100px, rgba(242,230,255,0.55), transparent 60%),
+    radial-gradient(900px 500px at 80% 200px, rgba(230,245,255,0.5), transparent 60%),
+    var(--background);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-position: 50% -120px, 80% 220px, 0 0;
+  animation: gradientShift 40s ease-in-out infinite alternate;
   color: var(--foreground);
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
 }

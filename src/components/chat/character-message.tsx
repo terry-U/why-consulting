@@ -54,28 +54,18 @@ export default function CharacterMessage({
 
   return (
     <div className="flex flex-col md:flex-row items-start mb-10">
-      {/* 캐릭터 아바타 (모바일에서는 텍스트 위) */}
-      <div className="w-12 h-12 rounded-full border bg-white/0 flex items-center justify-center md:mr-3 mb-2 md:mb-0 overflow-hidden relative">
-        <div
-          className="absolute inset-0 rounded-full avatar-shape"
-          style={{
-            background: `linear-gradient(135deg, ${from}, ${to})`
-          }}
-        />
-        <div className="relative w-8 h-8 rounded-lg bg-white/10 mix-blend-overlay" />
-      </div>
-
       {/* 메시지 영역: 모바일 좌측 밀착, 데스크탑 기존 너비 */}
       <div className="flex-1 max-w-full md:max-w-[85%]">
         <div className="mb-3 text-sm text-blue-700/80 font-medium flex items-center gap-2">
-          <span>{character.name}</span>
-          {emotion && (
-            <span className="text-blue-700/70">
-              {emotion === 'positive' && <Star className="w-4 h-4" />}
-              {emotion === 'supportive' && <Heart className="w-4 h-4" />}
-              {emotion === 'neutral' && <Smile className="w-4 h-4" />}
-            </span>
-          )}
+          <span className="text-black">{character.name}</span>
+          {/* 캐릭터 컬러 점: 모바일 상단, 데스크탑 우측 정렬을 위한 유연 배치 */}
+          <span className="ml-auto md:ml-2 inline-flex items-center">
+            <span
+              className="inline-block rounded-full"
+              style={{ width: '1em', height: '1em', background: `linear-gradient(135deg, ${from}, ${to})` }}
+              aria-hidden
+            />
+          </span>
         </div>
         {isTyping ? (
           <div className="flex items-center space-x-2 text-blue-700/70">
