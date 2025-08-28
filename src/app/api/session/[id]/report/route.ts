@@ -8,6 +8,7 @@ export async function GET(req: Request, context: any) {
   const sessionId = context?.params?.id || new URL(req.url).pathname.split('/').filter(Boolean).pop()
   const { searchParams } = new URL(req.url)
   const type = (searchParams.get('type') || 'my_why') as 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers'
+  const cascade = (searchParams.get('cascade') === '1' || searchParams.get('cascade') === 'true') && type === 'my_why'
   if (!sessionId) {
     return NextResponse.json({ success: false, error: 'sessionId가 필요합니다' }, { status: 400 })
   }
@@ -22,6 +23,11 @@ export async function GET(req: Request, context: any) {
       .single()
 
     if (!existingErr && existing?.content) {
+      // If cascade requested and my_why exists, ensure others in the background (sequential within this request)
+      if (cascade && type === 'my_why') {
+        const whyMd: string | undefined = existing.content?.markdown
+        await generateOthersIfMissing(sessionId, transcriptBuilder, promptBuilder, whyMd)
+      }
       return NextResponse.json({ success: true, report: existing.content, cached: true })
     }
 
@@ -46,10 +52,7 @@ export async function GET(req: Request, context: any) {
       return NextResponse.json({ success: false, error: '메시지 로딩 실패' }, { status: 500 })
     }
 
-    const transcript = (messages || [])
-      .map(m => `${m.role === 'assistant' ? `[${m.counselor_id || 'assistant'}]` : '[user]'} ${m.content}`)
-      .join('\n')
-
+    // transcriptBuilder로 대체됨
     // 3) 이전에 생성된 1번 Why 보고서(있다면) 로드하여 2~5번 입력에 합산
     let whyReportContent: any = null
     if (type !== 'my_why') {
@@ -69,8 +72,14 @@ export async function GET(req: Request, context: any) {
       return NextResponse.json({ success: false, error: '먼저 My Why 보고서를 생성해 주세요' }, { status: 400 })
     }
 
-    // 5) 타입별 프롬프트 구성 (요구 포맷은 각 타입별로 분리, JSON만 반환)
-    const prompts: Record<typeof type, string> = {
+    // Helpers
+    const transcriptBuilder = () => (messages || [])
+      .map(m => `${m.role === 'assistant' ? `[${m.counselor_id || 'assistant'}]` : '[user]'} ${m.content}`)
+      .join('\n')
+
+    const promptBuilder = (t: typeof type, whyMarkdown?: string) => {
+      const transcript = transcriptBuilder()
+      const prompts: Record<typeof type, string> = {
       my_why: `역할: 당신은 상담 대화 전체를 해석해 핵심 동기와 패턴을 정성적으로 도출하는 보고서 작성자입니다.
 
 규칙:
@@ -118,7 +127,7 @@ export async function GET(req: Request, context: any) {
 
 입력:
 - Transcript(전체 대화)\n${transcript}
-- WhyReport(JSON)\n${whyReportContent ? JSON.stringify(whyReportContent) : 'null'}`,
+- WhyReport(Markdown)\n${whyMarkdown || (whyReportContent?.markdown || 'null')}`,
 
       style_pattern: `역할: 가치를 만들어내는 스타일의 일치/불일치를 진단하고 정교한 조언을 제시합니다.
 
@@ -141,7 +150,7 @@ export async function GET(req: Request, context: any) {
 
 입력:
 - Transcript(전체 대화)\n${transcript}
-- WhyReport(JSON)\n${whyReportContent ? JSON.stringify(whyReportContent) : 'null'}`,
+- WhyReport(Markdown)\n${whyMarkdown || (whyReportContent?.markdown || 'null')}`,
 
       master_manager_spectrum: `역할: Master–Manager 스펙트럼 개념을 요약하고, 개인 성향을 해석하여 운영 가이드를 제시합니다.
 
@@ -165,7 +174,7 @@ export async function GET(req: Request, context: any) {
 
 입력:
 - Transcript(전체 대화)\n${transcript}
-- WhyReport(JSON)\n${whyReportContent ? JSON.stringify(whyReportContent) : 'null'}`,
+- WhyReport(Markdown)\n${whyMarkdown || (whyReportContent?.markdown || 'null')}`,
 
       fit_triggers: `역할: 켜짐/꺼짐 조건을 정교화하고 예방·회복 프로토콜을 제시합니다.
 
@@ -193,10 +202,12 @@ export async function GET(req: Request, context: any) {
 
 입력:
 - Transcript(전체 대화)\n${transcript}
-- WhyReport(JSON)\n${whyReportContent ? JSON.stringify(whyReportContent) : 'null'}`
+- WhyReport(Markdown)\n${whyMarkdown || (whyReportContent?.markdown || 'null')}`
+      }
+      return prompts[t]
     }
 
-    const prompt = prompts[type]
+    const prompt = promptBuilder(type)
 
     const systemMessage = '한국어로만 작성. 지정된 마크다운 템플릿 그대로, 불필요한 텍스트 금지. 마크다운만 반환.'
 
@@ -221,10 +232,54 @@ export async function GET(req: Request, context: any) {
       console.error('❌ 보고서 저장 실패', upErr)
     }
 
+    // cascade: my_why 생성 완료 시 2~5 자동 생성 (이미 존재하면 스킵)
+    if (cascade && type === 'my_why') {
+      const whyMd = parsed?.markdown as string | undefined
+      await generateOthersIfMissing(sessionId, transcriptBuilder, promptBuilder, whyMd)
+    }
+
     return NextResponse.json({ success: true, report: parsed })
   } catch (e) {
     console.error('❌ Report generation error', e)
     return NextResponse.json({ success: false, error: '보고서 생성 실패' }, { status: 500 })
+  }
+}
+
+async function generateOthersIfMissing(
+  sessionId: string,
+  transcriptBuilder: () => string,
+  promptBuilder: (t: 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers', whyMd?: string) => string,
+  whyMd?: string
+) {
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  const types: Array<'value_map'|'style_pattern'|'master_manager_spectrum'|'fit_triggers'> = [
+    'value_map','style_pattern','master_manager_spectrum','fit_triggers'
+  ]
+
+  for (const t of types) {
+    const { data: existing } = await supabaseServer
+      .from('reports')
+      .select('content')
+      .eq('session_id', sessionId)
+      .eq('type', t)
+      .single()
+
+    if (existing?.content) continue
+
+    const prompt = promptBuilder(t, whyMd)
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: '한국어로만 작성. 지정된 마크다운 템플릿 그대로, 불필요한 텍스트 금지. 마크다운만 반환.' },
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0.4
+    })
+    const content = completion.choices[0]?.message?.content || ''
+    const parsed: any = { markdown: content.trim() }
+    await supabaseServer
+      .from('reports')
+      .upsert({ session_id: sessionId, type: t, content: parsed }, { onConflict: 'session_id,type' })
   }
 }
 
