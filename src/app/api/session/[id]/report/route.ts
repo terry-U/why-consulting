@@ -23,8 +23,10 @@ export async function GET(req: Request, context: any) {
       .single()
 
     if (!existingErr && existing?.content) {
-      // 캐시 즉시 반환. 이후의 헬퍼는 아직 선언 전이므로 여기서는 cascade 처리하지 않고,
-      // 클라이언트가 my_why?cascade=1 호출 시 새 생성 분기에서 처리됨.
+      // 캐시 즉시 반환 + 요청 시 연쇄 생성 보장
+      if (cascade && type === 'my_why') {
+        await generateOthersIfMissing(sessionId)
+      }
       return NextResponse.json({ success: true, report: existing.content, cached: true })
     }
 
@@ -74,9 +76,8 @@ export async function GET(req: Request, context: any) {
       .map(m => `${m.role === 'assistant' ? `[${m.counselor_id || 'assistant'}]` : '[user]'} ${m.content}`)
       .join('\n')
 
-    const promptBuilder = (t: typeof type, whyMarkdown?: string) => {
-      const transcript = transcriptBuilder()
-      const prompts: Record<typeof type, string> = {
+    const buildPrompt = (t: 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers', transcript: string, whyMarkdown?: string) => {
+      const prompts: Record<typeof t, string> = {
       my_why: `역할: 당신은 상담 대화 전체를 해석해 핵심 동기와 패턴을 정성적으로 도출하는 보고서 작성자입니다.
 
 규칙:
@@ -204,7 +205,7 @@ export async function GET(req: Request, context: any) {
       return prompts[t]
     }
 
-    const prompt = promptBuilder(type)
+    const prompt = buildPrompt(type, transcriptBuilder())
 
     const systemMessage = '한국어로만 작성. 지정된 마크다운 템플릿 그대로, 불필요한 텍스트 금지. 마크다운만 반환.'
 
@@ -232,7 +233,7 @@ export async function GET(req: Request, context: any) {
     // cascade: my_why 생성 완료 시 2~5 자동 생성 (이미 존재하면 스킵)
     if (cascade && type === 'my_why') {
       const whyMd = parsed?.markdown as string | undefined
-      await generateOthersIfMissing(sessionId, transcriptBuilder, promptBuilder, whyMd)
+      await generateOthersIfMissing(sessionId, whyMd)
     }
 
     return NextResponse.json({ success: true, report: parsed })
@@ -242,16 +243,21 @@ export async function GET(req: Request, context: any) {
   }
 }
 
-async function generateOthersIfMissing(
-  sessionId: string,
-  transcriptBuilder: () => string,
-  promptBuilder: (t: 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers', whyMd?: string) => string,
-  whyMd?: string
-) {
+async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   const types: Array<'value_map'|'style_pattern'|'master_manager_spectrum'|'fit_triggers'> = [
     'value_map','style_pattern','master_manager_spectrum','fit_triggers'
   ]
+  // Load messages to build transcript
+  const { data: messages } = await supabaseServer
+    .from('messages')
+    .select('role, content, counselor_id, created_at')
+    .eq('session_id', sessionId)
+    .order('created_at', { ascending: true })
+
+  const transcript = (messages || [])
+    .map(m => `${m.role === 'assistant' ? `[${m.counselor_id || 'assistant'}]` : '[user]'} ${m.content}`)
+    .join('\n')
 
   for (const t of types) {
     const { data: existing } = await supabaseServer
@@ -260,10 +266,18 @@ async function generateOthersIfMissing(
       .eq('session_id', sessionId)
       .eq('type', t)
       .single()
-
     if (existing?.content) continue
 
-    const prompt = promptBuilder(t, whyMd)
+    const prompt = (function build(ti: typeof types[number]) {
+      // rebuild the same templates minimally by delegating to buildPrompt-like logic
+      return (
+        ti === 'value_map' ? buildPrompt('value_map', transcript, whyMd) :
+        ti === 'style_pattern' ? buildPrompt('style_pattern', transcript, whyMd) :
+        ti === 'master_manager_spectrum' ? buildPrompt('master_manager_spectrum', transcript, whyMd) :
+        buildPrompt('fit_triggers', transcript, whyMd)
+      )
+    })(t)
+
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
