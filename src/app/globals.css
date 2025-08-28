@@ -154,19 +154,22 @@ body {
   .neo {
     background: var(--surface);
     border-radius: var(--radius-lg);
-    box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
+    border: 1px solid var(--border);
+    box-shadow: none;
   }
 
   .neo-pressed {
     background: var(--surface);
     border-radius: var(--radius-lg);
-    box-shadow: inset 6px 6px 12px var(--shadow-dark), inset -6px -6px 12px var(--shadow-light);
+    border: 1px solid var(--border);
+    box-shadow: none;
   }
 
   .card {
     background: var(--surface);
     border-radius: var(--radius-lg);
-    box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+    border: 1px solid var(--border);
+    box-shadow: none;
   }
 
   .btn {
@@ -177,11 +180,12 @@ body {
     border-radius: var(--radius-md);
     background: var(--surface);
     color: var(--foreground);
-    box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
-    transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+    border: 1px solid var(--border);
+    box-shadow: none;
+    transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
   }
-  .btn:hover { transform: translateY(-1px); }
-  .btn:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); transform: translateY(0); }
+  .btn:hover { background: var(--secondary); }
+  .btn:active { background: var(--accent); }
 
   .btn-primary { background: var(--primary); color: var(--primary-foreground); box-shadow: none; }
   .btn-secondary { background: var(--surface); }
@@ -190,7 +194,8 @@ body {
     width: 40px; height: 40px; border-radius: 50%;
     display: inline-flex; align-items: center; justify-content: center;
     background: var(--surface);
-    box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+    border: 1px solid var(--border);
+    box-shadow: none;
   }
 
   .input {
@@ -200,14 +205,15 @@ body {
     border-radius: var(--radius-md);
     padding: 12px 14px;
     color: var(--foreground);
-    box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+    box-shadow: none;
   }
 
   .chip {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 8px 12px; border-radius: 9999px;
     background: var(--surface); color: var(--muted);
-    box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+    border: 1px solid var(--border);
+    box-shadow: none;
   }
 }
 

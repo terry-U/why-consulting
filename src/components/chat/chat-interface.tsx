@@ -646,7 +646,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
             onKeyPress={handleKeyPress}
             placeholder="솔직한 마음을 편하게 말해주세요..."
             aria-label="메시지 입력"
-            className="input resize-none flex-1 bg-white/70 border-white/30 text-gray-900 placeholder-gray-600 py-4 px-6 rounded-full focus:ring-2 focus:ring-purple-400/50 focus:border-transparent text-base backdrop-blur-sm shadow-lg"
+            className="input resize-none flex-1 bg-white/70 border-white/30 text-gray-900 placeholder-gray-600 py-4 px-6 rounded-full focus:ring-2 focus:ring-purple-400/50 focus:border-transparent text-base backdrop-blur-sm"
             rows={2}
             disabled={isLoading || isTyping}
           />
@@ -662,7 +662,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
           <button
             onClick={handleSendMessage}
             disabled={!inputValue.trim() || isLoading || isTyping}
-            className="px-6 py-4 rounded-full min-w-[60px] shadow-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed text-white"
+            className="px-6 py-4 rounded-full min-w-[60px] bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed text-white"
             aria-label="메시지 전송"
           >
             ▲
@@ -690,7 +690,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
       {/* 대화 마무리 모달 */}
       {showWrapUpModal && (
         <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full mx-4 p-6">
+          <div className="bg-white rounded-2xl border border-gray-200 max-w-2xl w-full mx-4 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">대화 요약</h3>
             <div className="border border-gray-200 rounded-xl p-4 bg-white mb-4 max-h-64 overflow-auto whitespace-pre-line text-gray-800 text-sm">
               {wrapUpSummary}
