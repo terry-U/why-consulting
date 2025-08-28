@@ -33,6 +33,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
   const waitingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const typingMessageIdRef = useRef<string | null>(null)
   const typingCounselorRef = useRef<CharacterType>('main')
+  const prevQuestionIndexRef = useRef<number>(session.current_question_index)
   const [isScrolledUp, setIsScrolledUp] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const clearTypingTimers = useCallback(() => {
@@ -144,6 +145,17 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
       handleFirstCounselorGreeting()
     }
   }, [initialMessages, handleFirstCounselorGreeting])
+
+  // 질문 인덱스 변경 시, 이전 상담사 메시지가 남지 않도록 초기화 후 새 상담사 인사
+  useEffect(() => {
+    if (prevQuestionIndexRef.current !== session.current_question_index) {
+      prevQuestionIndexRef.current = session.current_question_index
+      setMessages([])
+      setShowAdvanceButtons(false)
+      setNextPhaseData(null)
+      handleFirstCounselorGreeting()
+    }
+  }, [session.current_question_index, handleFirstCounselorGreeting])
   
   // 성능 최적화: 메모이제이션 (향후 사용 예정)
 
