@@ -636,17 +636,8 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
       )}
 
       {/* 하단 고정 바: 스크롤 업 시 숨김 (바깥 레이아웃 영향 없도록) */}
-      <div className={`fixed bottom-0 left-0 right-0 px-4 py-4 bg-white/30 backdrop-blur-xl border-t border-white/20 transition-transform transition-opacity duration-200 will-change-transform ${isScrolledUp ? 'opacity-0 pointer-events-none translate-y-2' : 'opacity-100 translate-y-0'}`}>
-        {/* Quick Actions */}
-        <div className="max-w-4xl mx-auto mb-2">
-          <div className="flex flex-wrap gap-2 justify-center">
-            {['스트레스를 받고 있어요','진로에 대해 고민이 많아요','인간관계가 어려워요','자신감이 부족해요'].map((q) => (
-              <button key={q} onClick={() => setInputValue(q)} className="px-3 py-2 bg-white/50 border border-white/30 rounded-full text-gray-700 hover:bg-white/70 transition-all text-xs md:text-sm font-medium backdrop-blur-sm">
-                {q}
-              </button>
-            ))}
-          </div>
-        </div>
+      <div className={`fixed bottom-0 left-0 right-0 px-4 py-4 bg-white/30 backdrop-blur-xl border-t border-white/20 transition-transform transition-opacity duration-200 will-change-transform ${(isScrolledUp || isTyping) ? 'opacity-0 pointer-events-none translate-y-2' : 'opacity-100 translate-y-0'}`}>
+        {/* Quick Actions removed per spec */}
         <div className="max-w-4xl mx-auto flex items-end gap-3">
           <textarea
             ref={inputRef}
