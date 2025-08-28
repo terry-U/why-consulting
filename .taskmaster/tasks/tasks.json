@@ -224,11 +224,69 @@
         ],
         "priority": "medium",
         "subtasks": []
+      },
+      {
+        "id": 17,
+        "title": "Fix Chat Bubble Newline Rendering and Typography Consistency",
+        "description": "Fix chat bubble rendering to preserve line breaks from both user and GPT responses, and unify letter-spacing between onboarding typing animation and final text state.",
+        "details": "1. Chat Bubble Newline Preservation:\n   ```typescript\n   // components/chat/ChatBubble.tsx\n   import React from 'react';\n   \n   interface ChatBubbleProps {\n     content: string;\n     isUser: boolean;\n     // other props...\n   }\n   \n   export function ChatBubble({ content, isUser }: ChatBubbleProps) {\n     // Transform newlines to proper HTML line breaks\n     const formattedContent = content.split('\\n').map((line, index) => (\n       <React.Fragment key={index}>\n         {line}\n         {index < content.split('\\n').length - 1 && <br />}\n       </React.Fragment>\n     ));\n     \n     return (\n       <div className={`chat-bubble ${isUser ? 'user-bubble' : 'gpt-bubble'}`}>\n         <div className=\"bubble-content whitespace-pre-wrap\">\n           {formattedContent}\n         </div>\n       </div>\n     );\n   }\n   ```\n\n2. Typography Consistency Fix:\n   ```css\n   /* styles/typography.css */\n   .typing-animation, .final-text {\n     letter-spacing: 0.02em; /* Consistent letter spacing */\n     line-height: 1.5;\n     font-family: 'Your-Font-Family', sans-serif;\n   }\n   ```\n\n3. Update Onboarding Component:\n   ```typescript\n   // components/onboarding/TypingAnimation.tsx\n   export function TypingAnimation({ text, isComplete }: TypingAnimationProps) {\n     return (\n       <div className={`${isComplete ? 'final-text' : 'typing-animation'}`}>\n         {/* Animation logic */}\n         {text}\n       </div>\n     );\n   }\n   ```\n\n4. Ensure CSS classes are properly applied in both contexts:\n   - Review all components that display chat messages\n   - Ensure consistent styling between typing animation and static text\n   - Apply the same whitespace handling to both contexts\n\n5. Update any message rendering components to use the improved ChatBubble component:\n   ```typescript\n   // components/chat/MessageList.tsx\n   import { ChatBubble } from './ChatBubble';\n   \n   export function MessageList({ messages }) {\n     return (\n       <div className=\"message-container\">\n         {messages.map((message) => (\n           <ChatBubble\n             key={message.id}\n             content={message.content}\n             isUser={message.role === 'user'}\n             // other props...\n           />\n         ))}\n       </div>\n     );\n   }\n   ```",
+        "testStrategy": "1. Newline Preservation Testing:\n   - Create test messages with multiple line breaks in different patterns\n   - Verify that user messages correctly display line breaks as entered\n   - Verify that GPT responses correctly display line breaks as received\n   - Test with edge cases: consecutive line breaks, line breaks at start/end of messages\n\n2. Typography Consistency Testing:\n   - Compare letter-spacing in onboarding typing animation and final text state\n   - Verify consistent appearance across different screen sizes and browsers\n   - Take screenshots before and after the fix to document the improvement\n   - Use browser dev tools to confirm CSS properties are identical\n\n3. Visual Regression Testing:\n   - Capture screenshots of chat bubbles before and after changes\n   - Compare rendering in different browsers (Chrome, Firefox, Safari)\n   - Test on both desktop and mobile viewports\n\n4. User Experience Testing:\n   - Verify that long messages with multiple paragraphs are readable\n   - Ensure code blocks and formatted text maintain proper spacing\n   - Test with real conversations to ensure natural reading flow\n\n5. Performance Testing:\n   - Measure any impact on rendering performance with large messages\n   - Ensure smooth scrolling with many messages containing line breaks\n\n6. Deployment Verification:\n   - After deployment, verify fixes in production environment\n   - Test with actual user conversations to confirm improvements",
+        "status": "pending",
+        "dependencies": [
+          10,
+          13,
+          14
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Update ChatBubble component to properly preserve newlines",
+            "description": "Modify the ChatBubble component to correctly render newlines in both user and GPT messages using CSS and React Fragment approach.",
+            "dependencies": [],
+            "details": "1. Update the ChatBubble.tsx component to ensure newlines are preserved:\n- Modify the whitespace handling in the bubble-content class to use whitespace-pre-wrap\n- Ensure the formattedContent logic correctly splits and rejoins content with line breaks\n- Test with various message formats including consecutive newlines\n2. Apply the same formatting logic to both user and GPT bubbles\n3. Verify that the implementation works with dynamic content loading",
+            "status": "pending",
+            "testStrategy": "Create test messages with various newline patterns (single, multiple consecutive, mixed with other content) and verify visual rendering in both user and GPT bubbles. Test with actual API responses to ensure compatibility."
+          },
+          {
+            "id": 2,
+            "title": "Implement special handling for [ANSWER_READY] multiline blocks",
+            "description": "Add specific rendering logic for GPT responses containing [ANSWER_READY] tags with multiline content to ensure proper formatting.",
+            "dependencies": [
+              "17.1"
+            ],
+            "details": "1. Identify the pattern used for [ANSWER_READY] blocks in GPT responses\n2. Add a special case in the ChatBubble component to detect and handle these blocks:\n```typescript\n// Add to ChatBubble.tsx\nconst processAnswerReadyBlocks = (content: string) => {\n  // Check if content contains [ANSWER_READY] tag\n  if (content.includes('[ANSWER_READY]')) {\n    // Extract and format the block appropriately\n    // Return properly formatted content\n  }\n  return content;\n};\n```\n3. Apply this processing before the newline formatting logic\n4. Ensure the blocks maintain their structure and formatting",
+            "status": "pending",
+            "testStrategy": "Create test cases with sample [ANSWER_READY] blocks containing various formatting patterns. Verify that the blocks render correctly with proper newlines and spacing. Test edge cases like nested blocks or partial tags."
+          },
+          {
+            "id": 3,
+            "title": "Unify typography between typing animation and final text state",
+            "description": "Standardize letter-spacing, line-height, and font properties between the typing animation and final text state in the onboarding component.",
+            "dependencies": [],
+            "details": "1. Create a shared typography CSS class that can be applied to both states:\n```css\n/* styles/typography.css */\n.shared-typography {\n  letter-spacing: 0.02em;\n  line-height: 1.5;\n  font-family: 'Your-Font-Family', sans-serif;\n}\n```\n2. Update the TypingAnimation component to use this shared class:\n```typescript\n// components/onboarding/TypingAnimation.tsx\nexport function TypingAnimation({ text, isComplete }: TypingAnimationProps) {\n  return (\n    <div className={`shared-typography ${isComplete ? 'final-text' : 'typing-animation'}`}>\n      {/* Animation logic */}\n      {text}\n    </div>\n  );\n}\n```\n3. Ensure any specific styling needed for animation doesn't affect the typography consistency",
+            "status": "pending",
+            "testStrategy": "Compare the rendered output of the typing animation and final text state side by side. Measure letter-spacing and line-height to ensure they match exactly. Test across different viewport sizes and with various text content lengths."
+          },
+          {
+            "id": 4,
+            "title": "Update all message rendering components and add regression tests",
+            "description": "Ensure all components that display chat messages use the improved ChatBubble component and create regression tests to prevent future issues.",
+            "dependencies": [
+              "17.1",
+              "17.2",
+              "17.3"
+            ],
+            "details": "1. Identify all components that render chat messages (MessageList, CharacterMessage, UserMessage, etc.)\n2. Update each component to use the improved ChatBubble component:\n```typescript\n// For each message rendering component\nimport { ChatBubble } from './ChatBubble';\n\n// Replace direct message rendering with ChatBubble\n<ChatBubble\n  content={message.content}\n  isUser={message.role === 'user'}\n  // Pass any additional props needed\n/>\n```\n3. Create a comprehensive test suite that covers various message formats and edge cases\n4. Add manual testing steps to the QA process to verify visual consistency",
+            "status": "pending",
+            "testStrategy": "1. Create automated tests for newline rendering in different contexts\n2. Test with real user input patterns and API responses\n3. Visual regression testing to compare before/after screenshots\n4. Create a test matrix covering different message types, lengths, and formatting\n5. Document manual verification steps for QA team"
+          }
+        ]
       }
     ],
     "metadata": {
       "created": "2025-08-18T05:37:51.615Z",
-      "updated": "2025-08-19T08:10:24.733Z",
+      "updated": "2025-08-22T11:38:51.621Z",
       "description": "Tasks for master context"
     }
   }
