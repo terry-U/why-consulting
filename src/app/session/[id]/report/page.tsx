@@ -20,32 +20,70 @@ export default function ReportPage() {
   const router = useRouter()
   const sessionId = params.id as string
   const [loading, setLoading] = useState(true)
+  const [allReady, setAllReady] = useState(false)
   const [activeType, setActiveType] = useState<ReportType>('my_why')
   const [report, setReport] = useState<ReportData | null>(null)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    const load = async () => {
+    if (!sessionId) return
+
+    const fetchReport = async (t: ReportType) => {
+      const res = await fetch(`/api/session/${sessionId}/report?type=${t}`)
+      const data = await res.json()
+      if (!data.success) throw new Error(data.error)
+      return data.report as ReportData
+    }
+
+    const ensureAll = async () => {
+      setLoading(true)
       try {
         const user = await getCurrentUser()
         if (!user) return router.push('/auth')
-        const res = await fetch(`/api/session/${sessionId}/report?type=${activeType}`)
-        const data = await res.json()
-        if (!data.success) throw new Error(data.error)
-        setReport(data.report)
+
+        // 1) Why를 cascade로 트리거 (이미 있으면 캐시 반환)
+        await fetch(`/api/session/${sessionId}/report?type=my_why&cascade=1`)
+
+        // 2) 5개 모두 확보 (이미 존재 시 즉시 반환)
+        const types: ReportType[] = ['my_why','value_map','style_pattern','master_manager_spectrum','fit_triggers']
+        const results = await Promise.all(types.map(t => fetchReport(t)))
+
+        setAllReady(true)
+        // 초기 표시는 현재 activeType 기준
+        const idx = types.indexOf(activeType)
+        setReport(results[idx] || results[0])
       } catch (e: any) {
         setError(e?.message || '보고서 생성에 실패했습니다')
       } finally {
         setLoading(false)
       }
     }
-    if (sessionId) load()
-  }, [sessionId, router, activeType])
 
-  if (loading) {
+    ensureAll()
+  }, [sessionId, router])
+
+  useEffect(() => {
+    const loadActive = async () => {
+      if (!allReady || !sessionId) return
+      setLoading(true)
+      try {
+        const res = await fetch(`/api/session/${sessionId}/report?type=${activeType}`)
+        const data = await res.json()
+        if (!data.success) throw new Error(data.error)
+        setReport(data.report)
+      } catch (e: any) {
+        setError(e?.message || '보고서 불러오기에 실패했습니다')
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadActive()
+  }, [activeType, allReady, sessionId])
+
+  if (loading || !allReady) {
     return (
       <div className="min-h-screen ui-container flex items-center justify-center">
-        <div className="text-gray-600">보고서를 생성하고 있어요…</div>
+        <div className="text-gray-600">보고서를 준비하고 있어요…</div>
       </div>
     )
   }

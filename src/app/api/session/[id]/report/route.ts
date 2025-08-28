@@ -23,11 +23,8 @@ export async function GET(req: Request, context: any) {
       .single()
 
     if (!existingErr && existing?.content) {
-      // If cascade requested and my_why exists, ensure others in the background (sequential within this request)
-      if (cascade && type === 'my_why') {
-        const whyMd: string | undefined = existing.content?.markdown
-        await generateOthersIfMissing(sessionId, transcriptBuilder, promptBuilder, whyMd)
-      }
+      // 캐시 즉시 반환. 이후의 헬퍼는 아직 선언 전이므로 여기서는 cascade 처리하지 않고,
+      // 클라이언트가 my_why?cascade=1 호출 시 새 생성 분기에서 처리됨.
       return NextResponse.json({ success: true, report: existing.content, cached: true })
     }
 
