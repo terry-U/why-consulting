@@ -103,7 +103,7 @@ export const CHARACTERS: Record<CharacterType, Character> = {
   }
 }
 
-// 8단계 질문 시스템 - 각 질문마다 고유한 상담사 1:1 매칭
+// 8단계 질문 시스템 - 각 질문마다 고유한 질문자 1:1 매칭
 export const COUNSELING_QUESTIONS: CounselingQuestion[] = [
   {
     id: 'q1',
@@ -187,6 +187,6 @@ export function getCurrentCounselor(phase: number): Character {
   if (question) {
     return getCharacter(question.counselor)
   }
-  // 기본값은 메인 상담사
+  // 기본값은 메인 질문자
   return getCharacter('main')
 }

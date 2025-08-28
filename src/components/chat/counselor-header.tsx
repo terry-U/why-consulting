@@ -12,7 +12,7 @@ export default function CounselorHeader({ counselor, currentQuestion, isLoading 
   return (
     <div className="bg-white border-b border-gray-200 px-4 py-3">
       <div className="flex items-center justify-between">
-        {/* 상담사 정보 */}
+        {/* 질문자 정보 */}
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 rounded-full border bg-white flex items-center justify-center">
             <span className="text-lg">{counselor.emoji}</span>
@@ -39,7 +39,7 @@ export default function CounselorHeader({ counselor, currentQuestion, isLoading 
         </div>
       </div>
 
-      {/* 상담사 설명 */}
+      {/* 질문자 설명 */}
       <div className="mt-3 pt-3 border-t border-gray-100">
         <p className="text-sm text-gray-600 leading-relaxed">
           {counselor.description}

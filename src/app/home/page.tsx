@@ -122,15 +122,15 @@ export default function HomePage() {
               <div className="text-3xl mb-3">🌟</div>
               <div className="text-xl mb-2">새로운 Why 찾기</div>
               <p className="text-gray-200 text-sm opacity-90">
-                8명의 상담사와 함께하는 특별한 여정
+                8명의 질문자와 함께하는 특별한 여정
               </p>
             </div>
           </button>
         </div>
 
-        {/* 상담사 소개 */}
+        {/* 질문자 소개 */}
         <div className="card p-6 mb-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">상담사 팀</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">질문자 팀</h3>
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center p-3">
               <div className="text-2xl mb-2">🌞</div>
@@ -173,7 +173,7 @@ export default function HomePage() {
 
         {/* 세션 목록 */}
         <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-gray-900">내 상담 기록</h2>
+          <h2 className="text-xl font-semibold text-gray-900">내 대화 기록</h2>
           
           <ConsultationHistoryList
             history={sessions}

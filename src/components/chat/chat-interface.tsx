@@ -129,7 +129,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
           content: '' // 처음에는 빈 내용으로 시작
         }])
         
-        // 일반 채팅 타이핑: 한 글자씩 빠르게 출력 후 완료
+        // 일반 채팅 타이핑: 사람처럼 랜덤 지연 + 온점에서 약간 추가 지연
         let i = 0
         const full = data.response
         const finishTyping = () => { i = full.length + 1 }
@@ -137,26 +137,32 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
         const tempId = aiResponse.id
         typingMessageIdRef.current = tempId
         typingCounselorRef.current = (data.counselor.type as CharacterType) || 'main'
-        typingIntervalRef.current = setInterval(() => {
-          // 중간에 질문 변경/요청 취소되면 중단
+
+        const scheduleNext = () => {
           if (localVersion !== greetingVersionRef.current) {
-            if (typingIntervalRef.current) clearInterval(typingIntervalRef.current)
+            if (typingIntervalRef.current) clearTimeout(typingIntervalRef.current as any)
             typingControllerRef.current = null
             return
           }
           if (i <= full.length) {
             const display = full.slice(0, i)
             setMessages([{ ...aiResponse, id: tempId, content: display }])
+            const prevChar = full.charAt(i - 1)
+            // 기본 22~48ms, 온점/물음표에서 80~140ms 추가 지연
+            const base = 22 + Math.floor(Math.random() * 27)
+            const extra = (prevChar === '.' || prevChar === '?') ? 80 + Math.floor(Math.random() * 61) : 0
             i++
+            typingIntervalRef.current = setTimeout(scheduleNext, base + extra) as any
           } else {
-            if (typingIntervalRef.current) clearInterval(typingIntervalRef.current)
+            if (typingIntervalRef.current) clearTimeout(typingIntervalRef.current as any)
             typingControllerRef.current = null
             setMessages([{ ...aiResponse, id: tempId, content: full }])
             setIsTyping(false)
             typingMessageIdRef.current = null
             setTimeout(() => { inputRef.current?.focus() }, 100)
           }
-        }, 16)
+        }
+        scheduleNext()
       }
     } catch (error) {
       console.error('첫 인사 오류:', error)
@@ -258,7 +264,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
         }
         setMessages(prev => [...prev, tempMessage])
         
-        // 일반 채팅 타이핑(응답): 한 글자씩 출력 후 완료
+        // 일반 채팅 타이핑(응답): 사람처럼 랜덤 지연 + 온점 추가 지연
         let i = 0
         const full = data.response
         const tempId = aiResponse.id
@@ -267,13 +273,18 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
         const tempCounselor = (data.counselor.type as CharacterType) || 'main'
         typingMessageIdRef.current = tempId
         typingCounselorRef.current = tempCounselor
-        typingIntervalRef.current = setInterval(() => {
+
+        const scheduleNext = () => {
           if (i <= full.length) {
             const display = full.slice(0, i)
             setMessages(prev => prev.map(msg => msg.id === tempId ? { ...msg, content: display } : msg))
+            const prevChar = full.charAt(i - 1)
+            const base = 22 + Math.floor(Math.random() * 27)
+            const extra = (prevChar === '.' || prevChar === '?') ? 80 + Math.floor(Math.random() * 61) : 0
             i++
+            typingIntervalRef.current = setTimeout(scheduleNext, base + extra) as any
           } else {
-            if (typingIntervalRef.current) clearInterval(typingIntervalRef.current)
+            if (typingIntervalRef.current) clearTimeout(typingIntervalRef.current as any)
             typingControllerRef.current = null
             setMessages(prev => prev.map(msg => msg.id === tempId ? { ...msg, content: full } : msg))
             setIsTyping(false)
@@ -285,7 +296,8 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
               setNextPhaseData(data.nextPhaseData)
             }
           }
-        }, 16)
+        }
+        scheduleNext()
       } else {
         throw new Error(data.error)
       }
