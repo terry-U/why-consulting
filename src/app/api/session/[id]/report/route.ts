@@ -268,15 +268,110 @@ async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
       .single()
     if (existing?.content) continue
 
-    const prompt = (function build(ti: typeof types[number]) {
-      // rebuild the same templates minimally by delegating to buildPrompt-like logic
-      return (
-        ti === 'value_map' ? buildPrompt('value_map', transcript, whyMd) :
-        ti === 'style_pattern' ? buildPrompt('style_pattern', transcript, whyMd) :
-        ti === 'master_manager_spectrum' ? buildPrompt('master_manager_spectrum', transcript, whyMd) :
-        buildPrompt('fit_triggers', transcript, whyMd)
-      )
-    })(t)
+    let prompt = ''
+    if (t === 'value_map') {
+      prompt = `역할: 전체 대화와 Why 보고서를 바탕으로 가치의 "생각 vs 실제" 간극까지 분석하고 해소 지침을 제시하는 보고서 작성자입니다.
+
+규칙:
+- 아래 템플릿을 마크다운 그대로 사용하여 한국어로만 작성합니다.
+- 수집 방식/상담사/캐릭터 등 메타는 본문에 드러내지 않습니다.
+- 실제 장면 근거를 간결히 제시하고, 간극 메우는 방법은 실험/지표를 포함합니다.
+
+템플릿(그대로 출력):
+# Value Map
+## 나의 가장 큰 가치(우선순위)
+- 1) …
+- 2) …
+- 3) …
+
+## 생각하는 가치 vs 실제로 드러난 가치
+| 가치 | 내가 가치 있다고 ‘생각’하는 것 | 실제 행동·장면 ‘근거’ | 간극(원인) | 메우는 방법(실험/지표) |
+|---|---|---|---|---|
+| 예시 | 자율성 | 의사결정 선호, 단독 시 빠른 실행 | 협업 시 갈등 | 회의 전 DoD 합의(리워크 -20%) |
+
+## 간극에서 발생하는 일(메커니즘)
+- 트리거 → 감정/사고 → 행동 → 결과를 3~5줄로 설명.
+- 단기/중기 개선안 각각 1~2개(측정지표 포함).
+
+입력:
+- Transcript(전체 대화)\n${transcript}
+- WhyReport(Markdown)\n${whyMd || 'null'}`
+    } else if (t === 'style_pattern') {
+      prompt = `역할: 가치를 만들어내는 스타일의 일치/불일치를 진단하고 정교한 조언을 제시합니다.
+
+규칙:
+- 아래 템플릿을 마크다운 그대로 사용하여 한국어로만 작성합니다.
+- 강점/주의/보완 팁은 구체적으로, 전환 방법에는 작은 실험과 성공 지표를 포함합니다.
+
+템플릿(그대로 출력):
+# Style Pattern
+## 나의 핵심 스타일(3~5)
+- 스타일명: 설명 (강점 / 주의 / 보완 팁)
+- 권장 상황: …
+- 피해야 할 상황: …
+
+## 현재 스타일이 나와 ‘맞는지’ 평가
+- 적합 포인트 2~3개, 부적합 포인트 1~2개.
+
+## 더 잘 어울릴 수 있는 스타일 제안
+- 대안 스타일 1~2개 + 전환 방법(작은 실험 2개, 성공지표 포함).
+
+입력:
+- Transcript(전체 대화)\n${transcript}
+- WhyReport(Markdown)\n${whyMd || 'null'}`
+    } else if (t === 'master_manager_spectrum') {
+      prompt = `역할: Master–Manager 스펙트럼 개념을 요약하고, 개인 성향을 해석하여 운영 가이드를 제시합니다.
+
+규칙:
+- 아래 템플릿을 마크다운 그대로 사용하여 한국어로만 작성합니다.
+- 루틴/브릿지 언어/성장 과제에는 지표 또는 확인 방법을 포함합니다.
+
+템플릿(그대로 출력):
+# Master–Manager Spectrum
+## 개념 요약
+- 마스터: 스스로 가치를 만들어내려는 경향(자율·성취·변화 주도).
+- 매니저: 타인/환경에 영향 주어 가치를 만들려는 경향(관계·기여·확산).
+
+## 나의 성향과 해석
+- 어디에 치우쳐 있는지, 맥락별로 어떻게 달라지는지(3~5문장).
+
+## 앞으로의 운영 가이드
+- 일하는 법(핵심 루틴 3개, 지표 포함).
+- 협업 팁(브릿지 언어 2개 예: “목표→방법→마감”, “역할→책임→완료정의”).
+- 성장 과제 3가지 & 리스크/완충 장치 1줄씩.
+
+입력:
+- Transcript(전체 대화)\n${transcript}
+- WhyReport(Markdown)\n${whyMd || 'null'}`
+    } else {
+      prompt = `역할: 켜짐/꺼짐 조건을 정교화하고 예방·회복 프로토콜을 제시합니다.
+
+규칙:
+- 아래 템플릿을 마크다운 그대로 사용하여 한국어로만 작성합니다.
+- 각 항목은 가능한 한 구체적인 단서/지표를 포함합니다.
+
+템플릿(그대로 출력):
+# Fit & Triggers
+## On(켜짐) 조건
+- 환경/사람/리듬/업무 유형별로 5~7개(짧은 근거 단서 포함).
+
+## Off(꺼짐) 조건
+- 방해 요인 5~7개 + 초기 경고 신호(행동/신체/생각).
+
+## Do more / Do less
+- 각 3개(실행 체크박스 + 주간 점검 지표).
+
+## Recovery Protocol
+- 90초 루틴: 호흡(30s) → 감정 라벨(30s) → ‘다음 한 걸음’(30s).
+- 확장 루틴(3단계): 환경 정리 → 연결 요청 → 작은 성취(측정 포함).
+
+## 경계 문장(Boundary Phrases)
+- 스스로/타인에게 말하기 좋은 문장 3개(회의·마감·우선순위 맥락).
+
+입력:
+- Transcript(전체 대화)\n${transcript}
+- WhyReport(Markdown)\n${whyMd || 'null'}`
+    }
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
