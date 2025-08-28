@@ -552,7 +552,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
     <div className="flex flex-col h-full bg-transparent">
       {/* 메인 스크롤 영역 */}
       <div className="flex-1 overflow-y-auto bg-transparent pt-28" ref={scrollRef} onScroll={handleScroll} style={{ WebkitOverflowScrolling: 'touch' }}>
-        <div className="max-w-4xl w-full px-6 pb-32 mx-auto space-y-3">
+        <div className="max-w-4xl w-full px-4 sm:px-6 pb-32 mx-auto space-y-3">
           {messages.map((message) => {
             if (message.role === 'user') {
               return <UserMessage key={message.id} message={message.content} timestamp={message.created_at} />
