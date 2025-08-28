@@ -4,23 +4,22 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/auth'
 
-interface ReportData {
-  whySentence: string
-  categories: {
-    values: string[]
-    strengths: string[]
-    emotionalTriggers: string[]
-    narratives: string[]
-    risks: string[]
-    actionSteps: { title: string; description: string; timeframe: string }[]
-  }
-}
+type ReportType = 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers'
+
+type MyWhy = { whySentence: string; rationale?: string; evidence?: string[] }
+type ValueMap = { coreValues?: string[]; supportingValues?: string[]; conflicts?: string[] }
+type StylePattern = { communicationStyle?: string[]; decisionPatterns?: string[]; stressResponses?: string[] }
+type MasterManager = { position?: 'Master'|'Manager'|'Hybrid'; score?: number; explanation?: string }
+type FitTriggers = { bestFit?: string[]; antiFit?: string[]; positiveTriggers?: string[]; negativeTriggers?: string[] }
+
+type ReportData = MyWhy | ValueMap | StylePattern | MasterManager | FitTriggers
 
 export default function ReportPage() {
   const params = useParams()
   const router = useRouter()
   const sessionId = params.id as string
   const [loading, setLoading] = useState(true)
+  const [activeType, setActiveType] = useState<ReportType>('my_why')
   const [report, setReport] = useState<ReportData | null>(null)
   const [error, setError] = useState('')
 
@@ -29,7 +28,7 @@ export default function ReportPage() {
       try {
         const user = await getCurrentUser()
         if (!user) return router.push('/auth')
-        const res = await fetch(`/api/session/${sessionId}/report`)
+        const res = await fetch(`/api/session/${sessionId}/report?type=${activeType}`)
         const data = await res.json()
         if (!data.success) throw new Error(data.error)
         setReport(data.report)
@@ -40,7 +39,7 @@ export default function ReportPage() {
       }
     }
     if (sessionId) load()
-  }, [sessionId, router])
+  }, [sessionId, router, activeType])
 
   if (loading) {
     return (
@@ -61,40 +60,97 @@ export default function ReportPage() {
     )
   }
 
-  const { whySentence, categories } = report
+  const renderBody = () => {
+    switch (activeType) {
+      case 'my_why': {
+        const r = report as MyWhy
+        return (
+          <div className="card p-6 mb-10">
+            <div className="text-5xl mb-3">🧭</div>
+            <h1 className="text-3xl font-bold mb-2">My "Why"</h1>
+            {r.whySentence && <p className="text-2xl text-gray-900 whitespace-pre-wrap">"{r.whySentence}"</p>}
+            {r.rationale && <p className="mt-3 text-gray-700 whitespace-pre-wrap">{r.rationale}</p>}
+            {r.evidence && r.evidence.length > 0 && (
+              <div className="mt-4">
+                <div className="font-semibold mb-1">근거</div>
+                <ul className="list-disc list-inside text-gray-800 space-y-1">
+                  {r.evidence.map((e, i) => <li key={i}>{e}</li>)}
+                </ul>
+              </div>
+            )}
+          </div>
+        )
+      }
+      case 'value_map': {
+        const r = report as ValueMap
+        return (
+          <div className="grid md:grid-cols-3 gap-6">
+            <Section title="핵심 가치" items={r.coreValues} icon="💎" />
+            <Section title="보조 가치" items={r.supportingValues} icon="🔗" />
+            <Section title="가치 충돌" items={r.conflicts} icon="⚠️" />
+          </div>
+        )
+      }
+      case 'style_pattern': {
+        const r = report as StylePattern
+        return (
+          <div className="grid md:grid-cols-3 gap-6">
+            <Section title="커뮤니케이션" items={r.communicationStyle} icon="🗣️" />
+            <Section title="의사결정 패턴" items={r.decisionPatterns} icon="🧭" />
+            <Section title="스트레스 반응" items={r.stressResponses} icon="💢" />
+          </div>
+        )
+      }
+      case 'master_manager_spectrum': {
+        const r = report as MasterManager
+        return (
+          <div className="card p-6">
+            <div className="text-5xl mb-3">⚖️</div>
+            <div className="text-lg">위치: <span className="font-semibold">{r.position || '-'}</span> {typeof r.score === 'number' && <span className="text-gray-500">(score: {r.score})</span>}</div>
+            {r.explanation && <p className="mt-2 text-gray-700 whitespace-pre-wrap">{r.explanation}</p>}
+          </div>
+        )
+      }
+      case 'fit_triggers': {
+        const r = report as FitTriggers
+        return (
+          <div className="grid md:grid-cols-2 gap-6">
+            <Section title="잘 맞는 환경" items={r.bestFit} icon="✅" />
+            <Section title="맞지 않는 환경" items={r.antiFit} icon="⛔" />
+            <Section title="긍정 트리거" items={r.positiveTriggers} icon="➕" />
+            <Section title="부정 트리거" items={r.negativeTriggers} icon="➖" />
+          </div>
+        )
+      }
+      default:
+        return null
+    }
+  }
 
   return (
     <div className="min-h-screen ui-container py-12">
       <div className="max-w-4xl mx-auto">
         <button onClick={() => router.push(`/session/${sessionId}`)} className="mb-8 text-gray-600 hover:text-gray-900">← 상담으로 돌아가기</button>
-        <div className="card p-6 mb-10">
-          <div className="text-5xl mb-3">🧭</div>
-          <h1 className="text-3xl font-bold mb-2">당신의 Why</h1>
-          <p className="text-2xl text-gray-900 whitespace-pre-wrap">"{whySentence}"</p>
+
+        <div className="mb-6 flex gap-2 overflow-x-auto">
+          {[
+            { key: 'my_why', label: 'My “Why”' },
+            { key: 'value_map', label: 'Value Map' },
+            { key: 'style_pattern', label: 'Style Pattern' },
+            { key: 'master_manager_spectrum', label: 'Master–Manager Spectrum' },
+            { key: 'fit_triggers', label: 'Fit & Triggers' }
+          ].map(t => (
+            <button
+              key={t.key}
+              onClick={() => setActiveType(t.key as ReportType)}
+              className={`btn ${activeType === (t.key as ReportType) ? 'btn-primary text-white' : ''}`}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <Section title="가치(values)" items={categories.values} icon="💎" />
-          <Section title="강점(strengths)" items={categories.strengths} icon="💪" />
-          <Section title="감정 트리거" items={categories.emotionalTriggers} icon="💓" />
-          <Section title="반복 서사(narratives)" items={categories.narratives} icon="📖" />
-          <Section title="리스크(risks)" items={categories.risks} icon="⚠️" />
-        </div>
-
-        <div className="mt-10">
-          <h2 className="text-2xl font-bold mb-4">실행 계획(Action Steps)</h2>
-          <div className="space-y-3">
-            {categories.actionSteps?.map((a, i) => (
-              <div key={i} className="card p-5">
-                <div className="flex items-center justify-between">
-                  <div className="font-semibold">{a.title}</div>
-                  <span className="text-xs text-gray-500">{labelTimeframe(a.timeframe)}</span>
-                </div>
-                <p className="text-gray-700 mt-1">{a.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+        {renderBody()}
 
         <div className="mt-12 flex gap-3">
           <button onClick={() => router.push(`/session/${sessionId}/why`)} className="btn">Why 후보 다시 보기</button>
