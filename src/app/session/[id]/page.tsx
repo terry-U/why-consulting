@@ -117,7 +117,7 @@ export default function SessionPage() {
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-[radial-gradient(1200px_600px_at_50%_-100px,rgba(242,230,255,0.7),transparent_60%),radial-gradient(900px_500px_at_80%_200px,rgba(230,245,255,0.6),transparent_60%),var(--background)]">
+    <div className="h-screen overflow-hidden animated-gradient">
       <div className="h-full flex flex-col">
         {/* 상단 고정 헤더 (뒤로가기 + 질문 텍스트) */}
         <div className="fixed top-0 left-0 right-0 z-50">

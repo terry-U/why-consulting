@@ -636,7 +636,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
       )}
 
       {/* 하단 고정 바: 스크롤 업 시 숨김 (바깥 레이아웃 영향 없도록) */}
-      <div className={`fixed bottom-0 left-0 right-0 px-4 py-4 bg-white/30 backdrop-blur-xl border-t border-white/20 transition-transform transition-opacity duration-200 will-change-transform ${(isScrolledUp || isTyping) ? 'opacity-0 pointer-events-none translate-y-2' : 'opacity-100 translate-y-0'}`}>
+      <div className={`fixed bottom-0 left-0 right-0 px-4 py-4 bg-white/50 backdrop-blur-xl border-t border-white/20 transition-transform transition-opacity duration-200 will-change-transform ${(isScrolledUp || isTyping) ? 'opacity-0 pointer-events-none translate-y-2' : 'opacity-100 translate-y-0'}`}>
         {/* Quick Actions removed per spec */}
         <div className="max-w-4xl mx-auto flex items-end gap-3">
           <textarea
