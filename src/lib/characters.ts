@@ -4,12 +4,12 @@ import { Character, CharacterType, CounselingQuestion } from '@/types/characters
 export const CHARACTERS: Record<CharacterType, Character> = {
   main: {
     type: 'main',
-    emoji: '🌟',
-    name: '메인 상담사',
+    emoji: '🔷',
+    name: '인디고',
     description: '인트로, Why 생성, 전체 진행 관리',
-    color: '#111827', // black
-    gradientFrom: '#374151', // gray-700
-    gradientTo: '#111827', // gray-900
+    color: '#4F46E5', // indigo-600
+    gradientFrom: '#E0E7FF', // indigo-100
+    gradientTo: '#6366F1', // indigo-500
     tone: '친절하고 안내하는 톤',
     role: '전체 상담 진행과 Why 도출을 담당합니다'
   },

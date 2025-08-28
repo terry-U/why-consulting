@@ -47,13 +47,13 @@ export const COUNSELOR_INFO: Record<string, CounselorInfo> = {
   },
   main: {
     id: 'main',
-    name: '지혜',
-    emoji: '🌟',
+    name: '인디고',
+    emoji: '🔷',
     role: '전체 상담 진행과 Why 도출',
-    description: '모든 대화를 종합하여 당신만의 삶의 목적을 함께 찾아갑니다',
-    color: '#6366F1',
+    description: '모든 대화를 종합해 핵심을 한 줄로 정리해드립니다',
+    color: '#4F46E5',
     gradientFrom: '#E0E7FF',
-    gradientTo: '#A5B4FC',
+    gradientTo: '#6366F1',
     questions: [8]
   }
 }
