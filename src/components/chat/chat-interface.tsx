@@ -380,7 +380,25 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
     if (goNext) {
       try {
         setIsLoading(true)
-        // 다음 질문으로 진행 (요약 단계로 가지 않음)
+        const isLastQuestion = (session.current_question_index || 1) >= 8
+        if (isLastQuestion) {
+          // 마지막 질문이면 요약 단계로 이동
+          const response = await fetch(`/api/session/${session.id}/advance`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nextPhase: 'summary', nextQuestionIndex: 8 })
+          })
+          const data = await response.json()
+          if (data.success) {
+            setShowWrapUpModal(false)
+            router.push(`/session/${session.id}/report`)
+            return
+          } else {
+            throw new Error(data.error)
+          }
+        }
+
+        // 마지막이 아니면 다음 질문으로 진행
         const nextIdx = Math.min((session.current_question_index || 1) + 1, 8)
         const response = await fetch(`/api/session/${session.id}/advance`, {
           method: 'POST',
@@ -392,7 +410,6 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
           if (onSessionUpdate) {
             onSessionUpdate({ ...session, counseling_phase: 'questions', current_question_index: nextIdx } as Session)
           }
-          // 대화 비우고 다음 상담사 인사
           setMessages([])
           setShowWrapUpModal(false)
           handleFirstCounselorGreeting()
@@ -400,8 +417,8 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
           throw new Error(data.error)
         }
       } catch (e) {
-        console.error('다음 질문 진행 오류:', e)
-        alert('다음 질문으로 진행하지 못했습니다.')
+        console.error('다음 단계 진행 오류:', e)
+        alert('진행에 실패했습니다.')
       } finally {
         setIsLoading(false)
       }
@@ -600,7 +617,12 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
             <div className="border border-gray-200 rounded-xl p-4 bg-white mb-4 max-h-64 overflow-auto whitespace-pre-line text-gray-800 text-sm">
               {wrapUpSummary}
             </div>
-            <p className="text-sm text-gray-700 mb-4">충분히 대화한 것 같나요? 충분하다면 다음 질문으로 넘어갑시다.</p>
+            <p className="text-sm text-gray-700 mb-4">
+              { (session.current_question_index || 1) >= 8
+                ? '충분히 대화한 것 같나요? 충분하다면 요약으로 넘어갑시다.'
+                : '충분히 대화한 것 같나요? 충분하다면 다음 질문으로 넘어갑시다.'
+              }
+            </p>
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => handleWrapUpDecision(false)}
@@ -614,7 +636,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
                 disabled={isLoading}
                 className="btn btn-primary text-white px-4 py-2 rounded-full"
               >
-                예, 다음 질문으로
+                { (session.current_question_index || 1) >= 8 ? '예, 요약으로' : '예, 다음 질문으로' }
               </button>
             </div>
           </div>
