@@ -554,13 +554,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 기존 메시지들 조회 (컨텍스트용)
+    // 기존 메시지들 조회 (컨텍스트용) - 상담사별 히스토리 분리
     const { data: previousMessages } = await supabaseServer
       .from('messages')
       .select('*')
       .eq('session_id', sessionId)
+      .eq('counselor_id', currentCounselorType)
       .order('created_at', { ascending: true })
-      // 전체 히스토리를 전송하기 위해 제한 제거
 
     // OpenAI 메시지 형식으로 변환
     const openaiMessages = [

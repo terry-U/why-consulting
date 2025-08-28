@@ -7,6 +7,7 @@ import { getSessionById } from '@/lib/sessions'
 import { getSessionMessages } from '@/lib/messages'
 import { Session, Message } from '@/lib/supabase'
 import ChatInterface from '@/components/chat/chat-interface'
+import { COUNSELING_QUESTIONS } from '@/lib/characters'
 
 export default function SessionPage() {
   const [user, setUser] = useState<any>(null)
@@ -121,7 +122,9 @@ export default function SessionPage() {
                 <div className="justify-self-center text-center">
                   <p className="text-xs text-gray-500">질문 {session.current_question_index}/8</p>
                   {session.counseling_phase === 'questions' && (
-                    <p className="text-base font-semibold text-gray-900 truncate max-w-[70vw] mx-auto">{`당신이 가장 뿌듯했던 경험은 무엇인가요?`}</p>
+                    <p className="text-base font-semibold text-gray-900 truncate max-w-[70vw] mx-auto">
+                      {COUNSELING_QUESTIONS[session.current_question_index - 1]?.text || ''}
+                    </p>
                   )}
                 </div>
               )}
