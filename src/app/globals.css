@@ -186,6 +186,9 @@ body {
   }
   .btn:hover { background: color-mix(in srgb, var(--secondary) 85%, white 15%); }
   .btn:active { background: color-mix(in srgb, var(--secondary) 70%, white 30%); }
+  /* Primary buttons keep near-black tone on hover/active */
+  .btn-primary:hover { background: color-mix(in srgb, var(--primary) 90%, black 10%); }
+  .btn-primary:active { background: color-mix(in srgb, var(--primary) 80%, black 20%); }
 
   .btn-primary { background: var(--primary); color: var(--primary-foreground); box-shadow: none; }
   .btn-secondary { background: var(--surface); }
