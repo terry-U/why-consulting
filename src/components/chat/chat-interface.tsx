@@ -644,6 +644,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="솔직한 마음을 편하게 말해주세요..."
+            aria-label="메시지 입력"
             className="input resize-none flex-1"
             rows={2}
             disabled={isLoading || isTyping}

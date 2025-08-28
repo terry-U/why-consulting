@@ -117,6 +117,7 @@ export default function HomePage() {
           <button
             onClick={handleNewSession}
             className="w-full btn btn-primary py-8 px-6 text-white font-semibold rounded-3xl"
+            aria-label="새로운 Why 찾기 시작하기"
           >
             <div className="text-center">
               <div className="text-3xl mb-3">🌟</div>
@@ -132,22 +133,22 @@ export default function HomePage() {
         <div className="card p-6 mb-8">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">질문자 팀</h3>
           <div className="grid grid-cols-2 gap-4">
-            <div className="text-center p-3">
+            <div className="card text-center p-3">
               <div className="text-2xl mb-2">🌞</div>
               <div className="text-sm font-medium text-gray-900">옐로</div>
               <div className="text-xs text-gray-600">성취 탐구</div>
             </div>
-            <div className="text-center p-3">
+            <div className="card text-center p-3">
               <div className="text-2xl mb-2">🦋</div>
               <div className="text-sm font-medium text-gray-900">비비</div>
               <div className="text-xs text-gray-600">감정 탐구</div>
             </div>
-            <div className="text-center p-3">
+            <div className="card text-center p-3">
               <div className="text-2xl mb-2">🌿</div>
               <div className="text-sm font-medium text-gray-900">그린</div>
               <div className="text-xs text-gray-600">꿈 탐구</div>
             </div>
-            <div className="text-center p-3">
+            <div className="card text-center p-3">
               <div className="text-2xl mb-2">🌟</div>
               <div className="text-sm font-medium text-gray-900">지혜</div>
               <div className="text-xs text-gray-600">Why 도출</div>
@@ -213,6 +214,7 @@ export default function HomePage() {
               <button
                 onClick={handleNewSession}
                 className="btn btn-primary text-white px-6 py-3 rounded-full font-medium"
+                aria-label="첫 상담 시작하기"
               >
                 첫 상담 시작하기
               </button>

@@ -47,7 +47,7 @@ export default function CharacterMessage({
   return (
     <div className="flex items-start mb-6">
       {/* 캐릭터 아바타 */}
-      <div className="w-10 h-10 rounded-full border bg-white flex items-center justify-center mr-3">
+      <div className="w-10 h-10 rounded-full border bg-white flex items-center justify-center mr-3 shadow-sm">
         <span className="text-lg">{character.emoji}</span>
       </div>
 
@@ -59,7 +59,7 @@ export default function CharacterMessage({
         </div>
 
         {/* 메시지 내용 - 글래스 말풍선 유지 */}
-        <div className="p-4 rounded-2xl border border-white/30 bg-white/60 backdrop-blur-md shadow-sm">
+        <div className="card p-4">
           {isTyping ? (
             <div className="flex items-center space-x-1">
               <div className="flex space-x-1">
