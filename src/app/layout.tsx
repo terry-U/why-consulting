@@ -1,6 +1,5 @@
 import './globals.css'
-import AppHeader from '@/components/layout/AppHeader'
-import AppFooter from '@/components/layout/AppFooter'
+import AppChrome from '@/components/layout/AppChrome'
 
 export const metadata = {
   title: 'Why 상담사',
@@ -15,9 +14,9 @@ export default function RootLayout({
   return (
     <html lang="ko" className="light">
       <body>
-        <AppHeader />
-        <main className="ui-container min-h-screen">{children}</main>
-        <AppFooter />
+        <AppChrome>
+          {children}
+        </AppChrome>
       </body>
     </html>
   )
