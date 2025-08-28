@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import ReactMarkdown from 'react-markdown'
 import { useParams, useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/auth'
 
@@ -63,21 +64,10 @@ export default function ReportPage() {
   const renderBody = () => {
     switch (activeType) {
       case 'my_why': {
-        const r = report as MyWhy
+        const md = (report as any)?.markdown as string | undefined
         return (
-          <div className="card p-6 mb-10">
-            <div className="text-5xl mb-3">🧭</div>
-            <h1 className="text-3xl font-bold mb-2">My "Why"</h1>
-            {r.whySentence && <p className="text-2xl text-gray-900 whitespace-pre-wrap">"{r.whySentence}"</p>}
-            {r.rationale && <p className="mt-3 text-gray-700 whitespace-pre-wrap">{r.rationale}</p>}
-            {r.evidence && r.evidence.length > 0 && (
-              <div className="mt-4">
-                <div className="font-semibold mb-1">근거</div>
-                <ul className="list-disc list-inside text-gray-800 space-y-1">
-                  {r.evidence.map((e, i) => <li key={i}>{e}</li>)}
-                </ul>
-              </div>
-            )}
+          <div className="card p-6 mb-10 prose max-w-none">
+            <ReactMarkdown>{md || ''}</ReactMarkdown>
           </div>
         )
       }
