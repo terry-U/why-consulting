@@ -80,13 +80,13 @@ export function getCurrentCounselorInfo(phase: string, questionIndex: number): C
 export function getCounselorForQuestion(questionIndex: number): string {
   const counselorMap: Record<number, string> = {
     1: 'yellow',
-    2: 'yellow', 
-    3: 'bibi',
+    2: 'orange',
+    3: 'indigo',
     4: 'bibi',
-    5: 'green',
-    6: 'green',
-    7: 'bibi',
-    8: 'main'
+    5: 'purple',
+    6: 'blue',
+    7: 'green',
+    8: 'pink'
   }
   return counselorMap[questionIndex] || 'main'
 }

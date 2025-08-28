@@ -13,6 +13,17 @@ export const CHARACTERS: Record<CharacterType, Character> = {
     tone: '친절하고 안내하는 톤',
     role: '전체 상담 진행과 Why 도출을 담당합니다'
   },
+  indigo: {
+    type: 'indigo',
+    emoji: '🔷',
+    name: '인디고',
+    description: '후배 룸메이트에게 해주고 싶은 인생 조언 탐구',
+    color: '#4F46E5', // indigo-600
+    gradientFrom: '#E0E7FF', // indigo-100
+    gradientTo: '#6366F1', // indigo-500
+    tone: '차분하고 명료한 톤',
+    role: '한 문장 조언과 그 배경을 도출합니다'
+  },
   yellow: {
     type: 'yellow',
     emoji: '🌞',
@@ -112,27 +123,27 @@ export const COUNSELING_QUESTIONS: CounselingQuestion[] = [
   },
   {
     id: 'q3',
+    text: '당신과 성격이 비슷한 후배 룸메이트가 있다면, 그 친구에게 꼭 해주고 싶은 인생 조언은?',
+    counselor: 'indigo',
+    phase: 3,
+    helpText: '후배에게 전하고 싶은 한 문장을 떠올려보세요.',
+    binaryChoices: ['속삭이듯 조언 vs 다짐의 조언', '과거의 나 vs 후배에게']
+  },
+  {
+    id: 'q4',
     text: '인생에서 가장 좋았던 순간은 언제였나요?',
     counselor: 'bibi',
-    phase: 3,
+    phase: 4,
     helpText: '그 순간의 따뜻함을 다시 한번 느껴보세요.',
     binaryChoices: ['평온한 행복 vs 역동적인 행복', '혼자만의 시간 vs 누군가와 함께한 시간']
   },
   {
-    id: 'q4',
+    id: 'q5',
     text: '살면서 "정말 힘들었지만, 그래도 이겨냈구나" 하고 생각한 경험이 있나요?',
     counselor: 'purple',
-    phase: 4,
+    phase: 5,
     helpText: '괜찮아요. 그 시간을 통해 더 강해진 자신을 인정해주세요.',
     binaryChoices: ['혼자 견딘 것 vs 도움받아 극복한 것', '피하고 싶었던 것 vs 맞서 싸운 것']
-  },
-  {
-    id: 'q5',
-    text: '만약 마법이 있다면, 이 세상에서 가장 먼저 바꾸고 싶은 것이 있나요?',
-    counselor: 'green',
-    phase: 5,
-    helpText: '현실적인 생각은 잠시 내려두고, 마음이 가는 대로 상상해보세요.',
-    binaryChoices: ['개인의 변화 vs 사회의 변화', '문제 해결 vs 새로운 창조']
   },
   {
     id: 'q6',
@@ -144,19 +155,19 @@ export const COUNSELING_QUESTIONS: CounselingQuestion[] = [
   },
   {
     id: 'q7',
-    text: '다른 사람들도 당신처럼 느꼈으면 좋겠다고 생각하는 감정이 있나요?',
-    counselor: 'pink',
+    text: '만약 마법이 있다면, 이 세상에서 가장 먼저 바꾸고 싶은 것이 있나요?',
+    counselor: 'green',
     phase: 7,
-    helpText: '세상 사람들이 이 감정을 안다면 더 좋아질 것 같은 그런 느낌 말이에요.',
-    binaryChoices: ['평화로운 감정 vs 역동적인 감정', '개인적 행복 vs 연대감']
+    helpText: '현실적인 생각은 잠시 내려두고, 마음이 가는 대로 상상해보세요.',
+    binaryChoices: ['개인의 변화 vs 사회의 변화', '문제 해결 vs 새로운 창조']
   },
   {
     id: 'q8',
-    text: '만약 과거의 자신을 만날 수 있다면, 가장 해주고 싶은 말이 있나요?',
-    counselor: 'main',
+    text: '다른 사람들도 당신처럼 느꼈으면 좋겠다고 생각하는 감정이 있나요?',
+    counselor: 'pink',
     phase: 8,
-    helpText: '그때의 당신이 꼭 들었으면 했던 그 한마디를 생각해보세요.',
-    binaryChoices: ['위로하는 말 vs 격려하는 말', '조심하라는 말 vs 도전하라는 말']
+    helpText: '세상 사람들이 이 감정을 안다면 더 좋아질 것 같은 그런 느낌 말이에요.',
+    binaryChoices: ['평화로운 감정 vs 역동적인 감정', '개인적 행복 vs 연대감']
   }
 ]
 
