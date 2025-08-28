@@ -55,6 +55,7 @@ export async function GET(req: Request, context: any) {
     // 3) 이전에 생성된 1번 Why 보고서(있다면) 로드하여 2~5번 입력에 합산
     let whyReportContent: any = null
     if (type !== 'my_why') {
+      // 1차: reports 테이블에서 조회
       const { data: whyExisting } = await supabaseServer
         .from('reports')
         .select('content')
@@ -63,6 +64,16 @@ export async function GET(req: Request, context: any) {
         .single()
       if (whyExisting?.content) {
         whyReportContent = whyExisting.content
+      } else {
+        // 2차: 세션 컬럼 폴백 사용
+        const { data: sessionWhy } = await supabaseServer
+          .from('sessions')
+          .select('generated_why')
+          .eq('id', sessionId)
+          .single()
+        if (sessionWhy?.generated_why) {
+          whyReportContent = { markdown: sessionWhy.generated_why }
+        }
       }
     }
 
@@ -228,6 +239,14 @@ export async function GET(req: Request, context: any) {
 
     if (upErr) {
       console.error('❌ 보고서 저장 실패', upErr)
+      // 폴백: 세션 컬럼에 저장
+      if (type === 'my_why' && parsed?.markdown) {
+        const { error: sessErr } = await supabaseServer
+          .from('sessions')
+          .update({ generated_why: parsed.markdown, updated_at: new Date().toISOString() })
+          .eq('id', sessionId)
+        if (sessErr) console.error('❌ 세션 폴백 저장 실패', sessErr)
+      }
     }
 
     // cascade: my_why 생성 완료 시 2~5 자동 생성 (이미 존재하면 스킵)
@@ -258,6 +277,25 @@ async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
   const transcript = (messages || [])
     .map(m => `${m.role === 'assistant' ? `[${m.counselor_id || 'assistant'}]` : '[user]'} ${m.content}`)
     .join('\n')
+
+  // ensure whyMd available via fallback
+  if (!whyMd) {
+    const { data: whyFromReports } = await supabaseServer
+      .from('reports')
+      .select('content')
+      .eq('session_id', sessionId)
+      .eq('type', 'my_why')
+      .single()
+    whyMd = whyFromReports?.content?.markdown
+    if (!whyMd) {
+      const { data: sessionWhy } = await supabaseServer
+        .from('sessions')
+        .select('generated_why')
+        .eq('id', sessionId)
+        .single()
+      if (sessionWhy?.generated_why) whyMd = sessionWhy.generated_why
+    }
+  }
 
   for (const t of types) {
     const { data: existing } = await supabaseServer
