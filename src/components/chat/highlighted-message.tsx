@@ -1,37 +1,40 @@
 'use client'
 
+import type { ReactNode } from 'react'
+
 interface HighlightedMessageProps {
   content: string
 }
 
 export default function HighlightedMessage({ content }: HighlightedMessageProps) {
   const insertSentenceBreaks = (text: string) => {
-    // 문장부호(., ?, !) 뒤 공백을 줄바꿈으로 치환. 이미 줄바꿈이면 유지
-    return text
-      .replace(/([.!?])\s+/g, '$1\n')
+    return text.replace(/([.!?])\s+/g, '$1\n')
   }
-  // [ANSWER_READY] 태그를 찾아서 하이라이트 처리
+
+  const renderLines = (text: string) => {
+    const lines = insertSentenceBreaks(text).split('\n')
+    return (
+      <div>
+        {lines.map((line, idx) => (
+          <p key={idx} className="mb-4 opacity-0 animate-[fadeInUp_0.5s_ease_forwards]" style={{ animationDelay: `${idx * 100}ms` }}>
+            {line || '\u00A0'}
+          </p>
+        ))}
+      </div>
+    )
+  }
+
   const processContent = (text: string) => {
-    // **[ANSWER_READY]** 패턴을 찾아서 처리 (줄바꿈 포함)
     const answerReadyRegex = /\*\*\[ANSWER_READY\]\*\*([\s\S]*?)\*\*\[ANSWER_READY\]\*\*/g
-    
     if (!answerReadyRegex.test(text)) {
-      // [ANSWER_READY] 태그가 없으면 일반 텍스트로 반환
-      return <span>{insertSentenceBreaks(text)}</span>
+      return renderLines(text)
     }
-    
-    // 태그가 있으면 분리해서 처리
     const parts = text.split(answerReadyRegex)
-    const result = []
-    
+    const result: ReactNode[] = []
     for (let i = 0; i < parts.length; i++) {
       if (i % 2 === 0) {
-        // 일반 텍스트
-        if (parts[i]) {
-          result.push(<span key={`text-${i}`}>{insertSentenceBreaks(parts[i])}</span>)
-        }
+        if (parts[i]) result.push(<div key={`text-${i}`}>{renderLines(parts[i])}</div>)
       } else {
-        // [ANSWER_READY] 내용 - 하이라이트
         result.push(
           <div key={`highlight-${i}`} className="inline-block my-2">
             <span className="px-2 py-1 rounded-2xl bg-gray-100 text-gray-900 border border-gray-200 whitespace-pre-wrap">💡 {insertSentenceBreaks(parts[i])}</span>
@@ -39,7 +42,6 @@ export default function HighlightedMessage({ content }: HighlightedMessageProps)
         )
       }
     }
-    
     return result
   }
 

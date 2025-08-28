@@ -3,19 +3,24 @@
 import { useState, useEffect } from 'react'
 import { Character } from '@/types/characters'
 import HighlightedMessage from './highlighted-message'
+import { Sparkles, Heart, Star, Smile } from 'lucide-react'
 
 interface CharacterMessageProps {
   character: Character
   message: string
   isTyping?: boolean
   showTypingEffect?: boolean
+  timestamp?: string
+  emotion?: 'positive' | 'neutral' | 'supportive'
 }
 
 export default function CharacterMessage({ 
   character, 
   message, 
   isTyping = false,
-  showTypingEffect = false 
+  showTypingEffect = false,
+  timestamp,
+  emotion
 }: CharacterMessageProps) {
   const [displayedText, setDisplayedText] = useState('')
   const [isComplete, setIsComplete] = useState(false)
@@ -53,16 +58,19 @@ export default function CharacterMessage({
 
       {/* 메시지 영역: 말풍선 제거, 대형 타이포그래피 */}
       <div className="flex-1 max-w-[85%]">
-        <div className="mb-3 text-sm text-blue-700/80 font-medium">
+        <div className="mb-3 text-sm text-blue-700/80 font-medium flex items-center gap-2">
           <span>{character.name}</span>
+          {emotion && (
+            <span className="text-blue-700/70">
+              {emotion === 'positive' && <Star className="w-4 h-4" />}
+              {emotion === 'supportive' && <Heart className="w-4 h-4" />}
+              {emotion === 'neutral' && <Smile className="w-4 h-4" />}
+            </span>
+          )}
         </div>
         {isTyping ? (
           <div className="flex items-center space-x-2 text-blue-700/70">
-            <div className="flex space-x-1">
-              <div className="w-2 h-2 bg-blue-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-              <div className="w-2 h-2 bg-blue-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-              <div className="w-2 h-2 bg-blue-300 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-            </div>
+            <Sparkles className="w-4 h-4 animate-pulse" />
             <span className="text-base">생각하는 중…</span>
           </div>
         ) : (
@@ -73,6 +81,9 @@ export default function CharacterMessage({
             )}
           </div>
         )}
+        {timestamp && (
+          <div className="mt-2 text-xs text-gray-500">{new Date(timestamp).toLocaleTimeString()}</div>
+        )}
       </div>
     </div>
   )
@@ -81,15 +92,20 @@ export default function CharacterMessage({
 // 사용자 메시지 컴포넌트
 interface UserMessageProps {
   message: string
+  timestamp?: string
 }
 
-export function UserMessage({ message }: UserMessageProps) {
+export function UserMessage({ message, timestamp }: UserMessageProps) {
   return (
     <div className="flex items-start mb-10 justify-end">
       <div className="max-w-[85%]">
-        <div className="text-gray-900 leading-relaxed whitespace-pre-wrap text-xl md:text-2xl">
+        <div className="mb-2 text-sm text-purple-700/80 font-medium text-right">나</div>
+        <div className="text-gray-900 leading-relaxed whitespace-pre-wrap text-xl md:text-2xl text-right">
           {message}
         </div>
+        {timestamp && (
+          <div className="mt-2 text-xs text-gray-500 text-right">{new Date(timestamp).toLocaleTimeString()}</div>
+        )}
       </div>
     </div>
   )
