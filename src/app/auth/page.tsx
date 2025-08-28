@@ -33,14 +33,8 @@ function AuthContent() {
   }
 
   return (
-    <div className="min-h-screen ui-container py-12">
-      {/* 헤더 액션 */}
-      <button
-        onClick={() => router.push('/')}
-        className="mb-8 text-gray-600 hover:text-gray-900 transition-colors"
-      >
-        ← 메인으로 돌아가기
-      </button>
+    <div className="min-h-screen flex items-center justify-center py-12">
+      {/* 헤더 액션 제거, 중앙정렬 */}
 
       {/* 오류 메시지 */}
       {authError && (
@@ -52,7 +46,7 @@ function AuthContent() {
       )}
 
       {/* 카카오 로그인 */}
-      <div className="max-w-md">
+      <div className="max-w-md w-full px-4">
         <div className="card p-8">
           <div className="mb-8">
             <div className="text-4xl mb-3">🌟</div>

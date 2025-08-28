@@ -184,8 +184,8 @@ body {
     box-shadow: none;
     transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
   }
-  .btn:hover { background: var(--secondary); }
-  .btn:active { background: var(--accent); }
+  .btn:hover { background: color-mix(in srgb, var(--secondary) 85%, white 15%); }
+  .btn:active { background: color-mix(in srgb, var(--secondary) 70%, white 30%); }
 
   .btn-primary { background: var(--primary); color: var(--primary-foreground); box-shadow: none; }
   .btn-secondary { background: var(--surface); }

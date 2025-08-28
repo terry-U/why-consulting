@@ -551,7 +551,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
   return (
     <div className="flex flex-col h-full bg-transparent">
       {/* 메인 스크롤 영역 */}
-      <div className="flex-1 overflow-y-auto bg-transparent pt-20" ref={scrollRef} onScroll={handleScroll} style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div className="flex-1 overflow-y-auto bg-transparent pt-28" ref={scrollRef} onScroll={handleScroll} style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="max-w-4xl w-full px-6 pb-32 mx-auto space-y-3">
           {messages.map((message) => {
             if (message.role === 'user') {
@@ -674,7 +674,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
       </div>
 
       {/* 스크롤 업 시 떠있는 맨 아래로 버튼 */}
-      {isScrolledUp && (
+      {isScrolledUp && !isTyping && (
         <button
           onClick={() => {
             const el = scrollRef.current

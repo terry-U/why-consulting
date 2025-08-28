@@ -125,9 +125,11 @@ export default function SessionPage() {
             <div className="grid grid-cols-3 items-center">
               <button
                 onClick={() => router.push('/home')}
-                className="justify-self-start text-gray-600 hover:text-gray-900 transition-colors"
+                className="justify-self-start text-gray-600 hover:text-gray-900 transition-colors flex items-center gap-2"
+                aria-label="홈으로"
+                title="홈으로"
               >
-                ← 홈으로 돌아가기
+                <span className="text-lg" aria-hidden>🏠</span>
               </button>
               {session && (
                 <div className="justify-self-center text-center">
