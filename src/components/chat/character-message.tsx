@@ -71,7 +71,7 @@ export default function CharacterMessage({
         {isTyping ? (
           <div className="flex items-center space-x-2 text-blue-700/70">
             <Sparkles className="w-4 h-4 animate-pulse" />
-            <span className="text-base">생각하는 중…</span>
+            <span className="text-base shimmer-text">생각하는 중…</span>
           </div>
         ) : (
           <div className="text-blue-700 leading-relaxed whitespace-pre-wrap font-medium text-lg sm:text-xl">
