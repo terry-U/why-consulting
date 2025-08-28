@@ -34,6 +34,9 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
   const typingMessageIdRef = useRef<string | null>(null)
   const typingCounselorRef = useRef<CharacterType>('main')
   const prevQuestionIndexRef = useRef<number>(session.current_question_index)
+  // 인사/요청 경합 방지용 가드
+  const greetingAbortRef = useRef<AbortController | null>(null)
+  const greetingVersionRef = useRef<number>(0)
   const [isScrolledUp, setIsScrolledUp] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const clearTypingTimers = useCallback(() => {
@@ -66,6 +69,18 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
   // 첫 상담사 인사 함수
   const handleFirstCounselorGreeting = useCallback(async () => {
     try {
+      // 이전 인사 요청 중단 및 타이핑 타이머 정리
+      if (greetingAbortRef.current) {
+        try { greetingAbortRef.current.abort() } catch {}
+      }
+      if (typingIntervalRef.current) clearInterval(typingIntervalRef.current)
+      typingControllerRef.current = null
+
+      // 새 인사 요청 준비
+      const aborter = new AbortController()
+      greetingAbortRef.current = aborter
+      const localVersion = ++greetingVersionRef.current
+
       setIsLoading(true)
       // 첫 상담 시작 즉시 타이핑 말풍선 표시(서버 응답 전)
       setIsTyping(true)
@@ -87,9 +102,15 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
           message: '', // 빈 메시지
           userId: session.user_id
         }),
+        signal: aborter.signal,
       })
 
       const data = await response.json()
+
+      // 최신 요청만 반영
+      if (localVersion !== greetingVersionRef.current) {
+        return
+      }
 
       if (data.success) {
         const aiResponse: Message = {
@@ -117,6 +138,12 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
         typingMessageIdRef.current = tempId
         typingCounselorRef.current = (data.counselor.type as CharacterType) || 'main'
         typingIntervalRef.current = setInterval(() => {
+          // 중간에 질문 변경/요청 취소되면 중단
+          if (localVersion !== greetingVersionRef.current) {
+            if (typingIntervalRef.current) clearInterval(typingIntervalRef.current)
+            typingControllerRef.current = null
+            return
+          }
           if (i <= full.length) {
             const display = full.slice(0, i)
             setMessages([{ ...aiResponse, id: tempId, content: display }])
@@ -150,6 +177,12 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
   useEffect(() => {
     if (prevQuestionIndexRef.current !== session.current_question_index) {
       prevQuestionIndexRef.current = session.current_question_index
+      // 진행 중 인사 요청 및 타이핑 중단
+      if (greetingAbortRef.current) {
+        try { greetingAbortRef.current.abort() } catch {}
+      }
+      if (typingIntervalRef.current) clearInterval(typingIntervalRef.current)
+      typingControllerRef.current = null
       setMessages([])
       setShowAdvanceButtons(false)
       setNextPhaseData(null)
