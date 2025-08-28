@@ -135,7 +135,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
     } finally {
       setIsLoading(false)
     }
-  }, [session.id, session.user_id])
+  }, [session.id, session.user_id, session.current_question_index, getCurrentCounselor])
 
   // 초기 메시지 로딩
   useEffect(() => {
