@@ -2,8 +2,8 @@
 
 :root {
   /* Minimal / Neumorphism tokens (light) */
-  --background: #eef2f7; /* soft gray canvas */
-  --surface: #f5f7fb;    /* elevated cards */
+  --background: #f7f2ff; /* brighter lilac canvas */
+  --surface: #fbf9ff;    /* softer elevated */
   --foreground: #0f172a;
   --muted: #6b7280;
 
@@ -41,7 +41,7 @@
 .dark {
   --background: #0f172a; /* slate-900 */
   --surface: #111827;    /* gray-900 */
-  --foreground: #e5e7eb; /* gray-200 */
+  --foreground: #e6ebff; /* light bluish */
   --muted: #94a3b8;      /* slate-400 */
 
   --primary: #e5e7eb;    /* light text on dark */
@@ -54,7 +54,7 @@
   --accent-foreground: #e5e7eb;
   --border: #1f2937;
   --input: #1f2937;
-  --ring: #93c5fd;       /* soft blue focus */
+  --ring: #8bb1ff;       /* soft blue focus */
 
   --shadow-dark: #0b1220;
   --shadow-light: #0f172a;

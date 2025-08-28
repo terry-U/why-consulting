@@ -121,19 +121,19 @@ export default function SessionPage() {
       <div className="h-full flex flex-col">
         {/* 상단 고정 헤더 (뒤로가기 + 질문 텍스트) */}
         <div className="fixed top-0 left-0 right-0 z-50">
-          <div className="w-full px-4 sm:px-6 py-3 border-b border-white/30 bg-white/60 backdrop-blur-md shadow-sm">
+          <div className="w-full px-6 py-6 bg-transparent">
             <div className="grid grid-cols-3 items-center">
               <button
                 onClick={() => router.push('/home')}
-                className="justify-self-start text-gray-600 hover:text-gray-900 transition-colors"
+                className="justify-self-start text-blue-700 hover:opacity-80 transition-opacity"
               >
                 ← 홈으로 돌아가기
               </button>
               {session && (
-                <div className="justify-self-center text-center">
-                  <p className="text-xs text-gray-500">질문 {session.current_question_index}/8</p>
+                <div className="justify-self-center text-center text-blue-700">
+                  <p className="text-xs opacity-70">질문 {session.current_question_index}/8</p>
                   {session.counseling_phase === 'questions' && (
-                    <p className="text-base font-semibold text-gray-900 truncate max-w-[70vw] mx-auto">
+                    <p className="text-2xl md:text-3xl font-semibold truncate max-w-[70vw] mx-auto">
                       {COUNSELING_QUESTIONS[session.current_question_index - 1]?.text || ''}
                     </p>
                   )}
