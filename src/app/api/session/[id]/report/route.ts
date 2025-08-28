@@ -64,7 +64,12 @@ export async function GET(req: Request, context: any) {
       }
     }
 
-    // 4) 타입별 프롬프트 구성 (요구 포맷은 각 타입별로 분리, JSON만 반환)
+    // 4) 선행 조건: 2~5 타입은 my_why 보고서가 이미 있어야 함
+    if (type !== 'my_why' && !whyReportContent) {
+      return NextResponse.json({ success: false, error: '먼저 My Why 보고서를 생성해 주세요' }, { status: 400 })
+    }
+
+    // 5) 타입별 프롬프트 구성 (요구 포맷은 각 타입별로 분리, JSON만 반환)
     const prompts: Record<typeof type, string> = {
       my_why: `당신은 심리상담 내용을 구조화하는 분석가입니다. 아래 전체 대화(transcript)를 바탕으로 클라이언트의 본질적 Why 한 문장을 도출하고, 왜에 대한 요약 보고서를 JSON으로 작성하세요.
 
@@ -153,7 +158,7 @@ Transcript:\n${transcript}`,
       parsed = JSON.parse(content.slice(start, end + 1))
     }
 
-    // 5) 저장(UPSERT)
+    // 6) 저장(UPSERT)
     const { error: upErr } = await supabaseServer
       .from('reports')
       .upsert({ session_id: sessionId, type, content: parsed }, { onConflict: 'session_id,type' })
