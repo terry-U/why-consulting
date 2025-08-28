@@ -69,7 +69,11 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
       // 첫 상담 시작 즉시 타이핑 말풍선 표시(서버 응답 전)
       setIsTyping(true)
       typingMessageIdRef.current = `typing-greeting-${Date.now()}`
-      typingCounselorRef.current = (getCurrentCounselor() as CharacterType) || 'yellow'
+      {
+        const qIdx = session.current_question_index
+        const mapped = qIdx >= 1 && qIdx <= 8 ? (COUNSELING_QUESTIONS[qIdx - 1]?.counselor as CharacterType) : (getCurrentCounselor() as CharacterType)
+        typingCounselorRef.current = mapped || 'main'
+      }
       
       // 빈 메시지로 API 호출하여 상담사가 먼저 말하게 함
       const response = await fetch('/api/chat', {

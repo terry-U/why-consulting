@@ -54,10 +54,21 @@ export default function SessionPage() {
 
         setSession(sessionData)
 
-        // 세션 메시지 가져오기
+        // 세션 메시지 가져오기 (현재 질문의 상담사 대화만 표시)
         try {
           const sessionMessages = await getSessionMessages(sessionId)
-          setMessages(sessionMessages)
+          const qIndex = Math.max(1, Math.min(8, sessionData.current_question_index || 1))
+          const currentCounselor = COUNSELING_QUESTIONS[qIndex - 1]?.counselor
+          const onlyCurrent = (sessionMessages || []).filter(m => {
+            if (m.role === 'assistant') return m.counselor_id === currentCounselor
+            return true
+          })
+          let lastAssistantIdx = -1
+          for (let i = 0; i < onlyCurrent.length; i++) {
+            if (onlyCurrent[i].role === 'assistant') lastAssistantIdx = i
+          }
+          const display = lastAssistantIdx >= 0 ? onlyCurrent.slice(lastAssistantIdx) : []
+          setMessages(display)
         } catch (error) {
           console.error('메시지 로딩 오류:', error)
           setMessages([])
