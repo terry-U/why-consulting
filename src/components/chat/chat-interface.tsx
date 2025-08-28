@@ -160,6 +160,16 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
             setIsTyping(false)
             typingMessageIdRef.current = null
             setTimeout(() => { inputRef.current?.focus() }, 100)
+            // AI가 답변 확인 신호를 보낸 경우 자동 마무리 모달 표시
+            if (data.shouldAdvance && data.nextPhaseData) {
+              const recent = [...messages, { role: 'assistant', content: full } as any].slice(-6)
+              const bullets = recent
+                .map(m => `${(m as any).role === 'user' ? '🙍‍♂️' : '🤖'} ${String((m as any).content || '').trim()}`)
+                .filter(Boolean)
+              setWrapUpSummary(bullets.join('\n'))
+              setShowWrapUpModal(true)
+              setNextPhaseData(data.nextPhaseData)
+            }
           }
         }
         scheduleNext()
@@ -292,7 +302,12 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
             setTimeout(() => { inputRef.current?.focus() }, 100)
             console.log('🔍 API 응답 데이터:', { shouldAdvance: data.shouldAdvance, nextPhaseData: data.nextPhaseData })
             if (data.shouldAdvance && data.nextPhaseData) {
-              setShowAdvanceButtons(true)
+              const recent = [...messages, { role: 'assistant', content: full } as any].slice(-6)
+              const bullets = recent
+                .map(m => `${(m as any).role === 'user' ? '🙍‍♂️' : '🤖'} ${String((m as any).content || '').trim()}`)
+                .filter(Boolean)
+              setWrapUpSummary(bullets.join('\n'))
+              setShowWrapUpModal(true)
               setNextPhaseData(data.nextPhaseData)
             }
           }
@@ -635,7 +650,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
           />
           <button
             onClick={handleOpenWrapUp}
-            disabled={isLoading}
+            disabled={isLoading || isTyping}
             className="btn px-4"
             aria-label="대화 마무리"
             title="대화 마무리"

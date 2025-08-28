@@ -67,10 +67,10 @@ export default function ReportPage() {
     <div className="min-h-screen ui-container py-12">
       <div className="max-w-4xl mx-auto">
         <button onClick={() => router.push(`/session/${sessionId}`)} className="mb-8 text-gray-600 hover:text-gray-900">← 상담으로 돌아가기</button>
-        <div className="mb-10">
-          <div className="text-5xl mb-4">🧭</div>
-          <h1 className="text-3xl font-bold mb-3">당신의 Why</h1>
-          <p className="text-2xl text-gray-900">"{whySentence}"</p>
+        <div className="card p-6 mb-10">
+          <div className="text-5xl mb-3">🧭</div>
+          <h1 className="text-3xl font-bold mb-2">당신의 Why</h1>
+          <p className="text-2xl text-gray-900 whitespace-pre-wrap">"{whySentence}"</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
@@ -85,7 +85,7 @@ export default function ReportPage() {
           <h2 className="text-2xl font-bold mb-4">실행 계획(Action Steps)</h2>
           <div className="space-y-3">
             {categories.actionSteps?.map((a, i) => (
-              <div key={i} className="p-4 rounded-xl border border-gray-200 bg-white">
+              <div key={i} className="card p-5">
                 <div className="flex items-center justify-between">
                   <div className="font-semibold">{a.title}</div>
                   <span className="text-xs text-gray-500">{labelTimeframe(a.timeframe)}</span>
@@ -108,7 +108,7 @@ export default function ReportPage() {
 function Section({ title, items, icon }: { title: string; items?: string[]; icon: string }) {
   if (!items || items.length === 0) return null
   return (
-    <div className="p-4 rounded-xl border border-gray-200 bg-white">
+    <div className="card p-5">
       <div className="mb-2 font-semibold">{icon} {title}</div>
       <ul className="list-disc list-inside text-gray-800 space-y-1">
         {items.map((t, i) => <li key={i}>{t}</li>)}

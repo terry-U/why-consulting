@@ -27,6 +27,29 @@
   --radius-sm: 10px;
 }
 
+/* Dark theme tokens (opt-in via .dark on <html> or <body>) */
+.dark {
+  --background: #0f172a; /* slate-900 */
+  --surface: #111827;    /* gray-900 */
+  --foreground: #e5e7eb; /* gray-200 */
+  --muted: #94a3b8;      /* slate-400 */
+
+  --primary: #e5e7eb;    /* light text on dark */
+  --primary-foreground: #0f172a;
+  --secondary: #1f2937;  /* darker panel */
+  --secondary-foreground: #e5e7eb;
+  --destructive: #ef4444;
+  --destructive-foreground: #0f172a;
+  --accent: #1f2937;
+  --accent-foreground: #e5e7eb;
+  --border: #1f2937;
+  --input: #1f2937;
+  --ring: #93c5fd;       /* soft blue focus */
+
+  --shadow-dark: #0b1220;
+  --shadow-light: #0f172a;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
