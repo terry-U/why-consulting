@@ -127,7 +127,7 @@ body {
   
   @media (max-width: 640px) {
     html {
-      font-size: 14px;
+      font-size: 13px;
     }
   }
   
@@ -141,7 +141,7 @@ body {
   
   @media (max-width: 640px) {
     button, input, textarea, select {
-      font-size: 16px; /* iOS 확대 방지를 위해 16px 유지 */
+      font-size: 16px; /* iOS 확대 방지를 위해 16px 유지 (줌 방지) */
     }
   }
   
