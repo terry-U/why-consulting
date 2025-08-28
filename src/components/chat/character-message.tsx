@@ -59,7 +59,7 @@ export default function CharacterMessage({
         <div className="mb-3 text-sm text-blue-700/80 font-medium flex items-center gap-2">
           <span className="text-black">{character.name}</span>
           {/* 캐릭터 컬러 점: 모바일 상단, 데스크탑 우측 정렬을 위한 유연 배치 */}
-          <span className="ml-auto md:ml-2 inline-flex items-center">
+          <span className="ml-2 inline-flex items-center">
             <span
               className="inline-block rounded-full"
               style={{ width: '1em', height: '1em', background: `linear-gradient(135deg, ${from}, ${to})` }}
