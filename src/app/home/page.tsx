@@ -141,6 +141,7 @@ export default function HomePage() {
             onClickAsync={handleNewSession}
             className="w-full btn btn-primary py-8 px-6 text-white font-semibold rounded-3xl text-left"
             aria-label="새로운 Why 찾기 시작하기"
+            persistBusyOnSuccess={true}
             busyText="세션 준비 중…"
           >
             <div className="text-left">
@@ -214,6 +215,7 @@ export default function HomePage() {
                 onClickAsync={handleNewSession}
                 className="btn btn-primary text-white px-6 py-3 rounded-full font-medium"
                 aria-label="첫 상담 시작하기"
+                persistBusyOnSuccess={true}
                 busyText="세션 준비 중…"
               >
                 첫 상담 시작하기

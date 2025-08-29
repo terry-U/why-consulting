@@ -218,6 +218,7 @@ function OnboardingRunner() {
             <AsyncButton
               onClickAsync={finish}
               busyText="시작 준비 중…"
+              persistBusyOnSuccess={true}
               className="btn btn-primary text-white font-semibold px-6 py-3 rounded-full"
             >
               준비됐어요!

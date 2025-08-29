@@ -6,12 +6,15 @@ interface AsyncButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>
   onClickAsync?: () => Promise<void> | void
   busyText?: string
   spinner?: boolean
+  // 페이지 전환 등으로 언마운트될 때까지 busy 유지 (성공 시 자동 해제하지 않음)
+  persistBusyOnSuccess?: boolean
 }
 
 export default function AsyncButton({
   onClickAsync,
   busyText,
   spinner = true,
+  persistBusyOnSuccess = false,
   disabled,
   children,
   className = '',
@@ -24,10 +27,14 @@ export default function AsyncButton({
     try {
       setBusy(true)
       await onClickAsync?.()
-    } finally {
+      // 성공 시: 전환/언마운트까지 유지가 필요하면 busy 유지
+      if (!persistBusyOnSuccess) setBusy(false)
+    } catch (e) {
+      // 에러 시에는 다시 클릭 가능하도록 해제
       setBusy(false)
+      throw e
     }
-  }, [busy, onClickAsync])
+  }, [busy, onClickAsync, persistBusyOnSuccess])
 
   return (
     <button
