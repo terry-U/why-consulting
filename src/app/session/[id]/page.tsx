@@ -147,10 +147,13 @@ export default function SessionPage() {
               <button
                 onClick={() => router.push('/home')}
                 className="justify-self-start text-gray-600 hover:text-gray-900 transition-colors flex items-center gap-2"
-                aria-label="홈으로"
-                title="홈으로"
+                aria-label="뒤로가기"
+                title="뒤로가기"
               >
-                <span className="text-lg" aria-hidden>🏠</span>
+                {/* Material icon: arrow_back */}
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                  <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+                </svg>
               </button>
               {session && (
                 <div className="justify-self-center text-center">

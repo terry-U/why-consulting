@@ -676,36 +676,48 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
 
       {/* 하단 고정 바: 스크롤 업 시 숨김 (바깥 레이아웃 영향 없도록) */}
       <div className={`fixed bottom-0 left-0 right-0 px-4 py-4 bg-white/50 backdrop-blur-xl border-t border-white/20 transition-transform transition-opacity duration-200 will-change-transform ${(isScrolledUp || isTyping) ? 'opacity-0 pointer-events-none translate-y-2' : 'opacity-100 translate-y-0'}`}>
-        {/* Quick Actions removed per spec */}
         <div className="max-w-4xl mx-auto flex items-end gap-3">
-          <textarea
-            ref={inputRef}
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="솔직한 마음을 편하게 말해주세요..."
-            aria-label="메시지 입력"
-            className="input resize-none flex-1 bg-white/70 border-white/30 text-gray-900 placeholder-gray-600 py-4 px-6 rounded-full focus:ring-2 focus:ring-purple-400/50 focus:border-transparent text-base backdrop-blur-sm"
-            rows={2}
-            disabled={isLoading || isTyping}
-          />
-          <button
-            onClick={handleOpenWrapUp}
-            disabled={isLoading || isTyping}
-            className="btn px-4 rounded-full"
-            aria-label="대화 마무리"
-            title="대화 마무리"
-          >
-            마무리
-          </button>
-          <button
-            onClick={handleSendMessage}
-            disabled={!inputValue.trim() || isLoading || isTyping}
-            className="px-6 py-4 rounded-full min-w-[60px] bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed text-white"
-            aria-label="메시지 전송"
-          >
-            ▲
-          </button>
+          {/* 입력 박스 컨테이너 */}
+          <div className="relative flex-1">
+            {/* 왼쪽 내부: 마무리 아이콘 버튼 */}
+            <button
+              onClick={handleOpenWrapUp}
+              disabled={isLoading || isTyping}
+              aria-label="대화 마무리"
+              title="대화 마무리"
+              className="absolute left-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-md text-gray-600 hover:text-gray-900 disabled:opacity-40 flex items-center justify-center"
+            >
+              {/* Material icon: flag rounded */}
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <path d="M14 6l-1-2H6v16h2v-6h5l1 2h6V6z"/>
+              </svg>
+            </button>
+
+            {/* 텍스트 영역 (2줄 표시, 부드러운 라운드) */}
+            <textarea
+              ref={inputRef}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="솔직한 마음을 편하게 말해주세요..."
+              aria-label="메시지 입력"
+              className="input resize-none w-full bg-white/80 border-white/30 text-gray-900 placeholder-gray-600 py-3 pl-12 pr-12 rounded-xl focus:ring-2 focus:ring-purple-400/50 focus:border-transparent text-base backdrop-blur-sm min-h-[3.2rem]"
+              rows={2}
+              disabled={isLoading || isTyping}
+            />
+
+            {/* 오른쪽 내부: 전송 버튼 */}
+            <button
+              onClick={handleSendMessage}
+              disabled={!inputValue.trim() || isLoading || isTyping}
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-md bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed text-white flex items-center justify-center"
+              aria-label="메시지 전송"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <path d="M3.4 20.4l17.45-8.02c.8-.37.8-1.39 0-1.76L3.4 2.6c-.72-.33-1.52.32-1.33 1.09L3.5 10.5l8 1-8 1-1.43 6.81c-.19.77.61 1.42 1.33 1.09z"/>
+              </svg>
+            </button>
+          </div>
         </div>
         {!isScrolledUp && (
           <div className="mt-2 text-[11px] text-gray-500 text-center">Enter 전송 • Shift+Enter 줄바꿈</div>
