@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { getCurrentUser } from '@/lib/auth'
 
 // 온보딩 메시지(기존 스크립트 복원)
 const ONBOARDING_MESSAGES = [
@@ -25,6 +26,7 @@ function OnboardingRunner() {
   const searchParams = useSearchParams()
   const sessionId = searchParams.get('sessionId')
   const autoStart = searchParams.get('autoStart') === '1'
+  const [creating, setCreating] = useState(false)
 
   const [step, setStep] = useState(0)
   const [text, setText] = useState('')
@@ -60,13 +62,40 @@ function OnboardingRunner() {
   const WAIT_MS = 2600
   const SHRINK_MS = 260
 
-  const finish = () => {
+  const finish = async () => {
     try { localStorage.setItem('onboarding_seen', 'true') } catch {}
     if (autoStart) {
-      // 홈에서 분기가 호출된 자동 시작 모드: 세션이 있으면 바로 이동, 없으면 홈으로
-      if (sessionId) router.push(`/session/${sessionId}`)
-      else router.push('/home')
-      return
+      try {
+        setCreating(true)
+        // 활성 세션 조회 후 없으면 생성
+        const me = await getCurrentUser()
+        if (!me) return router.push('/auth')
+        // 서버 측 온보딩 완료 표시(컬럼이 없으면 무시)
+        try {
+          await fetch('/api/user/onboarding-complete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: me.id }) })
+        } catch {}
+        const resp = await fetch(`/api/session?userId=${me.id}`)
+        const js = await resp.json()
+        if (js?.session) {
+          router.push(`/session/${js.session.id}`)
+          return
+        }
+        const createRes = await fetch('/api/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: me.id })
+        })
+        const created = await createRes.json()
+        if (!createRes.ok || !created?.success) throw new Error(created?.error || '세션 생성 실패')
+        router.push(`/session/${created.session.id}`)
+        return
+      } catch (e) {
+        console.error('자동 세션 시작 실패:', e)
+        router.push('/home')
+        return
+      } finally {
+        setCreating(false)
+      }
     }
     if (sessionId) router.push(`/session/${sessionId}`)
     else router.push('/home')

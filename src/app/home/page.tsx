@@ -35,7 +35,7 @@ export default function HomePage() {
       return
     }
 
-    // 결제/온보딩/첫 세션 자동 시작 분기
+    // 결제/온보딩 분기만 처리(홈에서는 자동 세션 생성 금지)
     (async () => {
       try {
         // 1) 결제 여부 확인
@@ -57,17 +57,7 @@ export default function HomePage() {
           }
         } catch {}
 
-        // 3) 첫 상담 자동 시작: 활성 세션 없으면 생성해서 바로 세션으로 이동
-        try {
-          const resp = await fetch(`/api/session?userId=${user.id}`)
-          const js = await resp.json()
-          const active = js?.session
-          if (!active) {
-            const created = await createNewSession(user.id as any)
-            router.replace(`/session/${created.id}`)
-            return
-          }
-        } catch {}
+        // 홈에서는 자동 시작하지 않음. 사용자가 명시적으로 CTA를 눌러야 시작
       } catch {}
     })()
 
