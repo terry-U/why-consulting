@@ -104,7 +104,9 @@ Why 한 줄(headline) 생성 규칙:
 - 기여 파트: "[대상]을[에게] [스타일/방법] 함으로"
 - 영향력 파트: 내가 중요하게 여기는 좋은 것을 타인도 느끼게 되는 실제 결과(예: 행복, 성취감, 안도감, 성장 등).
 
-보고서(markdown) 템플릿(그대로 출력):
+보고서(markdown) 템플릿(그대로 출력)
+
+:
 # My 'Why'
 - Why 한 줄: [headline 그대로]
 - 가치 Top3: [3개]
@@ -261,17 +263,19 @@ Why 한 줄(headline) 생성 규칙:
 
     if (upErr) {
       console.error('❌ 보고서 저장 실패', upErr)
-      // 폴백: 세션 컬럼에 저장
+      // 폴백: 세션 컬럼에 저장 시도 (my_why인 경우에만 의미 있음)
       if (type === 'my_why' && parsed?.markdown) {
         const { error: sessErr } = await supabaseServer
           .from('sessions')
           .update({ generated_why: parsed.markdown, updated_at: new Date().toISOString() })
           .eq('id', sessionId)
         if (sessErr) console.error('❌ 세션 폴백 저장 실패', sessErr)
-      } else if (type === 'my_why') {
-        // 저장 성공 시에도 세션을 완료 처리(요약 단계 고정)
-        await markSessionCompleted(sessionId, parsed?.markdown)
       }
+    }
+
+    // my_why 생성 시에는 성공/실패와 무관하게 세션 상태를 완료 처리하여 후속 흐름이 막히지 않도록 보장
+    if (type === 'my_why') {
+      await markSessionCompleted(sessionId, parsed?.markdown)
     }
 
     // cascade: my_why 생성 완료 시 2~5 자동 생성 (이미 존재하면 스킵)
