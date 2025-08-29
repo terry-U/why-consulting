@@ -19,11 +19,13 @@ export default function ReportPage() {
   const params = useParams()
   const router = useRouter()
   const sessionId = params.id as string
-  const [loading, setLoading] = useState(true)
+  const [initializing, setInitializing] = useState(true)
+  const [tabLoading, setTabLoading] = useState(false)
   const [allReady, setAllReady] = useState(false)
   const [activeType, setActiveType] = useState<ReportType>('my_why')
   const [report, setReport] = useState<ReportData | null>(null)
   const [error, setError] = useState('')
+  const [reportsMap, setReportsMap] = useState<Partial<Record<ReportType, ReportData>>>({})
 
   useEffect(() => {
     if (!sessionId) return
@@ -39,7 +41,7 @@ export default function ReportPage() {
     }
 
     const ensureAll = async () => {
-      setLoading(true)
+      setInitializing(true)
       try {
         const user = await getCurrentUser()
         if (!user) return router.push('/auth')
@@ -58,13 +60,19 @@ export default function ReportPage() {
         }
 
         setAllReady(results.every(Boolean))
-        // 초기 표시는 현재 activeType 기준
+        // 캐시 맵 구성 및 초기 표시
+        const map: Partial<Record<ReportType, ReportData>> = {}
+        types.forEach((t, i) => {
+          if (results[i]) map[t] = results[i] as ReportData
+        })
+        setReportsMap(map)
         const idx = types.indexOf(activeType)
-        setReport((results[idx] as ReportData) || (results[0] as ReportData))
+        const initial = (map[types[idx]] as ReportData) || (map['my_why'] as ReportData)
+        setReport(initial || null)
       } catch (e: any) {
         setError(e?.message || '보고서 생성에 실패했습니다')
       } finally {
-        setLoading(false)
+        setInitializing(false)
       }
     }
 
@@ -74,22 +82,28 @@ export default function ReportPage() {
   useEffect(() => {
     const loadActive = async () => {
       if (!allReady || !sessionId) return
-      setLoading(true)
+      // 캐시가 있으면 즉시 표시하고 네트워크 요청 생략
+      if (reportsMap[activeType]) {
+        setReport(reportsMap[activeType] as ReportData)
+        return
+      }
+      setTabLoading(true)
       try {
         const res = await fetch(`/api/session/${sessionId}/report?type=${activeType}`)
         const data = await res.json()
         if (!data.success) throw new Error(data.error)
         setReport(data.report)
+        setReportsMap(prev => ({ ...prev, [activeType]: data.report as ReportData }))
       } catch (e: any) {
         setError(e?.message || '보고서 불러오기에 실패했습니다')
       } finally {
-        setLoading(false)
+        setTabLoading(false)
       }
     }
     loadActive()
-  }, [activeType, allReady, sessionId])
+  }, [activeType, allReady, sessionId, reportsMap])
 
-  if (loading || !allReady) {
+  if (initializing || !allReady) {
     return (
       <div className="min-h-screen ui-container flex items-center justify-center">
         <div className="text-gray-600">보고서를 준비하고 있어요…</div>
@@ -109,6 +123,13 @@ export default function ReportPage() {
   }
 
   const renderBody = () => {
+    if (tabLoading) {
+      return (
+        <div className="card p-6 mb-10">
+          <div className="text-gray-600">이 섹션을 불러오는 중…</div>
+        </div>
+      )
+    }
     switch (activeType) {
       case 'my_why': {
         const md = (report as any)?.markdown as string | undefined
