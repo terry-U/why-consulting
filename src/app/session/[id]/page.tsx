@@ -86,6 +86,27 @@ export default function SessionPage() {
     }
   }, [sessionId, router])
 
+  // 뒤로가기(bfcache 복귀 포함) 시 상태 재검사 후 즉시 리디렉션
+  useEffect(() => {
+    const handler = async (e: PageTransitionEvent | Event) => {
+      try {
+        // pageshow(bfcache)는 persisted=true일 수 있으므로 강제 재조회
+        const res = await fetch(`/api/session?sessionId=${sessionId}`)
+        const data = await res.json()
+        const s = data?.session
+        if (s && (s.status === 'completed' || s.counseling_phase === 'summary' || !!s.generated_why)) {
+          router.replace(`/session/${sessionId}/report`)
+        }
+      } catch {}
+    }
+    window.addEventListener('pageshow', handler as any)
+    window.addEventListener('popstate', handler as any)
+    return () => {
+      window.removeEventListener('pageshow', handler as any)
+      window.removeEventListener('popstate', handler as any)
+    }
+  }, [sessionId, router])
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">

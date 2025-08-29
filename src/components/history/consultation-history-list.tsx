@@ -83,9 +83,15 @@ export default function ConsultationHistoryList({
                   <h3 className="font-semibold text-gray-900">
                     상담 #{session.id.slice(0, 8)}
                   </h3>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(session.status)}`}>
-                    {getStatusText(session.status)}
-                  </span>
+                  {(() => {
+                    const effectiveDone = session.status === 'completed' || session.counseling_phase === 'summary' || !!session.whyStatement || !!session.generated_why
+                    const effectiveStatus = effectiveDone ? 'completed' : session.status
+                    return (
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(effectiveStatus)}`}>
+                        {getStatusText(effectiveStatus)}
+                      </span>
+                    )
+                  })()}
                 </div>
                 
                 <div className="flex items-center space-x-2">
