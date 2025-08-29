@@ -518,6 +518,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // 상담 완료 또는 요약 단계면 채팅 차단 및 리포트로 유도
+    if (session.status === 'completed' || session.counseling_phase === 'summary' || session.counseling_phase === 'completed' || !!session.generated_why) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: '해당 상담은 완료되어 채팅을 계속할 수 없습니다.',
+          redirect: `/session/${sessionId}/report`
+        },
+        { status: 409 }
+      )
+    }
+
     // 현재 단계에 따른 상담사 결정
     let currentCounselorType = 'yellow' // 기본값
     
@@ -527,20 +539,6 @@ export async function POST(request: NextRequest) {
       if (questionIndex < counselingQuestions.length) {
         currentCounselorType = counselingQuestions[questionIndex].counselor
       }
-    } else if (session.counseling_phase === 'summary' || session.counseling_phase === 'completed') {
-      // 요약/완료 단계에서는 채팅 생성 자체를 막고 요약 전용 플로우로 전환 신호 반환
-      return NextResponse.json({
-        success: true,
-        response: '',
-        counselor: null,
-        shouldAdvance: true,
-        nextPhaseData: {
-          nextPhase: 'summary',
-          nextQuestionIndex: 0,
-          nextCounselor: counselingQuestions[counselingQuestions.length - 1]?.counselor || 'pink',
-          nextQuestion: null,
-        }
-      })
     }
     
     console.log('🎯 상담사 결정:', {

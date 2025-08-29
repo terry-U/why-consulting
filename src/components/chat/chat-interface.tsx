@@ -111,6 +111,18 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
         signal: aborter.signal,
       })
 
+      // 완료/요약 상태로 차단된 경우 즉시 리포트로 이동
+      if (response.status === 409) {
+        try {
+          const j = await response.json()
+          router.replace(j?.redirect || `/session/${session.id}/report`)
+          return
+        } catch {
+          router.replace(`/session/${session.id}/report`)
+          return
+        }
+      }
+
       const data = await response.json()
 
       // 최신 요청만 반영
@@ -263,6 +275,18 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
           userId: session.user_id
         }),
       })
+
+      // 완료/요약 상태로 차단된 경우 즉시 리포트로 이동
+      if (response.status === 409) {
+        try {
+          const j = await response.json()
+          router.replace(j?.redirect || `/session/${session.id}/report`)
+          return
+        } catch {
+          router.replace(`/session/${session.id}/report`)
+          return
+        }
+      }
 
       const data = await response.json()
 
