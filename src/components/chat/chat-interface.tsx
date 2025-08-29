@@ -677,22 +677,19 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
       {/* 하단 고정 바: 스크롤 업 시 숨김 (바깥 레이아웃 영향 없도록) */}
       <div className={`fixed bottom-0 left-0 right-0 px-4 py-4 bg-white/50 backdrop-blur-xl border-t border-white/20 transition-transform transition-opacity duration-200 will-change-transform ${(isScrolledUp || isTyping) ? 'opacity-0 pointer-events-none translate-y-2' : 'opacity-100 translate-y-0'}`}>
         <div className="max-w-4xl mx-auto flex items-end gap-3">
+          {/* 다음 질문으로(마무리) - 라이트 버튼 */}
+          <button
+            onClick={handleOpenWrapUp}
+            disabled={isLoading || isTyping}
+            aria-label="충분히 대화했어요. 다음 질문으로"
+            title="충분히 대화했어요. 다음 질문으로"
+            className="px-3 py-2 rounded-md border border-gray-300 bg-white/70 text-gray-700 hover:bg-white disabled:opacity-40"
+          >
+            다음 질문
+          </button>
+
           {/* 입력 박스 컨테이너 */}
           <div className="relative flex-1">
-            {/* 왼쪽 내부: 마무리 아이콘 버튼 */}
-            <button
-              onClick={handleOpenWrapUp}
-              disabled={isLoading || isTyping}
-              aria-label="대화 마무리"
-              title="대화 마무리"
-              className="absolute left-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-md text-gray-600 hover:text-gray-900 disabled:opacity-40 flex items-center justify-center"
-            >
-              {/* Material icon: flag rounded */}
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                <path d="M14 6l-1-2H6v16h2v-6h5l1 2h6V6z"/>
-              </svg>
-            </button>
-
             {/* 텍스트 영역 (2줄 표시, 부드러운 라운드) */}
             <textarea
               ref={inputRef}
@@ -701,7 +698,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
               onKeyPress={handleKeyPress}
               placeholder="솔직한 마음을 편하게 말해주세요..."
               aria-label="메시지 입력"
-              className="input resize-none w-full bg-white/80 border-white/30 text-gray-900 placeholder-gray-600 py-3 pl-12 pr-12 rounded-xl focus:ring-2 focus:ring-purple-400/50 focus:border-transparent text-base backdrop-blur-sm min-h-[3.2rem]"
+              className="input resize-none w-full bg-white/80 border-white/30 text-gray-900 placeholder-gray-600 py-3 pl-4 pr-12 rounded-xl focus:ring-2 focus:ring-purple-400/50 focus:border-transparent text-base backdrop-blur-sm min-h-[3.2rem]"
               rows={2}
               disabled={isLoading || isTyping}
             />
