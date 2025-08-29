@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 // GFM 지원(테이블 등)
-// @ts-ignore
-import gfm from 'remark-gfm'
+import remarkGfm from 'remark-gfm'
 import { useParams, useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/auth'
 
@@ -164,21 +163,21 @@ export default function ReportPage() {
         const md = (report as any)?.markdown as string | undefined
         return (
           <div className="card p-6 mb-10 prose max-w-none">
-            <ReactMarkdown remarkPlugins={[gfm]}>{md || ''}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{md || ''}</ReactMarkdown>
           </div>
         )
       }
       case 'value_map': {
         const md = (report as any)?.markdown as string | undefined
-        return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown remarkPlugins={[gfm]}>{md || ''}</ReactMarkdown></div>
+        return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown remarkPlugins={[remarkGfm]}>{md || ''}</ReactMarkdown></div>
       }
       case 'style_pattern': {
         const md = (report as any)?.markdown as string | undefined
-        return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown remarkPlugins={[gfm]}>{md || ''}</ReactMarkdown></div>
+        return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown remarkPlugins={[remarkGfm]}>{md || ''}</ReactMarkdown></div>
       }
       case 'master_manager_spectrum': {
         const md = (report as any)?.markdown as string | undefined
-        return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown remarkPlugins={[gfm]}>{md || ''}</ReactMarkdown></div>
+        return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown remarkPlugins={[remarkGfm]}>{md || ''}</ReactMarkdown></div>
       }
       case 'fit_triggers': {
         const md = (report as any)?.markdown as string | undefined
