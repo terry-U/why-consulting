@@ -181,7 +181,7 @@ export default function ReportPage() {
       }
       case 'fit_triggers': {
         const md = (report as any)?.markdown as string | undefined
-        return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown remarkPlugins={[gfm]}>{md || ''}</ReactMarkdown></div>
+        return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown remarkPlugins={[remarkGfm]}>{md || ''}</ReactMarkdown></div>
       }
       default:
         return null
