@@ -528,8 +528,19 @@ export async function POST(request: NextRequest) {
         currentCounselorType = counselingQuestions[questionIndex].counselor
       }
     } else if (session.counseling_phase === 'summary' || session.counseling_phase === 'completed') {
-      // 요약/완료 단계에서는 존재하지 않는 'main' 대신 마지막 질문의 상담사로 폴백
-      currentCounselorType = counselingQuestions[counselingQuestions.length - 1]?.counselor || 'yellow'
+      // 요약/완료 단계에서는 채팅 생성 자체를 막고 요약 전용 플로우로 전환 신호 반환
+      return NextResponse.json({
+        success: true,
+        response: '',
+        counselor: null,
+        shouldAdvance: true,
+        nextPhaseData: {
+          nextPhase: 'summary',
+          nextQuestionIndex: 0,
+          nextCounselor: counselingQuestions[counselingQuestions.length - 1]?.counselor || 'pink',
+          nextQuestion: null,
+        }
+      })
     }
     
     console.log('🎯 상담사 결정:', {

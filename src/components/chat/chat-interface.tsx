@@ -56,7 +56,8 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
   // 현재 상담사 결정 로직 (콜백으로 정의하여 의존성 관리)
   const getCurrentCounselor = useCallback(() => {
     if (session.counseling_phase === 'summary' || session.counseling_phase === 'completed') {
-      return 'main'
+      // 요약/완료 단계는 채팅을 사용하지 않음
+      return 'pink'
     }
     const questionIndex = session.current_question_index
     if (questionIndex >= 1 && questionIndex <= 8) {
@@ -68,6 +69,11 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
 
   // 첫 상담사 인사 함수
   const handleFirstCounselorGreeting = useCallback(async () => {
+    // 요약/완료 단계에서는 채팅 인사 호출 금지, 보고서로 전환
+    if (session.counseling_phase === 'summary' || session.counseling_phase === 'completed') {
+      router.replace(`/session/${session.id}/report`)
+      return
+    }
     try {
       // 이전 인사 요청 중단 및 타이핑 타이머 정리
       if (greetingAbortRef.current) {
@@ -183,11 +189,15 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
 
   // 초기 메시지 로딩
   useEffect(() => {
+    if (session.counseling_phase === 'summary' || session.counseling_phase === 'completed') {
+      router.replace(`/session/${session.id}/report`)
+      return
+    }
     if (initialMessages.length === 0) {
       // 메시지가 없으면 상담사가 먼저 인사
       handleFirstCounselorGreeting()
     }
-  }, [initialMessages, handleFirstCounselorGreeting])
+  }, [initialMessages, handleFirstCounselorGreeting, session.counseling_phase, session.id, router])
 
   // 질문 인덱스 변경 시, 이전 상담사 메시지가 남지 않도록 초기화 후 새 상담사 인사
   useEffect(() => {
