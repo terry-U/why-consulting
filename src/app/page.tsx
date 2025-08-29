@@ -52,7 +52,7 @@ export default function Home() {
           </p>
           <div className="space-y-3">
             <button
-              onClick={() => router.push('/auth')}
+              onClick={() => router.push('/auth?next=/pay')}
               className="btn btn-primary text-white text-xl font-semibold px-8 py-4 rounded-full"
             >
               상담 시작하기

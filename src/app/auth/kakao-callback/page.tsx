@@ -70,9 +70,14 @@ function KakaoCallbackContent() {
           }
         }
 
-        console.log('✅ Session set successfully, redirecting to home...')
-        // 세션 설정 후 강제 리로드로 middleware 재실행
-        window.location.href = '/home'
+        console.log('✅ Session set successfully, deciding next route...')
+        // 로그인 후 이동 결정: 결제/온보딩/첫 세션 자동 시작 흐름 지원
+        let next = '/home'
+        try {
+          const stored = localStorage.getItem('auth_next')
+          if (stored) next = stored
+        } catch {}
+        window.location.href = next
 
       } catch (error) {
         console.error('❌ Callback processing error:', error)

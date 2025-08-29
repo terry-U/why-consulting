@@ -35,16 +35,42 @@ export default function HomePage() {
       return
     }
 
-    // 최초 로그인 한 번만 온보딩 자동 표시 (로컬 디바이스 기준)
-    try {
-      const seen = typeof window !== 'undefined' && localStorage.getItem('onboarding_seen') === 'true'
-      if (!seen) {
-        router.push('/onboarding')
-        return
-      }
-    } catch (e) {
-      // localStorage 접근 불가 시 무시
-    }
+    // 결제/온보딩/첫 세션 자동 시작 분기
+    (async () => {
+      try {
+        // 1) 결제 여부 확인
+        const res = await fetch(`/api/user/status?userId=${user.id}`)
+        const data = await res.json()
+        const isPaid = !!data?.user?.is_paid_user
+
+        if (!isPaid) {
+          router.push('/pay')
+          return
+        }
+
+        // 2) 온보딩 체크(기기 기준). 미완료면 온보딩으로
+        try {
+          const seen = typeof window !== 'undefined' && localStorage.getItem('onboarding_seen') === 'true'
+          if (!seen) {
+            router.push('/onboarding?autoStart=1')
+            return
+          }
+        } catch {}
+
+        // 3) 첫 상담 자동 시작: 활성 세션 없으면 생성해서 바로 세션으로 이동
+        try {
+          const resp = await fetch(`/api/session?userId=${user.id}`)
+          const js = await resp.json()
+          const active = js?.session
+          if (!active) {
+            // 서버 API에 활성 세션 생성 로직이 없으므로, 홈의 NewSession 버튼과 동일한 경로 사용을 위해 클라이언트 생성
+            const created = await createNewSession(user.id as any)
+            router.push(`/session/${created.id}`)
+            return
+          }
+        } catch {}
+      } catch {}
+    })()
 
     const loadUserData = async () => {
       try {

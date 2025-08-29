@@ -23,6 +23,11 @@ function AuthContent() {
       setAuthError('')
       
       console.log('🔄 Starting Kakao login...')
+      // next 파라미터를 로컬 스토리지에 저장하여 콜백 후 이동
+      try {
+        const next = searchParams.get('next') || '/home'
+        localStorage.setItem('auth_next', next)
+      } catch {}
       await signInWithKakao()
       // 성공 시 카카오가 자동으로 콜백 페이지로 리다이렉트
     } catch (error: any) {

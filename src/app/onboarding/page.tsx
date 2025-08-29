@@ -24,6 +24,7 @@ function OnboardingRunner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const sessionId = searchParams.get('sessionId')
+  const autoStart = searchParams.get('autoStart') === '1'
 
   const [step, setStep] = useState(0)
   const [text, setText] = useState('')
@@ -61,12 +62,14 @@ function OnboardingRunner() {
 
   const finish = () => {
     try { localStorage.setItem('onboarding_seen', 'true') } catch {}
-    // 요구사항: 상담 시작 시에는 온보딩을 보여줄 필요 없음 → 기본은 홈으로 복귀
-    if (sessionId) {
-      router.push(`/session/${sessionId}`)
-    } else {
-      router.push('/home')
+    if (autoStart) {
+      // 홈에서 분기가 호출된 자동 시작 모드: 세션이 있으면 바로 이동, 없으면 홈으로
+      if (sessionId) router.push(`/session/${sessionId}`)
+      else router.push('/home')
+      return
     }
+    if (sessionId) router.push(`/session/${sessionId}`)
+    else router.push('/home')
   }
 
   const clearTimers = () => {
