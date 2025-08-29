@@ -676,20 +676,22 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
 
       {/* 하단 고정 바: 스크롤 업 시 숨김 (바깥 레이아웃 영향 없도록) */}
       <div className={`fixed bottom-0 left-0 right-0 px-4 py-4 bg-white/50 backdrop-blur-xl border-t border-white/20 transition-transform transition-opacity duration-200 will-change-transform ${(isScrolledUp || isTyping) ? 'opacity-0 pointer-events-none translate-y-2' : 'opacity-100 translate-y-0'}`}>
-        <div className="max-w-4xl mx-auto flex items-end gap-3">
-          {/* 다음 질문으로(마무리) - 라이트 버튼 */}
-          <button
-            onClick={handleOpenWrapUp}
-            disabled={isLoading || isTyping}
-            aria-label="충분해요, 다음 질문"
-            title="충분해요, 다음 질문"
-            className="px-3 py-2 rounded-md border border-gray-300 bg-white/70 text-gray-700 hover:bg-white disabled:opacity-40"
-          >
-            충분해요, 다음 질문
-          </button>
+        <div className="max-w-4xl mx-auto flex flex-col gap-2">
+          {/* 상단 액션 라인 */}
+          <div className="flex items-center justify-start">
+            <button
+              onClick={handleOpenWrapUp}
+              disabled={isLoading || isTyping}
+              aria-label="충분해요, 다음 질문"
+              title="충분해요, 다음 질문"
+              className="px-3 py-2 rounded-md border border-gray-300 bg-white/70 text-gray-700 hover:bg-white disabled:opacity-40"
+            >
+              충분해요, 다음 질문
+            </button>
+          </div>
 
           {/* 입력 박스 컨테이너 */}
-          <div className="relative flex-1">
+          <div className="relative w-full">
             {/* 텍스트 영역 (2줄 표시, 부드러운 라운드) */}
             <textarea
               ref={inputRef}
