@@ -129,9 +129,14 @@ export default function HomePage() {
           </div>
           <button
             onClick={handleLogout}
-            className="icon-btn text-gray-500"
+            className="icon-btn text-gray-500 hover:text-gray-800"
+            aria-label="로그아웃"
+            title="로그아웃"
           >
-            로그아웃
+            {/* Material icon: logout */}
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+              <path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3h-6v2h6v14h-6v2h6c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/>
+            </svg>
           </button>
         </div>
 
