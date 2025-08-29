@@ -27,6 +27,7 @@ function OnboardingRunner() {
   const sessionId = searchParams.get('sessionId')
   const autoStart = searchParams.get('autoStart') === '1'
   const [creating, setCreating] = useState(false)
+  const finishedRef = useRef(false)
 
   const [step, setStep] = useState(0)
   const [text, setText] = useState('')
@@ -63,6 +64,8 @@ function OnboardingRunner() {
   const SHRINK_MS = 260
 
   const finish = async () => {
+    if (finishedRef.current) return
+    finishedRef.current = true
     try { localStorage.setItem('onboarding_seen', 'true') } catch {}
     if (autoStart) {
       try {
@@ -95,6 +98,7 @@ function OnboardingRunner() {
         return
       } finally {
         setCreating(false)
+        finishedRef.current = true
       }
     }
     if (sessionId) router.push(`/session/${sessionId}`)
@@ -204,14 +208,16 @@ function OnboardingRunner() {
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <button
             onClick={finish}
-            className="text-gray-500 hover:text-gray-700 text-sm underline"
+            disabled={creating}
+            className="text-gray-500 hover:text-gray-700 text-sm underline disabled:opacity-50"
           >
             건너뛰기
           </button>
           {segments[step] && segments[step].includes('준비 됐나요') && !isTyping && (
             <button
               onClick={finish}
-              className="btn btn-primary text-white font-semibold px-6 py-3 rounded-full"
+              disabled={creating}
+              className="btn btn-primary text-white font-semibold px-6 py-3 rounded-full disabled:opacity-50"
             >
               준비됐어요!
             </button>
