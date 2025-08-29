@@ -106,6 +106,21 @@ export async function POST(request: NextRequest) {
 
     console.log('👤 요청 사용자 ID:', userId)
 
+    // 결제 게이트: 미결제 사용자는 세션 생성 차단
+    try {
+      const { data: user } = await supabaseServer
+        .from('users')
+        .select('is_paid_user')
+        .eq('id', userId)
+        .single()
+      if (!user || user.is_paid_user === false) {
+        return NextResponse.json({ success: false, error: '결제가 필요합니다.' }, { status: 402 })
+      }
+    } catch (e) {
+      console.warn('결제 상태 확인 실패, 기본 차단:', e)
+      return NextResponse.json({ success: false, error: '결제 확인 실패' }, { status: 500 })
+    }
+
     // 환경 변수 확인
     console.log('🔑 환경 변수 확인:')
     console.log('- OPENAI_API_KEY 존재:', !!process.env.OPENAI_API_KEY)

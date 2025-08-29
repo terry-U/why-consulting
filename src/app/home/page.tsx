@@ -44,7 +44,7 @@ export default function HomePage() {
         const isPaid = !!data?.user?.is_paid_user
 
         if (!isPaid) {
-          router.push('/pay')
+          router.replace('/pay')
           return
         }
 
@@ -52,7 +52,7 @@ export default function HomePage() {
         try {
           const seen = typeof window !== 'undefined' && localStorage.getItem('onboarding_seen') === 'true'
           if (!seen) {
-            router.push('/onboarding?autoStart=1')
+            router.replace('/onboarding?autoStart=1')
             return
           }
         } catch {}
@@ -63,9 +63,8 @@ export default function HomePage() {
           const js = await resp.json()
           const active = js?.session
           if (!active) {
-            // 서버 API에 활성 세션 생성 로직이 없으므로, 홈의 NewSession 버튼과 동일한 경로 사용을 위해 클라이언트 생성
             const created = await createNewSession(user.id as any)
-            router.push(`/session/${created.id}`)
+            router.replace(`/session/${created.id}`)
             return
           }
         } catch {}
@@ -100,10 +99,17 @@ export default function HomePage() {
   const handleNewSession = async () => {
     try {
       if (!user) return
-      
+
+      // 결제 게이트 확인(서버가 이중으로 차단하지만 UI도 보호)
+      const res = await fetch(`/api/user/status?userId=${user.id}`)
+      const js = await res.json()
+      if (!js?.user?.is_paid_user) {
+        router.replace('/pay')
+        return
+      }
+
       const newSession = await createNewSession(user.id)
-      // 요구사항: 상담 시작 시에는 온보딩을 보여주지 않고 바로 세션으로 이동
-      router.push(`/session/${newSession.id}`)
+      router.replace(`/session/${newSession.id}`)
     } catch (error) {
       console.error('새 세션 생성 오류:', error)
       alert('새 상담을 시작할 수 없습니다. 다시 시도해주세요.')

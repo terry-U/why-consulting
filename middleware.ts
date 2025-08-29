@@ -88,6 +88,27 @@ export async function middleware(req: NextRequest) {
     }
   }
 
+  // 결제 게이트: 로그인되어 있고 지급/결제가 완료되지 않은 사용자는 대부분의 보호 경로에서 /pay로 강제 이동
+  if (session) {
+    const userId = session.user.id
+    // /pay, /auth, 콜백 경로는 예외
+    const isPayPath = req.nextUrl.pathname.startsWith('/pay')
+    const isCallback = req.nextUrl.pathname.startsWith('/auth/kakao-callback')
+    const isApi = req.nextUrl.pathname.startsWith('/api/')
+    if (!isPayPath && !isCallback && !isApi) {
+      try {
+        const { data: u } = await supabase
+          .from('users')
+          .select('is_paid_user')
+          .eq('id', userId)
+          .single()
+        if (u && u.is_paid_user === false) {
+          return NextResponse.redirect(new URL('/pay', req.url))
+        }
+      } catch {}
+    }
+  }
+
   // 보호된 경로에 접근하려는데 로그인되지 않은 경우
   if (isProtectedPath && !session) {
     return NextResponse.redirect(new URL('/auth', req.url))
