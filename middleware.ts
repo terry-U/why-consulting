@@ -68,6 +68,26 @@ export async function middleware(req: NextRequest) {
     req.nextUrl.pathname.startsWith(path)
   )
 
+  // 세션 종료 시 채팅 화면 접근 차단: /session/[id] -> /session/[id]/report
+  const sessionChatMatch = req.nextUrl.pathname.match(/^\/session\/(.+)$/)
+  if (sessionChatMatch) {
+    const pathRemainder = sessionChatMatch[1]
+    // 중첩 경로(report/why 등)는 제외하고 정확히 /session/[id] 일 때만 검사
+    if (!pathRemainder.includes('/')) {
+      const sessionId = pathRemainder
+      try {
+        const { data: s } = await supabase
+          .from('sessions')
+          .select('id,status,counseling_phase,generated_why')
+          .eq('id', sessionId)
+          .single()
+        if (s && (s.status === 'completed' || s.counseling_phase === 'summary' || !!s.generated_why)) {
+          return NextResponse.redirect(new URL(`/session/${sessionId}/report`, req.url))
+        }
+      } catch {}
+    }
+  }
+
   // 보호된 경로에 접근하려는데 로그인되지 않은 경우
   if (isProtectedPath && !session) {
     return NextResponse.redirect(new URL('/auth', req.url))
