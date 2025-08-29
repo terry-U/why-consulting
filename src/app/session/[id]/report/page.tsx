@@ -191,8 +191,7 @@ export default function ReportPage() {
   return (
     <div className="min-h-screen ui-container py-12">
       <div className="max-w-4xl mx-auto">
-        <button onClick={() => router.push(`/session/${sessionId}`)} className="mb-8 text-gray-600 hover:text-gray-900">← 상담으로 돌아가기</button>
-
+        {/* 상담으로 돌아가기 버튼 제거 (보고서가 최종 단계) */}
         <div className="mb-6 flex gap-2 overflow-x-auto">
           {[
             { key: 'my_why', label: 'My “Why”' },
