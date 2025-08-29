@@ -20,6 +20,7 @@ const ConsultationHistoryList = dynamic(
 import { DashboardSkeleton } from '@/components/common/skeleton-loader'
 import SkeletonLoader from '@/components/common/skeleton-loader'
 import ResponsiveLayout from '@/components/layout/responsive-layout'
+import AsyncButton from '@/components/common/AsyncButton'
 
 export default function HomePage() {
   const { user, loading: authLoading } = useAuth()
@@ -136,10 +137,11 @@ export default function HomePage() {
 
         {/* 메인 CTA */}
         <div className="mb-8">
-          <button
-            onClick={handleNewSession}
+          <AsyncButton
+            onClickAsync={handleNewSession}
             className="w-full btn btn-primary py-8 px-6 text-white font-semibold rounded-3xl text-left"
             aria-label="새로운 Why 찾기 시작하기"
+            busyText="세션 준비 중…"
           >
             <div className="text-left">
               <div className="text-3xl mb-3">🌟</div>
@@ -148,7 +150,7 @@ export default function HomePage() {
                 8명의 질문자와 함께하는 특별한 여정
               </p>
             </div>
-          </button>
+          </AsyncButton>
         </div>
 
         {/* 질문자 소개 섹션 제거 */}
@@ -208,13 +210,14 @@ export default function HomePage() {
               <p className="text-gray-500 mb-6">
                 8개의 질문을 통해 당신만의 Why를 발견해보세요
               </p>
-              <button
-                onClick={handleNewSession}
+              <AsyncButton
+                onClickAsync={handleNewSession}
                 className="btn btn-primary text-white px-6 py-3 rounded-full font-medium"
                 aria-label="첫 상담 시작하기"
+                busyText="세션 준비 중…"
               >
                 첫 상담 시작하기
-              </button>
+              </AsyncButton>
             </div>
           )}
         </div>

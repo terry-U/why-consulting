@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, Suspense, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getCurrentUser } from '@/lib/auth'
+import AsyncButton from '@/components/common/AsyncButton'
 
 // 온보딩 메시지(기존 스크립트 복원)
 const ONBOARDING_MESSAGES = [
@@ -214,13 +215,13 @@ function OnboardingRunner() {
             건너뛰기
           </button>
           {segments[step] && segments[step].includes('준비 됐나요') && !isTyping && (
-            <button
-              onClick={finish}
-              disabled={creating}
-              className="btn btn-primary text-white font-semibold px-6 py-3 rounded-full disabled:opacity-50"
+            <AsyncButton
+              onClickAsync={finish}
+              busyText="시작 준비 중…"
+              className="btn btn-primary text-white font-semibold px-6 py-3 rounded-full"
             >
               준비됐어요!
-            </button>
+            </AsyncButton>
           )}
         </div>
       </div>
