@@ -26,6 +26,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
   const [nextPhaseData, setNextPhaseData] = useState<any>(null)
   const [showWrapUpModal, setShowWrapUpModal] = useState(false)
   const [wrapUpSummary, setWrapUpSummary] = useState<string>('')
+  const [wrapAction, setWrapAction] = useState<'next'|'more'|null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const typingControllerRef = useRef<null | (() => void)>(null)
@@ -489,6 +490,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
   const handleWrapUpDecision = useCallback(async (goNext: boolean) => {
     if (goNext) {
       try {
+        setWrapAction('next')
         setIsLoading(true)
         const isLastQuestion = (session.current_question_index || 1) >= 8
         if (isLastQuestion) {
@@ -530,11 +532,13 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
         console.error('다음 단계 진행 오류:', e)
         alert('진행에 실패했습니다.')
       } finally {
+        setWrapAction(null)
         setIsLoading(false)
       }
     } else {
       // 아직 이야기 남음 → 현재 상담사 격려 메시지 요청
       try {
+        setWrapAction('more')
         setIsLoading(true)
         const currentCounselor = getCurrentCounselor()
         const response = await fetch(`/api/session/${session.id}/encourage`, {
@@ -556,6 +560,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
           setMessages(prev => [...prev, encouragementMessage])
         }
       } finally {
+        setWrapAction(null)
         setIsLoading(false)
         setShowWrapUpModal(false)
       }
@@ -741,15 +746,34 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
                 disabled={isLoading}
                 className="btn px-4 py-2 rounded-full"
               >
-                아직 할 이야기가 남았어요
+                {isLoading && wrapAction === 'more' ? (
+                  <span className="inline-flex items-center gap-1">
+                    <span className="dot" />
+                    <span className="dot" />
+                    <span className="dot" />
+                  </span>
+                ) : '아직 할 이야기가 남았어요'}
               </button>
               <button
                 onClick={() => handleWrapUpDecision(true)}
                 disabled={isLoading}
                 className="btn btn-primary text-white px-4 py-2 rounded-full"
               >
-                { (session.current_question_index || 1) >= 8 ? '예, 요약으로' : '예, 다음 질문으로' }
+                {isLoading && wrapAction === 'next' ? (
+                  <span className="inline-flex items-center gap-1">
+                    <span className="dot dot1" />
+                    <span className="dot dot2" />
+                    <span className="dot dot3" />
+                  </span>
+                ) : ((session.current_question_index || 1) >= 8 ? '예, 요약으로' : '예, 다음 질문으로')}
               </button>
+              <style jsx>{`
+                @keyframes dotsBlink { 0%, 60%, 100% { opacity: 0.2 } 30% { opacity: 1 } }
+                .dot { width: 6px; height: 6px; background: currentColor; border-radius: 9999px; display: inline-block; animation: dotsBlink 1.2s infinite ease-in-out; }
+                .dot1 { animation-delay: 0s }
+                .dot2 { animation-delay: 0.2s }
+                .dot3 { animation-delay: 0.4s }
+              `}</style>
             </div>
           </div>
         </div>
