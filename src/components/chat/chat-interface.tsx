@@ -681,11 +681,11 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
           <button
             onClick={handleOpenWrapUp}
             disabled={isLoading || isTyping}
-            aria-label="충분히 대화했어요. 다음 질문으로"
-            title="충분히 대화했어요. 다음 질문으로"
+            aria-label="충분해요, 다음 질문"
+            title="충분해요, 다음 질문"
             className="px-3 py-2 rounded-md border border-gray-300 bg-white/70 text-gray-700 hover:bg-white disabled:opacity-40"
           >
-            다음 질문
+            충분해요, 다음 질문
           </button>
 
           {/* 입력 박스 컨테이너 */}
