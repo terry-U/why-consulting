@@ -89,25 +89,33 @@ export async function GET(req: Request, context: any) {
 
     const buildPrompt = (t: 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers', transcript: string, whyMarkdown?: string) => {
       const prompts: Record<typeof t, string> = {
-      my_why: `역할: 당신은 상담 대화 전체를 해석해 핵심 동기와 패턴을 정성적으로 도출하는 보고서 작성자입니다.
+      my_why: `역할: 상담 대화 전체를 해석해 Why 한 문장과 상세 해석 보고서를 작성합니다.
 
-규칙:
-- 아래 템플릿을 "마크다운" 그대로 사용해 한국어로만 작성합니다.
-- 수집 방식/상담사/캐릭터/모델/프롬프트/메타는 본문에 일절 드러내지 않습니다.
-- 전체 대화의 모든 맥락을 반영하되, 단정적 결정론은 피하고 근거 중심으로 서술합니다.
+출력 형식: 반드시 JSON만 출력합니다. 프리텍스트 금지. 다음 스키마를 지키세요.
+{
+  "headline": string, // Why 한 줄 문장만. 따옴표·불릿 금지
+  "markdown": string  // 아래 마크다운 템플릿을 그대로 채워 반환
+}
 
-템플릿(그대로 출력):
+Why 한 줄(headline) 생성 규칙:
+- "확산" 같은 추상 표현 금지.
+- 다음 구조로, 자연스러운 한국어 문장 한 줄:
+  "[남들을 위해 적극적으로 하는 일을 함]으로써 [그런 기여가 이뤄졌을 때 실제로 일어나는 일] 한다."
+- 기여 파트: "[대상]을[에게] [스타일/방법] 함으로"
+- 영향력 파트: 내가 중요하게 여기는 좋은 것을 타인도 느끼게 되는 실제 결과(예: 행복, 성취감, 안도감, 성장 등).
+
+보고서(markdown) 템플릿(그대로 출력):
 # My 'Why'
-- Why: [스타일/방법]함으로써 [궁극 감정]을 [누구/어디에] [어떻게 확산]한다.
+- Why 한 줄: [headline 그대로]
 - 가치 Top3: [3개]
 - 스타일 3개: [3개]
-- 자기/타자 경향 한줄 해석: (예: “자기 영향에 약간 더 치우친 편으로, 성취-안정 축을 선호하십니다.”)
+- 자기/타자 경향 한줄 해석: (예: "자기 영향에 약간 더 치우친 편…")
 
-## 해석(사주처럼 읽히되 결정론 금지, 자세히)
-- 당신은 어떤 스타일의 사람인지(핵심 습관·선택 기준).
-- 지금까지 어떻게 살아왔는지(반복 패턴·의미).
-- 그 결과 어떤 일이 생겼는지(강점·리스크·전환점).
-- 앞으로 어떻게 살아가면 좋은지(핵심 조언 3가지: 구체·측정 가능).
+## 해석(결정론 금지, 근거 중심)
+- 당신은 어떤 스타일의 사람인지(핵심 습관·선택 기준)
+- 지금까지 어떻게 살아왔는지(반복 패턴·의미)
+- 그 결과 어떤 일이 생겼는지(강점·리스크·전환점)
+- 앞으로 어떻게 살아가면 좋은지(핵심 조언 3가지: 구체·측정 가능)
 
 입력 Transcript(전체 대화):\n${transcript}`,
 
@@ -230,7 +238,21 @@ export async function GET(req: Request, context: any) {
     })
 
     const content = completion.choices[0]?.message?.content || ''
-    const parsed: any = { markdown: content.trim() }
+    let parsed: any
+    if (type === 'my_why') {
+      try {
+        parsed = JSON.parse(content)
+        // 안전 가드
+        if (typeof parsed?.headline !== 'string' || typeof parsed?.markdown !== 'string') {
+          throw new Error('invalid json shape')
+        }
+      } catch {
+        // JSON 실패 시 전체를 마크다운으로 간주
+        parsed = { headline: '', markdown: content.trim() }
+      }
+    } else {
+      parsed = { markdown: content.trim() }
+    }
 
     // 6) 저장(UPSERT)
     const { error: upErr } = await supabaseServer
@@ -251,7 +273,7 @@ export async function GET(req: Request, context: any) {
 
     // cascade: my_why 생성 완료 시 2~5 자동 생성 (이미 존재하면 스킵)
     if (cascade && type === 'my_why') {
-      const whyMd = parsed?.markdown as string | undefined
+      const whyMd = (parsed?.markdown as string | undefined)
       await generateOthersIfMissing(sessionId, whyMd)
     }
 

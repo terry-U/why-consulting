@@ -15,6 +15,8 @@ type FitTriggers = { bestFit?: string[]; antiFit?: string[]; positiveTriggers?: 
 
 type ReportData = MyWhy | ValueMap | StylePattern | MasterManager | FitTriggers | { markdown?: string }
 
+type WhyJson = { headline?: string; markdown?: string }
+
 export default function ReportPage() {
   const params = useParams()
   const router = useRouter()
@@ -26,6 +28,7 @@ export default function ReportPage() {
   const [report, setReport] = useState<ReportData | null>(null)
   const [error, setError] = useState('')
   const [reportsMap, setReportsMap] = useState<Partial<Record<ReportType, ReportData>>>({})
+  const [gateOpen, setGateOpen] = useState(false)
 
   useEffect(() => {
     if (!sessionId) return
@@ -66,6 +69,9 @@ export default function ReportPage() {
           if (results[i]) map[t] = results[i] as ReportData
         })
         setReportsMap(map)
+        // 게이트: Why JSON에 headline이 있으면 이를 먼저 확인하도록 저장
+        const why = map['my_why'] as WhyJson | undefined
+        setGateOpen(!!why?.headline)
         const idx = types.indexOf(activeType)
         const initial = (map[types[idx]] as ReportData) || (map['my_why'] as ReportData)
         setReport(initial || null)
@@ -117,6 +123,23 @@ export default function ReportPage() {
         <div className="text-center">
           <div className="text-4xl mb-4">⚠️</div>
           <p className="text-gray-700">{error || '보고서를 불러오지 못했습니다'}</p>
+        </div>
+      </div>
+    )
+  }
+
+  // 1단계: Why 한줄 확인 게이트
+  if (gateOpen) {
+    const why = (reportsMap['my_why'] as WhyJson) || {}
+    return (
+      <div className="min-h-screen ui-container flex items-center justify-center">
+        <div className="max-w-xl w-full card p-8 text-center">
+          <div className="text-sm text-gray-500 mb-2">축하합니다!</div>
+          <h1 className="text-2xl font-bold mb-4">당신의 Why</h1>
+          <div className="border rounded-xl p-6 bg-white">
+            <div className="text-xl font-semibold text-gray-900 leading-relaxed">{why.headline || 'Why 한줄을 불러왔습니다.'}</div>
+          </div>
+          <button className="btn btn-primary text-white mt-6" onClick={() => setGateOpen(false)}>보고서로 이동</button>
         </div>
       </div>
     )
