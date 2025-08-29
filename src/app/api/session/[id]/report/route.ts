@@ -24,8 +24,9 @@ export async function GET(req: Request, context: any) {
 
     if (!existingErr && existing?.content) {
       // 캐시 즉시 반환 + 요청 시 연쇄 생성 보장
-      if (cascade && type === 'my_why') {
-        await generateOthersIfMissing(sessionId)
+      if (type === 'my_why') {
+        await markSessionCompleted(sessionId, existing.content?.markdown)
+        if (cascade) await generateOthersIfMissing(sessionId)
       }
       return NextResponse.json({ success: true, report: existing.content, cached: true })
     }
@@ -267,6 +268,9 @@ Why 한 줄(headline) 생성 규칙:
           .update({ generated_why: parsed.markdown, updated_at: new Date().toISOString() })
           .eq('id', sessionId)
         if (sessErr) console.error('❌ 세션 폴백 저장 실패', sessErr)
+      } else if (type === 'my_why') {
+        // 저장 성공 시에도 세션을 완료 처리(요약 단계 고정)
+        await markSessionCompleted(sessionId, parsed?.markdown)
       }
     }
 
@@ -445,6 +449,19 @@ async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
     await supabaseServer
       .from('reports')
       .upsert({ session_id: sessionId, type: t, content: parsed }, { onConflict: 'session_id,type' })
+  }
+}
+
+async function markSessionCompleted(sessionId: string, whyMd?: string) {
+  try {
+    const updates: any = { counseling_phase: 'summary', status: 'completed', updated_at: new Date().toISOString() }
+    if (whyMd) updates.generated_why = whyMd
+    await supabaseServer
+      .from('sessions')
+      .update(updates)
+      .eq('id', sessionId)
+  } catch (e) {
+    console.warn('세션 완료 업데이트 실패(무시 가능):', e)
   }
 }
 
