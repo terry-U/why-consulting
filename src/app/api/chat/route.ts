@@ -528,7 +528,8 @@ export async function POST(request: NextRequest) {
         currentCounselorType = counselingQuestions[questionIndex].counselor
       }
     } else if (session.counseling_phase === 'summary' || session.counseling_phase === 'completed') {
-      currentCounselorType = 'main'
+      // 요약/완료 단계에서는 존재하지 않는 'main' 대신 마지막 질문의 상담사로 폴백
+      currentCounselorType = counselingQuestions[counselingQuestions.length - 1]?.counselor || 'yellow'
     }
     
     console.log('🎯 상담사 결정:', {
@@ -538,7 +539,13 @@ export async function POST(request: NextRequest) {
       questionData: session.current_question_index >= 1 ? counselingQuestions[session.current_question_index - 1] : null
     })
 
-    const currentCounselor = counselors[currentCounselorType as keyof typeof counselors]
+    // 안전 가드: 정의되지 않은 상담사 타입일 경우 yellow로 폴백
+    let currentCounselor = counselors[currentCounselorType as keyof typeof counselors]
+    if (!currentCounselor) {
+      console.warn('⚠️ 알 수 없는 상담사 타입, yellow로 폴백:', currentCounselorType)
+      currentCounselorType = 'yellow'
+      currentCounselor = counselors.yellow as (typeof counselors)[keyof typeof counselors]
+    }
 
     // 사용자 메시지가 있을 때만 저장 (빈 메시지는 첫 인사용)
     if (message.trim()) {
