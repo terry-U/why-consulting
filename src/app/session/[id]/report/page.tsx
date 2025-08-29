@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
+// GFM 지원(테이블 등)
+// @ts-ignore
+import gfm from 'remark-gfm'
 import { useParams, useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/auth'
 
@@ -111,9 +114,12 @@ export default function ReportPage() {
 
   if (initializing || !allReady) {
     return (
-      <div className="min-h-screen ui-container flex items-center justify-center">
-        <div className="text-gray-600">보고서를 준비하고 있어요…</div>
-      </div>
+      <LoadingStage
+        ready={allReady}
+        onContinue={() => {
+          if (allReady) setGateOpen(true)
+        }}
+      />
     )
   }
 
@@ -158,25 +164,25 @@ export default function ReportPage() {
         const md = (report as any)?.markdown as string | undefined
         return (
           <div className="card p-6 mb-10 prose max-w-none">
-            <ReactMarkdown>{md || ''}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[gfm]}>{md || ''}</ReactMarkdown>
           </div>
         )
       }
       case 'value_map': {
         const md = (report as any)?.markdown as string | undefined
-        return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown>{md || ''}</ReactMarkdown></div>
+        return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown remarkPlugins={[gfm]}>{md || ''}</ReactMarkdown></div>
       }
       case 'style_pattern': {
         const md = (report as any)?.markdown as string | undefined
-        return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown>{md || ''}</ReactMarkdown></div>
+        return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown remarkPlugins={[gfm]}>{md || ''}</ReactMarkdown></div>
       }
       case 'master_manager_spectrum': {
         const md = (report as any)?.markdown as string | undefined
-        return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown>{md || ''}</ReactMarkdown></div>
+        return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown remarkPlugins={[gfm]}>{md || ''}</ReactMarkdown></div>
       }
       case 'fit_triggers': {
         const md = (report as any)?.markdown as string | undefined
-        return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown>{md || ''}</ReactMarkdown></div>
+        return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown remarkPlugins={[gfm]}>{md || ''}</ReactMarkdown></div>
       }
       default:
         return null
@@ -212,6 +218,26 @@ export default function ReportPage() {
           <button onClick={() => router.push(`/session/${sessionId}/why`)} className="btn">Why 후보 다시 보기</button>
           <button onClick={() => router.push('/home')} className="btn btn-primary text-white">홈으로</button>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function LoadingStage({ ready, onContinue }: { ready: boolean; onContinue: () => void }) {
+  return (
+    <div className="min-h-screen ui-container flex items-center justify-center">
+      <div className="max-w-xl w-full text-center">
+        <div className="mb-6">
+          <div className="text-gray-700 text-lg mb-2">보고서를 준비하고 있어요…</div>
+          <div className="text-sm text-gray-500">대화 전체를 정리해 Why와 4개 서브리포트를 생성 중입니다.</div>
+        </div>
+        <div className="w-full h-2 bg-white/60 rounded-full overflow-hidden shadow-inner">
+          <div className="h-full bg-gray-900 animate-[progress_2.2s_ease_infinite]"></div>
+        </div>
+        <button className="btn btn-primary text-white mt-8 disabled:opacity-40" onClick={onContinue} disabled={!ready}>
+          {ready ? '계속하기' : '생성 중…'}
+        </button>
+        <style>{`@keyframes progress{0%{width:10%}50%{width:85%}100%{width:10%}}`}</style>
       </div>
     </div>
   )
