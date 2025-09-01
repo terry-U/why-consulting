@@ -142,7 +142,7 @@ export default function ReportPage() {
       <LoadingStage
         ready={allReady}
         onContinue={() => {
-          if (allReady) router.push(`/session/${sessionId}/why`)
+          if (allReady) router.push(`/session/${sessionId}/prologue`)
         }}
       />
     )

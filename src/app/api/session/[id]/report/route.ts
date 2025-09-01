@@ -7,7 +7,7 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 export async function GET(req: Request, context: any) {
   const sessionId = context?.params?.id || new URL(req.url).pathname.split('/').filter(Boolean).pop()
   const { searchParams } = new URL(req.url)
-  const type = (searchParams.get('type') || 'my_why') as 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers'
+  const type = (searchParams.get('type') || 'my_why') as 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers' | 'prologue'
   const checkOnly = (searchParams.get('check') === '1' || searchParams.get('check') === 'true')
   const cascade = (searchParams.get('cascade') === '1' || searchParams.get('cascade') === 'true') && type === 'my_why'
   if (!sessionId) {
@@ -94,7 +94,7 @@ export async function GET(req: Request, context: any) {
       .map(m => `${m.role === 'assistant' ? `[${m.counselor_id || 'assistant'}]` : '[user]'} ${m.content}`)
       .join('\n')
 
-    const buildPrompt = (t: 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers', transcript: string, whyMarkdown?: string) => {
+    const buildPrompt = (t: 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers' | 'prologue', transcript: string, whyMarkdown?: string, whyHeadline?: string, userName?: string) => {
       const prompts: Record<typeof t, string> = {
       my_why: `역할: 상담 대화 전체를 해석해 Why 한 문장과 상세 해석 보고서를 작성합니다.
 
@@ -228,11 +228,91 @@ Why 한 줄(headline) 생성 규칙:
 입력:
 - Transcript(전체 대화)\n${transcript}
 - WhyReport(Markdown)\n${whyMarkdown || (whyReportContent?.markdown || 'null')}`
+      ,
+      prologue: (() => {
+        const USER_NAME = userName || '사용자'
+        const WHY_REFINED = (whyHeadline || '').trim() || ' '
+        const BAN_TEMPLATES = ['확산','전달','임팩트','영향','세상을 바꾸','가치를 전']
+        return `당신은 공감형 스토리텔러이자 동기심리 코치입니다.
+이 출력은 서비스의 '프롤로그' 섹션에 그대로 노출됩니다.
+톤은 따뜻하고 환대하는 톤을 유지하고, 임상적 진단/라벨링/교정 뉘앙스는 금지합니다.
+'확산/전달/임팩트/영향' 같은 상투어는 사용자가 TRANSCRIPT에서 실제로 쓴 경우에만 허용합니다.
+
+입력 변수:
+{
+  "USER_NAME": "${USER_NAME}",
+  "TRANSCRIPT": "${(transcript || '').replace(/`/g,'\\`')}",
+  "LOCALE": "ko-KR",
+  "TONE": "따뜻하고 환대하는 톤, 평가/진단 금지",
+  "WHY_REFINED": "${WHY_REFINED.replace(/"/g,'\\"')}",
+  "BAN_TEMPLATES": ${JSON.stringify(BAN_TEMPLATES)}
+}
+
+아래 TRANSCRIPT(대화 전체)를 바탕으로, 프롤로그 콘텐츠를 생성하세요.
+
+필수 요구:
+1) 상단에 Why 스위치 ON/OFF 문장 세트
+   - ON: WHY_REFINED를 그대로 출력
+   - OFF: WHY의 반대 버전 한 문장(의미 희미/공허/고립 등), 담백한 한국어 1문장
+   - OFF 대안 문장 2~3개(따뜻/철학 톤) 추가
+
+2) 서사 단락(2~3단락):
+   - 숫자는 괜찮았지만 공허했던 날, 유저의 짧은 감사가 오래 남았던 순간, 동료의 '고마워요', 혼자 버텨 실마리 찾은 밤,
+     방향 전환/작은 실험 같은 장면을 TRANSCRIPT의 맥락 언어로 자연스럽게 엮어주세요.
+   - 판단/평가는 금지. '연결된 의미'가 왜 그 사람의 심장에 크게 반응하는지 부드럽게 설명.
+
+3) 회고 질문(3문항):
+   - '어제' 프레임, 얼굴/에너지/덕분에/숫자만 남은 성과에서 무엇이 빠졌는지 묻는 질문
+
+4) 한 줄 기록 템플릿:
+   - “어제 나는 ______ 때문에 _____해졌고, ______ 때문에 _____해졌다.”
+
+5) 꼬리 질문:
+   - “어때요. 나의 Why와 비슷한 모습인가요?” 한 문장
+
+출력 형식(JSON만):
+{
+  "title": "나의 Why는,",
+  "on_why": "<WHY_REFINED 그대로>",
+  "off_why_main": "<담백 1문장>",
+  "off_why_alternatives": ["<따뜻>", "<철학>"],
+  "narrative": [
+    "<단락1>",
+    "<단락2>",
+    "<단락3 - 선택>"
+  ],
+  "reflection_questions": [
+    "<질문1>", "<질문2>", "<질문3>"
+  ],
+  "one_line_template": "어제 나는 ______ 때문에 _____해졌고, ______ 때문에 _____해졌다.",
+  "cta_label": "엔터",
+  "post_prompt": "어때요. 나의 Why와 비슷한 모습인가요?"
+}
+
+품질 체크:
+- off_why_main은 18~40자 권장, 상투어 금지.
+- narrative는 2~3단락, 한 단락 2~4문장.
+- reflection_questions는 3개 정확히.
+- TRANSCRIPT에서 사용자가 실제 쓴 어휘 1~2개 정도 자연스럽게 포함.
+- 임상/진단/교정 어휘 금지.`
+      })()
       }
       return prompts[t]
     }
 
-    const prompt = buildPrompt(type, transcriptBuilder())
+    // WHY headline 확보 (prologue 등에서 활용)
+    let whyHeadline: string | undefined
+    if (!whyHeadline) {
+      const { data: whyExisting } = await supabaseServer
+        .from('reports')
+        .select('content')
+        .eq('session_id', sessionId)
+        .eq('type', 'my_why')
+        .single()
+      if (whyExisting?.content?.headline) whyHeadline = whyExisting.content.headline
+    }
+
+    const prompt = buildPrompt(type as any, transcriptBuilder(), undefined, whyHeadline, (sessionData as any)?.user_name)
 
     const systemMessage = '한국어로만 작성. 지정된 마크다운 템플릿 그대로, 불필요한 텍스트 금지. 마크다운만 반환.'
 
@@ -257,6 +337,12 @@ Why 한 줄(headline) 생성 규칙:
       } catch {
         // JSON 실패 시 전체를 마크다운으로 간주
         parsed = { headline: '', markdown: content.trim() }
+      }
+    } else if (type === 'prologue') {
+      try {
+        parsed = JSON.parse(content)
+      } catch {
+        parsed = { raw: content.trim() }
       }
     } else {
       parsed = { markdown: content.trim() }
