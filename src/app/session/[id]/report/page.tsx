@@ -266,7 +266,6 @@ function LoadingStage({ ready, onContinue }: { ready: boolean; onContinue: () =>
   const [step, setStep] = useState(0)
   const [typed, setTyped] = useState('')
 
-  // 간단한 타자 효과
   useEffect(() => {
     if (step >= scripts.length) return
     const full = scripts[step]
@@ -284,27 +283,27 @@ function LoadingStage({ ready, onContinue }: { ready: boolean; onContinue: () =>
   }, [step])
 
   return (
-    <div className="min-h-screen ui-container flex items-center justify-center">
-      <div className="max-w-xl w-full text-center">
-        <div className="card p-8 text-left">
-          <div className="text-sm text-gray-500 mb-4">함께 발견하는 여정</div>
+    <div className="min-h-screen ui-container">
+      <div className="max-w-4xl w-full px-6 pt-24 pb-24 mx-auto">
+        <div className="text-left font-semibold leading-tight tracking-tight text-3xl md:text-5xl min-h-[5.5rem] md:min-h-[8rem]">
           {scripts.slice(0, step).map((line, idx) => (
-            <p key={idx} className="text-gray-900 mb-3 leading-relaxed">{line}</p>
+            <p key={idx} className="mb-4">{line}</p>
           ))}
           {step < scripts.length && (
-            <p className="text-gray-900 mb-3 leading-relaxed">{typed}<span className="opacity-40">▍</span></p>
+            <p className="mb-4">{typed}<span className="opacity-40">▍</span></p>
           )}
-          <div className="w-full h-2 bg-white/60 rounded-full overflow-hidden shadow-inner mt-4">
-            <div className="h-full bg-gray-900 animate-[progress_2.2s_ease_infinite]"></div>
-          </div>
+        </div>
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 px-6 py-4">
+        <div className="max-w-4xl mx-auto flex items-center justify-end">
           <button
-            className="btn btn-primary text-white mt-8 disabled:opacity-40"
+            className="btn btn-primary text-white font-semibold px-6 py-3 rounded-full disabled:opacity-40"
             onClick={onContinue}
             disabled={!ready}
           >
-            {ready ? '나의 Why 보고서' : '생성 중…'}
+            {ready ? '나의 Why 보고서' : '보고서 작성중…'}
           </button>
-          <style>{`@keyframes progress{0%{width:10%}50%{width:85%}100%{width:10%}}`}</style>
         </div>
       </div>
     </div>
