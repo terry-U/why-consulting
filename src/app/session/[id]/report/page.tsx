@@ -29,6 +29,7 @@ export default function ReportPage() {
   const [isFirstGen, setIsFirstGen] = useState(false)
   const [tabLoading, setTabLoading] = useState(false)
   const [allReady, setAllReady] = useState(false)
+  const [hasPrologue, setHasPrologue] = useState(false)
   const [activeType, setActiveType] = useState<ReportType>('my_why')
   const [report, setReport] = useState<ReportData | null>(null)
   const [error, setError] = useState('')
@@ -86,6 +87,13 @@ export default function ReportPage() {
           if (results[i]) map[t] = results[i] as ReportData
         })
         setReportsMap(map)
+        // 프롤로그 존재 여부만 별도 확인(렌더 버튼 조건)
+        try {
+          const chk = await fetch(`/api/session/${sessionId}/report?type=prologue&check=1`)
+          setHasPrologue(chk.status === 200)
+        } catch {
+          setHasPrologue(false)
+        }
         // 게이트: 기존 보고서 경로에서만 사용(최초 생성 플로우에서는 스킵)
         if (!firstGen) {
           const why = map['my_why'] as WhyJson | undefined
@@ -247,6 +255,9 @@ export default function ReportPage() {
         {renderBody()}
 
         <div className="mt-12 flex gap-3">
+          {hasPrologue && (
+            <button onClick={() => router.push(`/session/${sessionId}/prologue`)} className="btn">프롤로그 보기</button>
+          )}
           <button onClick={() => router.push(`/session/${sessionId}/why`)} className="btn">Why 후보 다시 보기</button>
           <button onClick={() => router.push('/home')} className="btn btn-primary text-white">홈으로</button>
         </div>
