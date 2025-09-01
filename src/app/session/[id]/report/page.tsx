@@ -25,6 +25,7 @@ export default function ReportPage() {
   const router = useRouter()
   const sessionId = params.id as string
   const [initializing, setInitializing] = useState(true)
+  const [showGenerating, setShowGenerating] = useState(false)
   const [tabLoading, setTabLoading] = useState(false)
   const [allReady, setAllReady] = useState(false)
   const [activeType, setActiveType] = useState<ReportType>('my_why')
@@ -62,6 +63,7 @@ export default function ReportPage() {
         let results: Array<ReportData | null> = await Promise.all(types.map(t => fetchReport(t)))
         // 일부가 비어 있으면 그때만 cascade 트리거 후 짧게 폴링
         if (!results.every(Boolean)) {
+          setShowGenerating(true)
           await fetch(`/api/session/${sessionId}/report?type=my_why&cascade=1`)
           for (let attempt = 0; attempt < 6 && !results.every(Boolean); attempt++) {
             await new Promise(r => setTimeout(r, 1200))
@@ -122,8 +124,8 @@ export default function ReportPage() {
     loadActive()
   }, [activeType, allReady, sessionId, reportsMap])
 
-  // 로딩 화면: my_why 캐시가 전혀 없을 때만 "생성 중" 단계 노출
-  if (initializing && !reportsMap['my_why']) {
+  // 실제 생성 프로세스일 때만 생성용 로딩 화면을 노출
+  if (initializing && showGenerating) {
     return (
       <LoadingStage
         ready={allReady}
