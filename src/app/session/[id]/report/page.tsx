@@ -197,6 +197,10 @@ export default function ReportPage() {
     const prologueView = pro ? (
       <div className="mb-10">
         <h2 className="text-2xl font-bold mb-2">{pro.title || '나의 Why는,'}</h2>
+        {/* HTML이 오면 우선 렌더 */}
+        {pro.html ? (
+          <div className="card p-5 mb-4" dangerouslySetInnerHTML={{ __html: pro.html }} />
+        ) : (
         <div className="card p-5 mb-4">
           <div className="flex items-center gap-3 mb-2">
             <span className="pill"><strong>스위치 ON</strong></span>
@@ -210,6 +214,7 @@ export default function ReportPage() {
             </details>
           ) : null}
         </div>
+        )}
         {Array.isArray(pro.narrative) && pro.narrative.length > 0 && (
           <div className="card p-5 mb-4">
             {pro.narrative.map((p: string, i: number) => <p key={i} className="mb-3">{p}</p>)}

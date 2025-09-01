@@ -270,7 +270,7 @@ Why 한 줄(headline) 생성 규칙:
 5) 꼬리 질문:
    - “어때요. 나의 Why와 비슷한 모습인가요?” 한 문장
 
-출력 형식(JSON만):
+출력 형식(JSON만, 원문 복붙 금지 / TRANSCRIPT는 재서술):
 {
   "title": "나의 Why는,",
   "on_why": "<WHY_REFINED 그대로>",
@@ -286,14 +286,15 @@ Why 한 줄(headline) 생성 규칙:
   ],
   "one_line_template": "어제 나는 ______ 때문에 _____해졌고, ______ 때문에 _____해졌다.",
   "cta_label": "엔터",
-  "post_prompt": "어때요. 나의 Why와 비슷한 모습인가요?"
+  "post_prompt": "어때요. 나의 Why와 비슷한 모습인가요?",
+  "html": "<section>... (선택: HTML 마크업 결과)" 
 }
 
 품질 체크:
 - off_why_main은 18~40자 권장, 상투어 금지.
 - narrative는 2~3단락, 한 단락 2~4문장.
 - reflection_questions는 3개 정확히.
-- TRANSCRIPT에서 사용자가 실제 쓴 어휘 1~2개 정도 자연스럽게 포함.
+- TRANSCRIPT에서 사용자가 실제 쓴 어휘 1~2개 정도를 자연스럽게 포함하되, 입력 원문을 그대로 복사/붙여넣기 하지 말고 재서술(paraphrase)하세요.
 - 임상/진단/교정 어휘 금지.`
       })()
       }
@@ -314,7 +315,9 @@ Why 한 줄(headline) 생성 규칙:
 
     const prompt = buildPrompt(type as any, transcriptBuilder(), undefined, whyHeadline, (sessionData as any)?.user_name)
 
-    const systemMessage = '한국어로만 작성. 지정된 마크다운 템플릿 그대로, 불필요한 텍스트 금지. 마크다운만 반환.'
+    const systemMessage = type === 'prologue'
+      ? '한국어로만 작성. 반드시 JSON만 반환. 프리텍스트/설명/코멘트 금지.'
+      : '한국어로만 작성. 지정된 마크다운 템플릿 그대로, 불필요한 텍스트 금지. 마크다운만 반환.'
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
