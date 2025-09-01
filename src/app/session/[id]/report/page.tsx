@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useParams, useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/auth'
+import LoadingSpinner from '@/components/common/loading-spinner'
 
 type ReportType = 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers'
 
@@ -121,7 +122,7 @@ export default function ReportPage() {
     loadActive()
   }, [activeType, allReady, sessionId, reportsMap])
 
-  // 로딩 화면: my_why 캐시가 전혀 없을 때만 노출 (진입 즉시 화면 깜빡임 방지)
+  // 로딩 화면: my_why 캐시가 전혀 없을 때만 "생성 중" 단계 노출
   if (initializing && !reportsMap['my_why']) {
     return (
       <LoadingStage
@@ -130,6 +131,15 @@ export default function ReportPage() {
           if (allReady) setGateOpen(true)
         }}
       />
+    )
+  }
+
+  // 데이터 페칭 로딩: 캐시가 있는 상태에서의 초기화는 간결 스피너로 처리
+  if (initializing) {
+    return (
+      <div className="min-h-screen ui-container flex items-center justify-center">
+        <LoadingSpinner size="medium" message="보고서 불러오는 중..." />
+      </div>
     )
   }
 
