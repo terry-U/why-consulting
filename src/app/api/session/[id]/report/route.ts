@@ -8,6 +8,7 @@ export async function GET(req: Request, context: any) {
   const sessionId = context?.params?.id || new URL(req.url).pathname.split('/').filter(Boolean).pop()
   const { searchParams } = new URL(req.url)
   const type = (searchParams.get('type') || 'my_why') as 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers'
+  const checkOnly = (searchParams.get('check') === '1' || searchParams.get('check') === 'true')
   const cascade = (searchParams.get('cascade') === '1' || searchParams.get('cascade') === 'true') && type === 'my_why'
   if (!sessionId) {
     return NextResponse.json({ success: false, error: 'sessionId가 필요합니다' }, { status: 400 })
@@ -29,6 +30,11 @@ export async function GET(req: Request, context: any) {
         if (cascade) await generateOthersIfMissing(sessionId)
       }
       return NextResponse.json({ success: true, report: existing.content, cached: true })
+    }
+
+    // 존재 확인만 요청한 경우: 생성 로직을 시작하지 않고 보류 응답
+    if (checkOnly) {
+      return NextResponse.json({ success: false, pending: true, error: '보고서 미생성' }, { status: 202 })
     }
 
     // 2) 세션 및 전체 메시지 로드

@@ -55,12 +55,12 @@ export default function ReportPage() {
         const user = await getCurrentUser()
         if (!user) return router.push('/auth')
 
-        // 1) 우선 캐시만 확인 (cascade 트리거하지 않음)
-        await fetch(`/api/session/${sessionId}/report?type=my_why`)
+        // 1) 우선 존재만 확인 (생성 트리거 금지)
+        await fetch(`/api/session/${sessionId}/report?type=my_why&check=1`)
 
         // 2) 5개 모두 확보 (이미 존재 시 즉시 반환)
         const types: ReportType[] = ['my_why','value_map','style_pattern','master_manager_spectrum','fit_triggers']
-        // 먼저 한번 조회
+        // 먼저 한번 조회(존재만 확인했으므로 이 시점엔 생성되지 않았을 수 있음)
         let results: Array<ReportData | null> = await Promise.all(types.map(t => fetchReport(t)))
         const firstGen = !results.every(Boolean)
         setIsFirstGen(firstGen)
