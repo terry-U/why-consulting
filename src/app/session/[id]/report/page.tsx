@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
 // GFM 지원(테이블 등)
 import remarkGfm from 'remark-gfm'
@@ -258,39 +258,76 @@ export default function ReportPage() {
 
 function LoadingStage({ ready, onContinue }: { ready: boolean; onContinue: () => void }) {
   const scripts = [
-    '우리가 만드는 것은 정답이나 라벨이 아닙니다.',
-    '당신이 살아온 경험 속 장면과 감정을 함께 들여다보며,',
-    '그 안에서 반복적으로 드러난 가치와 방식들을 발견해 갑니다.',
-    '잠시 뒤, 당신만의 Why를 함께 확인하겠습니다.'
+    '우리가 만드는 것은 정답이나 라벨이 아닙니다. 당신이 살아온 경험 속 장면과 감정을 함께 들여다보며, 그 안에서 반복적으로 드러난 가치와 방식들을 발견해 갑니다.',
+    '이 여정은 진단이 아니라 발견입니다. 때로는 익숙한 말보다 낯선 단어가 더 정확할 수 있어요.',
+    '조금만 기다려 주세요. 대화 전체를 바탕으로 당신만의 Why를 정리하고 있어요. 잠시 뒤 결과를 함께 확인합니다.',
+    '왜 그렇게 살아왔는지, 무엇을 중요하게 여겨왔는지. 작은 습관부터 선택의 기준까지 연결해 하나의 문장으로 응축합니다.',
+    '그 문장은 앞으로의 방향을 잡아 줄 기준이 됩니다. 일과 관계, 생활의 리듬까지 더 당신답게 만들 수 있어요.',
+    '준비가 되면 나의 Why 보고서로 이동해 주세요. 거기서 더 깊이 있는 해석과 가이드도 함께 드립니다.'
   ]
+
+  // 온점/물음표/느낌표 기준으로 문장 단위로 평탄화
+  const segments = useMemo(() => {
+    const result: string[] = []
+    scripts.forEach(m => {
+      const matches = m.match(/[^.?!]+[.?!]/g)
+      if (matches && matches.length) {
+        matches.forEach(s => { const t = s.trim(); if (t) result.push(t) })
+        const tail = m.replace(/[^.?!]+[.?!]/g, '').trim()
+        if (tail) result.push(tail)
+      } else {
+        const t = m.trim(); if (t) result.push(t)
+      }
+    })
+    return result
+  }, [])
+
   const [step, setStep] = useState(0)
   const [typed, setTyped] = useState('')
+  const [isTyping, setIsTyping] = useState(true)
 
   useEffect(() => {
-    if (step >= scripts.length) return
-    const full = scripts[step]
+    if (step >= segments.length) return
+    const full = segments[step]
     let i = 0
     setTyped('')
+    setIsTyping(true)
     const iv = setInterval(() => {
       i++
       setTyped(full.slice(0, i))
       if (i >= full.length) {
         clearInterval(iv)
-        setTimeout(() => setStep(s => Math.min(s + 1, scripts.length)), 650)
+        setIsTyping(false)
+        setTimeout(() => setStep(s => Math.min(s + 1, segments.length)), 800)
       }
     }, 28)
     return () => clearInterval(iv)
-  }, [step])
+  }, [step, segments])
 
   return (
     <div className="min-h-screen ui-container">
       <div className="max-w-4xl w-full px-6 pt-24 pb-24 mx-auto">
         <div className="text-left font-semibold leading-tight tracking-tight text-3xl md:text-5xl min-h-[5.5rem] md:min-h-[8rem]">
-          {scripts.slice(0, step).map((line, idx) => (
+          {segments.slice(0, step).map((line, idx) => (
             <p key={idx} className="mb-4">{line}</p>
           ))}
-          {step < scripts.length && (
-            <p className="mb-4">{typed}<span className="opacity-40">▍</span></p>
+          {step < segments.length && (
+            <p
+              role="button"
+              onClick={() => {
+                if (isTyping) {
+                  const full = segments[step]
+                  setTyped(full)
+                  setIsTyping(false)
+                  setTimeout(() => setStep(s => Math.min(s + 1, segments.length)), 150)
+                } else {
+                  setStep(s => Math.min(s + 1, segments.length))
+                }
+              }}
+              className="mb-4 cursor-pointer select-none"
+            >
+              {typed}<span className="opacity-40">▍</span>
+            </p>
           )}
         </div>
       </div>
@@ -298,10 +335,13 @@ function LoadingStage({ ready, onContinue }: { ready: boolean; onContinue: () =>
       <div className="fixed bottom-0 left-0 right-0 px-6 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-end">
           <button
-            className="btn btn-primary text-white font-semibold px-6 py-3 rounded-full disabled:opacity-40"
+            className="btn btn-primary text-white font-semibold px-6 py-3 rounded-full disabled:opacity-40 flex items-center gap-2"
             onClick={onContinue}
             disabled={!ready}
           >
+            {!ready && (
+              <span className="inline-block w-4 h-4 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: '#facc1540', borderTopColor: '#facc15' }} />
+            )}
             {ready ? '나의 Why 보고서' : '보고서 작성중…'}
           </button>
         </div>
