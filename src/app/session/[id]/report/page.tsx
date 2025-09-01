@@ -55,23 +55,28 @@ export default function ReportPage() {
         const user = await getCurrentUser()
         if (!user) return router.push('/auth')
 
-        // 1) 우선 존재만 확인 (생성 트리거 금지)
-        await fetch(`/api/session/${sessionId}/report?type=my_why&check=1`)
-
-        // 2) 5개 모두 확보 (이미 존재 시 즉시 반환)
+        // 1) 존재 여부만 빠르게 점검 (생성 트리거 금지)
         const types: ReportType[] = ['my_why','value_map','style_pattern','master_manager_spectrum','fit_triggers']
-        // 먼저 한번 조회(존재만 확인했으므로 이 시점엔 생성되지 않았을 수 있음)
-        let results: Array<ReportData | null> = await Promise.all(types.map(t => fetchReport(t)))
-        const firstGen = !results.every(Boolean)
+        const existence = await Promise.all(types.map(async (t) => {
+          const res = await fetch(`/api/session/${sessionId}/report?type=${t}&check=1`)
+          return res.ok
+        }))
+        const firstGen = !existence.every(Boolean)
         setIsFirstGen(firstGen)
         setShowGenerating(firstGen)
-        // 일부가 비어 있으면 그때만 cascade 트리거 후 짧게 폴링
+
+        let results: Array<ReportData | null> = []
         if (firstGen) {
+          // 2) 최초 생성이면 온보딩 로딩을 즉시 노출한 상태에서 생성 트리거 후 폴링
           await fetch(`/api/session/${sessionId}/report?type=my_why&cascade=1`)
-          for (let attempt = 0; attempt < 6 && !results.every(Boolean); attempt++) {
+          for (let attempt = 0; attempt < 10; attempt++) {
             await new Promise(r => setTimeout(r, 1200))
             results = await Promise.all(types.map(t => fetchReport(t)))
+            if (results.every(Boolean)) break
           }
+        } else {
+          // 3) 이미 모두 존재하면 즉시 데이터 로드
+          results = await Promise.all(types.map(t => fetchReport(t)))
         }
 
         setAllReady(results.every(Boolean))
