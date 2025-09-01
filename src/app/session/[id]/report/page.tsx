@@ -202,17 +202,7 @@ export default function ReportPage() {
           <div className="card p-5 mb-4" dangerouslySetInnerHTML={{ __html: pro.html }} />
         ) : (
         <div className="card p-5 mb-4">
-          <div className="flex items-center gap-3 mb-2">
-            <span className="pill"><strong>스위치 ON</strong></span>
-          </div>
-          <p className="text-lg font-semibold">{pro.on_why}</p>
-          {pro.off_why_main ? (
-            <details className="mt-2"><summary className="cursor-pointer">OFF 대안 문장 보기</summary>
-              <ul className="ml-4 mt-2 list-disc">
-                {Array.isArray(pro.off_why_alternatives) ? pro.off_why_alternatives.map((s: string, i: number) => <li key={i} className="text-sm text-gray-600">{s}</li>) : null}
-              </ul>
-            </details>
-          ) : null}
+          <WhySwitch onText={pro.on_why} offText={pro.off_why_main} />
         </div>
         )}
         {Array.isArray(pro.narrative) && pro.narrative.length > 0 && (
@@ -222,14 +212,15 @@ export default function ReportPage() {
         )}
         {Array.isArray(pro.reflection_questions) && pro.reflection_questions.length === 3 && (
           <div className="card p-5">
-            <h3 className="text-lg font-semibold mb-1">어제 있었던 일을 잠깐 떠올려볼까요?</h3>
+            <h3 className="text-lg font-semibold mb-1">어제 가장 인상깊었던 일을 떠올려볼까요?</h3>
             <ul className="list-disc ml-5 mb-3">
               {pro.reflection_questions.map((q: string, i: number) => <li key={i} className="mb-2">{q}</li>)}
             </ul>
-            <div className="flex gap-2">
-              <input placeholder={pro.one_line_template || '“어제 나는 ______ 때문에 _____해졌고, ______ 때문에 _____해졌다.”'} aria-label="한 줄 기록 입력" className="flex-1 input" />
-              <button className="btn btn-primary text-white">{pro.cta_label || '엔터'}</button>
-            </div>
+            <OneLineEntry placeholder={pro.one_line_template || '어제 나는 ______ 때문에 _____해졌다.'} cta={pro.cta_label || '엔터'} onEnter={() => {
+              // 엔터 시 스위치 영역도 함께 표시되도록 스크롤/포커스
+              const el = document.getElementById('why-switch')
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            }} />
             {pro.post_prompt && <p className="text-xs text-gray-500 mt-2">{pro.post_prompt}</p>}
           </div>
         )}
@@ -402,6 +393,47 @@ function LoadingStage({ ready, onContinue }: { ready: boolean; onContinue: () =>
             {ready ? '나의 Why 보고서' : '보고서 작성중…'}
           </button>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function WhySwitch({ onText, offText }: { onText?: string; offText?: string }) {
+  const [isOn, setIsOn] = useState(true)
+  return (
+    <div id="why-switch">
+      <div className="flex items-center gap-3 mb-2">
+        <span className="pill"><strong>{isOn ? '스위치 ON' : '스위치 OFF'}</strong></span>
+        <button onClick={() => setIsOn(v => !v)} className="btn">ON/OFF 전환</button>
+      </div>
+      <div className="space-y-2">
+        <p className={`text-lg font-semibold ${isOn ? 'text-black' : 'text-gray-500'}`}>{onText}</p>
+        {offText ? (
+          <p className={`text-lg font-semibold ${!isOn ? 'text-black' : 'text-gray-500'}`}>{offText}</p>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
+function OneLineEntry({ placeholder, cta, onEnter }: { placeholder: string; cta: string; onEnter: () => void }) {
+  const [text, setText] = useState('')
+  return (
+    <div>
+      <div className="text-lg">
+        어제 나는
+        <input
+          value={text}
+          onChange={e => setText(e.target.value)}
+          placeholder={placeholder.replace('어제 나는 ', '')}
+          aria-label="어제 나는 _____ 때문에 _____해졌다."
+          className="mx-2 border-b border-gray-400 bg-transparent outline-none px-1"
+          style={{ minWidth: 160 }}
+        />
+        
+      </div>
+      <div className="mt-3">
+        <button className="btn btn-primary text-white" onClick={onEnter}>{cta}</button>
       </div>
     </div>
   )
