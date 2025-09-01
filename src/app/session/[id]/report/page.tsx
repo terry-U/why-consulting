@@ -35,6 +35,7 @@ export default function ReportPage() {
   const [error, setError] = useState('')
   const [reportsMap, setReportsMap] = useState<Partial<Record<ReportType, ReportData>>>({})
   const [gateOpen, setGateOpen] = useState(false)
+  const [showProSwitch, setShowProSwitch] = useState(false)
   const gateKey = typeof window !== 'undefined' ? `why_gate_seen_${sessionId}` : ''
 
   useEffect(() => {
@@ -57,7 +58,8 @@ export default function ReportPage() {
         if (!user) return router.push('/auth')
 
         // 1) 존재 여부만 빠르게 점검 (생성 트리거 금지)
-        const types: ReportType[] = ['my_why','prologue','value_map','style_pattern','master_manager_spectrum','fit_triggers']
+        // 최초 생성 여부 판단은 기존 5개 보고서만 기준 (prologue는 존재 여부와 무관)
+        const types: ReportType[] = ['my_why','value_map','style_pattern','master_manager_spectrum','fit_triggers']
         const existence = await Promise.all(types.map(async (t) => {
           const res = await fetch(`/api/session/${sessionId}/report?type=${t}&check=1`)
           return res.status === 200
@@ -78,6 +80,13 @@ export default function ReportPage() {
         } else {
           // 3) 이미 모두 존재하면 즉시 데이터 로드
           results = await Promise.all(types.map(t => fetchReport(t)))
+          // prologue는 있으면 추가로 가져옴 (없어도 무시)
+          try {
+            const pr = await fetchReport('prologue' as ReportType)
+            if (pr) {
+              (results as any).push(pr)
+            }
+          } catch {}
         }
 
         setAllReady(results.every(Boolean))
@@ -202,7 +211,11 @@ export default function ReportPage() {
           <div className="card p-5 mb-4" dangerouslySetInnerHTML={{ __html: pro.html }} />
         ) : (
         <div className="card p-5 mb-4">
-          <WhySwitch onText={pro.on_why} offText={pro.off_why_main} />
+          {showProSwitch ? (
+            <WhySwitch onText={pro.on_why} offText={pro.off_why_main} />
+          ) : (
+            <div className="text-sm text-gray-500">엔터를 누르면 Why 스위치를 볼 수 있어요.</div>
+          )}
         </div>
         )}
         {Array.isArray(pro.narrative) && pro.narrative.length > 0 && (
@@ -217,7 +230,7 @@ export default function ReportPage() {
               {pro.reflection_questions.map((q: string, i: number) => <li key={i} className="mb-2">{q}</li>)}
             </ul>
             <OneLineEntry placeholder={pro.one_line_template || '어제 나는 ______ 때문에 _____해졌다.'} cta={pro.cta_label || '엔터'} onEnter={() => {
-              // 엔터 시 스위치 영역도 함께 표시되도록 스크롤/포커스
+              setShowProSwitch(true)
               const el = document.getElementById('why-switch')
               if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
             }} />
@@ -407,9 +420,9 @@ function WhySwitch({ onText, offText }: { onText?: string; offText?: string }) {
         <button onClick={() => setIsOn(v => !v)} className="btn">ON/OFF 전환</button>
       </div>
       <div className="space-y-2">
-        <p className={`text-lg font-semibold ${isOn ? 'text-black' : 'text-gray-500'}`}>{onText}</p>
-        {offText ? (
-          <p className={`text-lg font-semibold ${!isOn ? 'text-black' : 'text-gray-500'}`}>{offText}</p>
+        <p className={`text-lg font-semibold ${isOn ? 'text-gray-900' : 'text-gray-400'}`}>{onText || '-'}</p>
+        {typeof offText === 'string' && offText.length > 0 ? (
+          <p className={`text-lg font-semibold ${!isOn ? 'text-gray-900' : 'text-gray-400'}`}>{offText}</p>
         ) : null}
       </div>
     </div>
