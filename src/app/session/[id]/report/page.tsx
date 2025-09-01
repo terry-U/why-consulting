@@ -8,7 +8,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/auth'
 import LoadingSpinner from '@/components/common/loading-spinner'
 
-type ReportType = 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers' | 'prologue'
+type ReportType = 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers'
 
 type MyWhy = { whySentence: string; rationale?: string; evidence?: string[] }
 type ValueMap = { coreValues?: string[]; supportingValues?: string[]; conflicts?: string[] }
@@ -16,8 +16,7 @@ type StylePattern = { communicationStyle?: string[]; decisionPatterns?: string[]
 type MasterManager = { position?: 'Master'|'Manager'|'Hybrid'; score?: number; explanation?: string }
 type FitTriggers = { bestFit?: string[]; antiFit?: string[]; positiveTriggers?: string[]; negativeTriggers?: string[] }
 
-type Prologue = { title?: string; on_why?: string; off_why_main?: string; off_why_alternatives?: string[]; narrative?: string[]; reflection_questions?: string[]; one_line_template?: string; cta_label?: string; post_prompt?: string }
-type ReportData = MyWhy | ValueMap | StylePattern | MasterManager | FitTriggers | { markdown?: string } | Prologue
+type ReportData = MyWhy | ValueMap | StylePattern | MasterManager | FitTriggers | { markdown?: string }
 
 type WhyJson = { headline?: string; markdown?: string }
 
@@ -35,7 +34,6 @@ export default function ReportPage() {
   const [error, setError] = useState('')
   const [reportsMap, setReportsMap] = useState<Partial<Record<ReportType, ReportData>>>({})
   const [gateOpen, setGateOpen] = useState(false)
-  const [showProSwitch, setShowProSwitch] = useState(false)
   const gateKey = typeof window !== 'undefined' ? `why_gate_seen_${sessionId}` : ''
 
   useEffect(() => {
@@ -58,7 +56,6 @@ export default function ReportPage() {
         if (!user) return router.push('/auth')
 
         // 1) 존재 여부만 빠르게 점검 (생성 트리거 금지)
-        // 최초 생성 여부 판단은 기존 5개 보고서만 기준 (prologue는 존재 여부와 무관)
         const types: ReportType[] = ['my_why','value_map','style_pattern','master_manager_spectrum','fit_triggers']
         const existence = await Promise.all(types.map(async (t) => {
           const res = await fetch(`/api/session/${sessionId}/report?type=${t}&check=1`)
@@ -80,13 +77,6 @@ export default function ReportPage() {
         } else {
           // 3) 이미 모두 존재하면 즉시 데이터 로드
           results = await Promise.all(types.map(t => fetchReport(t)))
-          // prologue는 있으면 추가로 가져옴 (없어도 무시)
-          try {
-            const pr = await fetchReport('prologue' as ReportType)
-            if (pr) {
-              (results as any).push(pr)
-            }
-          } catch {}
         }
 
         setAllReady(results.every(Boolean))
@@ -202,53 +192,12 @@ export default function ReportPage() {
       )
     }
     // Prologue 영역을 최상단으로 배치
-    const pro = reportsMap['prologue'] as any
-    const prologueView = pro ? (
-      <div className="mb-10">
-        <h2 className="text-2xl font-bold mb-2">{pro.title || '나의 Why는,'}</h2>
-        {/* HTML이 오면 우선 렌더 */}
-        {pro.html ? (
-          <div className="card p-5 mb-4" dangerouslySetInnerHTML={{ __html: pro.html }} />
-        ) : (
-        <div className="card p-5 mb-4">
-          {showProSwitch ? (
-            <WhySwitch onText={pro.on_why} offText={pro.off_why_main} />
-          ) : (
-            <div className="text-sm text-gray-500">엔터를 누르면 Why 스위치를 볼 수 있어요.</div>
-          )}
-        </div>
-        )}
-        {Array.isArray(pro.narrative) && pro.narrative.length > 0 && (
-          <div className="card p-5 mb-4">
-            {pro.narrative.map((p: string, i: number) => <p key={i} className="mb-3">{p}</p>)}
-          </div>
-        )}
-        {Array.isArray(pro.reflection_questions) && pro.reflection_questions.length === 3 && (
-          <div className="card p-5">
-            <h3 className="text-lg font-semibold mb-1">어제 가장 인상깊었던 일을 떠올려볼까요?</h3>
-            <ul className="list-disc ml-5 mb-3">
-              {pro.reflection_questions.map((q: string, i: number) => <li key={i} className="mb-2">{q}</li>)}
-            </ul>
-            <OneLineEntry placeholder={pro.one_line_template || '어제 나는 ______ 때문에 _____해졌다.'} cta={pro.cta_label || '엔터'} onEnter={() => {
-              setShowProSwitch(true)
-              const el = document.getElementById('why-switch')
-              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-            }} />
-            {pro.post_prompt && <p className="text-xs text-gray-500 mt-2">{pro.post_prompt}</p>}
-          </div>
-        )}
-      </div>
-    ) : null
-
     switch (activeType) {
       case 'my_why': {
         const md = (report as any)?.markdown as string | undefined
         return (
-          <div className="prose max-w-none">
-            {prologueView}
-            <div className="card p-6 mb-10">
+          <div className="card p-6 mb-10 prose max-w-none">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{md || ''}</ReactMarkdown>
-            </div>
           </div>
         )
       }
