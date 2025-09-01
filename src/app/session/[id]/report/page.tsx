@@ -8,7 +8,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/auth'
 import LoadingSpinner from '@/components/common/loading-spinner'
 
-type ReportType = 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers'
+type ReportType = 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers' | 'prologue'
 
 type MyWhy = { whySentence: string; rationale?: string; evidence?: string[] }
 type ValueMap = { coreValues?: string[]; supportingValues?: string[]; conflicts?: string[] }
@@ -16,7 +16,8 @@ type StylePattern = { communicationStyle?: string[]; decisionPatterns?: string[]
 type MasterManager = { position?: 'Master'|'Manager'|'Hybrid'; score?: number; explanation?: string }
 type FitTriggers = { bestFit?: string[]; antiFit?: string[]; positiveTriggers?: string[]; negativeTriggers?: string[] }
 
-type ReportData = MyWhy | ValueMap | StylePattern | MasterManager | FitTriggers | { markdown?: string }
+type Prologue = { title?: string; on_why?: string; off_why_main?: string; off_why_alternatives?: string[]; narrative?: string[]; reflection_questions?: string[]; one_line_template?: string; cta_label?: string; post_prompt?: string }
+type ReportData = MyWhy | ValueMap | StylePattern | MasterManager | FitTriggers | { markdown?: string } | Prologue
 
 type WhyJson = { headline?: string; markdown?: string }
 
@@ -56,7 +57,7 @@ export default function ReportPage() {
         if (!user) return router.push('/auth')
 
         // 1) 존재 여부만 빠르게 점검 (생성 트리거 금지)
-        const types: ReportType[] = ['my_why','value_map','style_pattern','master_manager_spectrum','fit_triggers']
+        const types: ReportType[] = ['my_why','prologue','value_map','style_pattern','master_manager_spectrum','fit_triggers']
         const existence = await Promise.all(types.map(async (t) => {
           const res = await fetch(`/api/session/${sessionId}/report?type=${t}&check=1`)
           return res.status === 200
@@ -141,9 +142,7 @@ export default function ReportPage() {
     return (
       <LoadingStage
         ready={allReady}
-        onContinue={() => {
-          if (allReady) router.push(`/session/${sessionId}/prologue`)
-        }}
+        onContinue={() => { /* 보고서 내에서 이어서 표시 */ }}
       />
     )
   }
@@ -193,12 +192,54 @@ export default function ReportPage() {
         </div>
       )
     }
+    // Prologue 영역을 최상단으로 배치
+    const pro = reportsMap['prologue'] as any
+    const prologueView = pro ? (
+      <div className="mb-10">
+        <h2 className="text-2xl font-bold mb-2">{pro.title || '나의 Why는,'}</h2>
+        <div className="card p-5 mb-4">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="pill"><strong>스위치 ON</strong></span>
+          </div>
+          <p className="text-lg font-semibold">{pro.on_why}</p>
+          {pro.off_why_main ? (
+            <details className="mt-2"><summary className="cursor-pointer">OFF 대안 문장 보기</summary>
+              <ul className="ml-4 mt-2 list-disc">
+                {Array.isArray(pro.off_why_alternatives) ? pro.off_why_alternatives.map((s: string, i: number) => <li key={i} className="text-sm text-gray-600">{s}</li>) : null}
+              </ul>
+            </details>
+          ) : null}
+        </div>
+        {Array.isArray(pro.narrative) && pro.narrative.length > 0 && (
+          <div className="card p-5 mb-4">
+            {pro.narrative.map((p: string, i: number) => <p key={i} className="mb-3">{p}</p>)}
+          </div>
+        )}
+        {Array.isArray(pro.reflection_questions) && pro.reflection_questions.length === 3 && (
+          <div className="card p-5">
+            <h3 className="text-lg font-semibold mb-1">어제 있었던 일을 잠깐 떠올려볼까요?</h3>
+            <ul className="list-disc ml-5 mb-3">
+              {pro.reflection_questions.map((q: string, i: number) => <li key={i} className="mb-2">{q}</li>)}
+            </ul>
+            <div className="flex gap-2">
+              <input placeholder={pro.one_line_template || '“어제 나는 ______ 때문에 _____해졌고, ______ 때문에 _____해졌다.”'} aria-label="한 줄 기록 입력" className="flex-1 input" />
+              <button className="btn btn-primary text-white">{pro.cta_label || '엔터'}</button>
+            </div>
+            {pro.post_prompt && <p className="text-xs text-gray-500 mt-2">{pro.post_prompt}</p>}
+          </div>
+        )}
+      </div>
+    ) : null
+
     switch (activeType) {
       case 'my_why': {
         const md = (report as any)?.markdown as string | undefined
         return (
-          <div className="card p-6 mb-10 prose max-w-none">
+          <div className="prose max-w-none">
+            {prologueView}
+            <div className="card p-6 mb-10">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{md || ''}</ReactMarkdown>
+            </div>
           </div>
         )
       }
