@@ -59,7 +59,7 @@ export default function ReportPage() {
         const types: ReportType[] = ['my_why','value_map','style_pattern','master_manager_spectrum','fit_triggers']
         const existence = await Promise.all(types.map(async (t) => {
           const res = await fetch(`/api/session/${sessionId}/report?type=${t}&check=1`)
-          return res.ok
+          return res.status === 200
         }))
         const firstGen = !existence.every(Boolean)
         setIsFirstGen(firstGen)
