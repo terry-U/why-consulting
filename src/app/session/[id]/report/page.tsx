@@ -52,17 +52,20 @@ export default function ReportPage() {
         const user = await getCurrentUser()
         if (!user) return router.push('/auth')
 
-        // 1) Why를 cascade로 트리거 (이미 있으면 캐시 반환)
-        await fetch(`/api/session/${sessionId}/report?type=my_why&cascade=1`)
+        // 1) 우선 캐시만 확인 (cascade 트리거하지 않음)
+        await fetch(`/api/session/${sessionId}/report?type=my_why`)
 
         // 2) 5개 모두 확보 (이미 존재 시 즉시 반환)
         const types: ReportType[] = ['my_why','value_map','style_pattern','master_manager_spectrum','fit_triggers']
-        // 재시도 로직: why 완료 후 2~5가 준비될 때까지 짧게 폴링
-        let results: Array<ReportData | null> = []
-        for (let attempt = 0; attempt < 6; attempt++) {
-          results = await Promise.all(types.map(t => fetchReport(t)))
-          if (results.every(Boolean)) break
-          await new Promise(r => setTimeout(r, 1200))
+        // 먼저 한번 조회
+        let results: Array<ReportData | null> = await Promise.all(types.map(t => fetchReport(t)))
+        // 일부가 비어 있으면 그때만 cascade 트리거 후 짧게 폴링
+        if (!results.every(Boolean)) {
+          await fetch(`/api/session/${sessionId}/report?type=my_why&cascade=1`)
+          for (let attempt = 0; attempt < 6 && !results.every(Boolean); attempt++) {
+            await new Promise(r => setTimeout(r, 1200))
+            results = await Promise.all(types.map(t => fetchReport(t)))
+          }
         }
 
         setAllReady(results.every(Boolean))
