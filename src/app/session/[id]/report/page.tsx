@@ -285,6 +285,20 @@ function LoadingStage({ ready, onContinue }: { ready: boolean; onContinue: () =>
   const [step, setStep] = useState(0)
   const [typed, setTyped] = useState('')
   const [isTyping, setIsTyping] = useState(true)
+  const [isShrinking, setIsShrinking] = useState(false)
+
+  const WAIT_MS = 800
+  const SHRINK_MS = 180
+
+  const startShrinkThenNext = (quick = false) => {
+    setTimeout(() => {
+      setIsShrinking(true)
+      setTimeout(() => {
+        setIsShrinking(false)
+        setStep(s => Math.min(s + 1, segments.length))
+      }, SHRINK_MS)
+    }, quick ? 80 : WAIT_MS)
+  }
 
   useEffect(() => {
     if (step >= segments.length) return
@@ -298,7 +312,7 @@ function LoadingStage({ ready, onContinue }: { ready: boolean; onContinue: () =>
       if (i >= full.length) {
         clearInterval(iv)
         setIsTyping(false)
-        setTimeout(() => setStep(s => Math.min(s + 1, segments.length)), 800)
+        startShrinkThenNext(false)
       }
     }, 28)
     return () => clearInterval(iv)
@@ -308,9 +322,6 @@ function LoadingStage({ ready, onContinue }: { ready: boolean; onContinue: () =>
     <div className="min-h-screen ui-container">
       <div className="max-w-4xl w-full px-6 pt-24 pb-24 mx-auto">
         <div className="text-left font-semibold leading-tight tracking-tight text-3xl md:text-5xl min-h-[5.5rem] md:min-h-[8rem]">
-          {segments.slice(0, step).map((line, idx) => (
-            <p key={idx} className="mb-4">{line}</p>
-          ))}
           {step < segments.length && (
             <p
               role="button"
@@ -319,12 +330,12 @@ function LoadingStage({ ready, onContinue }: { ready: boolean; onContinue: () =>
                   const full = segments[step]
                   setTyped(full)
                   setIsTyping(false)
-                  setTimeout(() => setStep(s => Math.min(s + 1, segments.length)), 150)
-                } else {
-                  setStep(s => Math.min(s + 1, segments.length))
+                  startShrinkThenNext(true)
+                } else if (!isShrinking) {
+                  startShrinkThenNext(true)
                 }
               }}
-              className="mb-4 cursor-pointer select-none"
+              className={`mb-4 cursor-pointer select-none transition-all duration-200 ease-out ${isShrinking ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}
             >
               {typed}<span className="opacity-40">▍</span>
             </p>
