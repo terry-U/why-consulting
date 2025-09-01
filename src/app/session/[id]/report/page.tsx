@@ -26,6 +26,7 @@ export default function ReportPage() {
   const sessionId = params.id as string
   const [initializing, setInitializing] = useState(true)
   const [showGenerating, setShowGenerating] = useState(false)
+  const [isFirstGen, setIsFirstGen] = useState(false)
   const [tabLoading, setTabLoading] = useState(false)
   const [allReady, setAllReady] = useState(false)
   const [activeType, setActiveType] = useState<ReportType>('my_why')
@@ -61,9 +62,11 @@ export default function ReportPage() {
         const types: ReportType[] = ['my_why','value_map','style_pattern','master_manager_spectrum','fit_triggers']
         // 먼저 한번 조회
         let results: Array<ReportData | null> = await Promise.all(types.map(t => fetchReport(t)))
+        const firstGen = !results.every(Boolean)
+        setIsFirstGen(firstGen)
+        setShowGenerating(firstGen)
         // 일부가 비어 있으면 그때만 cascade 트리거 후 짧게 폴링
-        if (!results.every(Boolean)) {
-          setShowGenerating(true)
+        if (firstGen) {
           await fetch(`/api/session/${sessionId}/report?type=my_why&cascade=1`)
           for (let attempt = 0; attempt < 6 && !results.every(Boolean); attempt++) {
             await new Promise(r => setTimeout(r, 1200))
@@ -78,15 +81,19 @@ export default function ReportPage() {
           if (results[i]) map[t] = results[i] as ReportData
         })
         setReportsMap(map)
-        // 게이트: 첫 방문(디바이스 기준)에서만 Why 한 줄 확인
-        const why = map['my_why'] as WhyJson | undefined
-        let seen = false
-        try {
-          if (typeof window !== 'undefined' && gateKey) {
-            seen = localStorage.getItem(gateKey) === '1'
-          }
-        } catch {}
-        setGateOpen(!!why?.headline && !seen)
+        // 게이트: 기존 보고서 경로에서만 사용(최초 생성 플로우에서는 스킵)
+        if (!firstGen) {
+          const why = map['my_why'] as WhyJson | undefined
+          let seen = false
+          try {
+            if (typeof window !== 'undefined' && gateKey) {
+              seen = localStorage.getItem(gateKey) === '1'
+            }
+          } catch {}
+          setGateOpen(!!why?.headline && !seen)
+        } else {
+          setGateOpen(false)
+        }
         const idx = types.indexOf(activeType)
         const initial = (map[types[idx]] as ReportData) || (map['my_why'] as ReportData)
         setReport(initial || null)
@@ -124,13 +131,13 @@ export default function ReportPage() {
     loadActive()
   }, [activeType, allReady, sessionId, reportsMap])
 
-  // 실제 생성 프로세스일 때만 생성용 로딩 화면을 노출
-  if (initializing && showGenerating) {
+  // 최초 생성 중에는 온보딩형 로딩 화면과 버튼(완료 시 활성화) 표시
+  if (initializing && showGenerating && isFirstGen) {
     return (
       <LoadingStage
         ready={allReady}
         onContinue={() => {
-          if (allReady) setGateOpen(true)
+          if (allReady) router.push(`/session/${sessionId}/why`)
         }}
       />
     )
@@ -245,20 +252,55 @@ export default function ReportPage() {
 }
 
 function LoadingStage({ ready, onContinue }: { ready: boolean; onContinue: () => void }) {
+  const scripts = [
+    '우리가 만드는 것은 정답이나 라벨이 아닙니다.',
+    '당신이 살아온 경험 속 장면과 감정을 함께 들여다보며,',
+    '그 안에서 반복적으로 드러난 가치와 방식들을 발견해 갑니다.',
+    '잠시 뒤, 당신만의 Why를 함께 확인하겠습니다.'
+  ]
+  const [step, setStep] = useState(0)
+  const [typed, setTyped] = useState('')
+
+  // 간단한 타자 효과
+  useEffect(() => {
+    if (step >= scripts.length) return
+    const full = scripts[step]
+    let i = 0
+    setTyped('')
+    const iv = setInterval(() => {
+      i++
+      setTyped(full.slice(0, i))
+      if (i >= full.length) {
+        clearInterval(iv)
+        setTimeout(() => setStep(s => Math.min(s + 1, scripts.length)), 650)
+      }
+    }, 28)
+    return () => clearInterval(iv)
+  }, [step])
+
   return (
     <div className="min-h-screen ui-container flex items-center justify-center">
       <div className="max-w-xl w-full text-center">
-        <div className="mb-6">
-          <div className="text-gray-700 text-lg mb-2">보고서를 준비하고 있어요…</div>
-          <div className="text-sm text-gray-500">대화 전체를 정리해 Why와 4개 서브리포트를 생성 중입니다.</div>
+        <div className="card p-8 text-left">
+          <div className="text-sm text-gray-500 mb-4">함께 발견하는 여정</div>
+          {scripts.slice(0, step).map((line, idx) => (
+            <p key={idx} className="text-gray-900 mb-3 leading-relaxed">{line}</p>
+          ))}
+          {step < scripts.length && (
+            <p className="text-gray-900 mb-3 leading-relaxed">{typed}<span className="opacity-40">▍</span></p>
+          )}
+          <div className="w-full h-2 bg-white/60 rounded-full overflow-hidden shadow-inner mt-4">
+            <div className="h-full bg-gray-900 animate-[progress_2.2s_ease_infinite]"></div>
+          </div>
+          <button
+            className="btn btn-primary text-white mt-8 disabled:opacity-40"
+            onClick={onContinue}
+            disabled={!ready}
+          >
+            {ready ? '나의 Why 보고서' : '생성 중…'}
+          </button>
+          <style>{`@keyframes progress{0%{width:10%}50%{width:85%}100%{width:10%}}`}</style>
         </div>
-        <div className="w-full h-2 bg-white/60 rounded-full overflow-hidden shadow-inner">
-          <div className="h-full bg-gray-900 animate-[progress_2.2s_ease_infinite]"></div>
-        </div>
-        <button className="btn btn-primary text-white mt-8 disabled:opacity-40" onClick={onContinue} disabled={!ready}>
-          {ready ? '계속하기' : '생성 중…'}
-        </button>
-        <style>{`@keyframes progress{0%{width:10%}50%{width:85%}100%{width:10%}}`}</style>
       </div>
     </div>
   )
