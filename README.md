@@ -122,3 +122,12 @@ npm run dev
 ## 📄 라이센스
 
 This project is licensed under the MIT License.
+
+---
+
+## 📚 추가 문서
+
+- 프로젝트 아키텍처 개요: [`PROJECT_ARCHITECTURE.md`](PROJECT_ARCHITECTURE.md)
+- 앱 흐름/게이트 정책: [`docs/USER_FLOW.md`](docs/USER_FLOW.md)
+- 파일/디렉터리 역할 총정리: [`docs/FILE_ROLES.md`](docs/FILE_ROLES.md)
+- Supabase Edge Functions 배포: [`docs/EDGE_FUNCTION_DEPLOYMENT.md`](docs/EDGE_FUNCTION_DEPLOYMENT.md)
