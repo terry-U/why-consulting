@@ -121,7 +121,8 @@ export default function ReportPage() {
     loadActive()
   }, [activeType, allReady, sessionId, reportsMap])
 
-  if (initializing || !allReady) {
+  // 로딩 화면: my_why 캐시가 전혀 없을 때만 노출 (진입 즉시 화면 깜빡임 방지)
+  if (initializing && !reportsMap['my_why']) {
     return (
       <LoadingStage
         ready={allReady}
