@@ -4,26 +4,50 @@ import { OpenAI } from 'openai'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
+function validateAndFillMyWhy(input: any) {
+  const result: any = {
+    headline: typeof input?.headline === 'string' ? input.headline.trim() : '',
+    markdown: typeof input?.markdown === 'string' ? input.markdown.trim() : '',
+    off_why_main: typeof input?.off_why_main === 'string' ? input.off_why_main.trim() : '',
+    off_why_alternatives: Array.isArray(input?.off_why_alternatives) ? input.off_why_alternatives.slice(0, 3) : [],
+    narrative: Array.isArray(input?.narrative) ? input.narrative.slice(0, 3) : [],
+    reflection_questions: Array.isArray(input?.reflection_questions) ? input.reflection_questions.slice(0, 3) : [],
+    one_line_template: typeof input?.one_line_template === 'string' ? input.one_line_template : '어제 나는 ______ 때문에 _____해졌다.',
+    cta_label: typeof input?.cta_label === 'string' ? input.cta_label : '엔터',
+    post_prompt: typeof input?.post_prompt === 'string' ? input.post_prompt : '어때요. 나의 Why와 비슷한 모습인가요?'
+  }
+  const defaults = [
+    '어제, 일이 잘 풀렸던 장면을 떠올리면 누구의 얼굴이 함께 떠오르나요?',
+    '그 순간 당신의 에너지는 올라갔나요, 유지됐나요, 줄었나요? 이유는 무엇이었나요?',
+    '숫자만 남은 성과였다면 무엇이 빠져 있었나요? (얼굴/목소리/이야기의 맥락)'
+  ]
+  if (result.reflection_questions.length < 3) {
+    result.reflection_questions = defaults.slice(0, 3)
+  }
+  return result
+}
+
 export async function GET(req: Request, context: any) {
   const sessionId = context?.params?.id || new URL(req.url).pathname.split('/').filter(Boolean).pop()
   const { searchParams } = new URL(req.url)
   const type = (searchParams.get('type') || 'my_why') as 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers'
   const checkOnly = (searchParams.get('check') === '1' || searchParams.get('check') === 'true')
+  const force = (searchParams.get('force') === '1' || searchParams.get('force') === 'true')
   const cascade = (searchParams.get('cascade') === '1' || searchParams.get('cascade') === 'true') && type === 'my_why'
   if (!sessionId) {
     return NextResponse.json({ success: false, error: 'sessionId가 필요합니다' }, { status: 400 })
   }
 
   try {
-    // 1) 기존 저장된 보고서가 있으면 반환 (캐싱)
-    const { data: existing, error: existingErr } = await supabaseServer
+    // 1) 기존 저장된 보고서가 있으면 반환 (캐싱) — force=1이면 건너뜀
+    const { data: existing, error: existingErr } = force ? { data: null as any, error: null as any } : await supabaseServer
       .from('reports')
       .select('content')
       .eq('session_id', sessionId)
       .eq('type', type)
       .single()
 
-    if (!existingErr && existing?.content) {
+    if (!force && !existingErr && existing?.content) {
       // 캐시 즉시 반환 + 요청 시 연쇄 생성 보장
       if (type === 'my_why') {
         await markSessionCompleted(sessionId, existing.content?.markdown)
@@ -110,6 +134,30 @@ export async function GET(req: Request, context: any) {
   "one_line_template": string,            // 예: "어제 나는 ______ 때문에 _____해졌다."
   "cta_label": string,                    // 기본 "엔터"
   "post_prompt": string                   // 예: "어때요. 나의 Why와 비슷한 모습인가요?"
+}
+
+function validateAndFillMyWhy(input: any) {
+  const result: any = {
+    headline: typeof input?.headline === 'string' ? input.headline.trim() : '',
+    markdown: typeof input?.markdown === 'string' ? input.markdown.trim() : '',
+    off_why_main: typeof input?.off_why_main === 'string' ? input.off_why_main.trim() : '',
+    off_why_alternatives: Array.isArray(input?.off_why_alternatives) ? input.off_why_alternatives.slice(0, 3) : [],
+    narrative: Array.isArray(input?.narrative) ? input.narrative.slice(0, 3) : [],
+    reflection_questions: Array.isArray(input?.reflection_questions) ? input.reflection_questions.slice(0, 3) : [],
+    one_line_template: typeof input?.one_line_template === 'string' ? input.one_line_template : '어제 나는 ______ 때문에 _____해졌다.',
+    cta_label: typeof input?.cta_label === 'string' ? input.cta_label : '엔터',
+    post_prompt: typeof input?.post_prompt === 'string' ? input.post_prompt : '어때요. 나의 Why와 비슷한 모습인가요?'
+  }
+  // 최소 보장: 질문 3개 미만이면 기본 질문으로 채움
+  const defaults = [
+    '어제, 일이 잘 풀렸던 장면을 떠올리면 누구의 얼굴이 함께 떠오르나요?',
+    '그 순간 당신의 에너지는 올라갔나요, 유지됐나요, 줄었나요? 이유는 무엇이었나요?',
+    '숫자만 남은 성과였다면 무엇이 빠져 있었나요? (얼굴/목소리/이야기의 맥락)'
+  ]
+  if (result.reflection_questions.length < 3) {
+    result.reflection_questions = defaults.slice(0, 3)
+  }
+  return result
 }
 
 Why 한 줄(headline) 생성 규칙:
@@ -269,7 +317,7 @@ Why 한 줄(headline) 생성 규칙:
 
     const prompt = buildPrompt(type as any, transcriptBuilder(), undefined, whyHeadline, (sessionData as any)?.user_name)
 
-    const systemMessage = '한국어로만 작성. my_why는 JSON만 반환(프리텍스트 금지), 그 외 타입은 지정된 마크다운 템플릿 그대로만 반환.'
+    const systemMessage = '한국어만 사용. my_why는 반드시 JSON 하나만 반환(프리텍스트 금지). 다른 타입은 템플릿 마크다운만. 상투어·진단 어휘 금지.'
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
@@ -289,9 +337,10 @@ Why 한 줄(headline) 생성 규칙:
         if (typeof parsed?.headline !== 'string' || typeof parsed?.markdown !== 'string') {
           throw new Error('invalid json shape')
         }
+        parsed = validateAndFillMyWhy(parsed)
       } catch {
         // JSON 실패 시 전체를 마크다운으로 간주
-        parsed = { headline: '', markdown: content.trim() }
+        parsed = validateAndFillMyWhy({ headline: '', markdown: content.trim() } as any)
       }
     } else {
       parsed = { markdown: content.trim() }
