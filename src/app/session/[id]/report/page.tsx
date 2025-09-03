@@ -252,9 +252,17 @@ export default function ReportPage() {
     switch (activeType) {
       case 'my_why': {
         const md = (report as any)?.markdown as string | undefined
+        const headline = (reportsMap['my_why'] as any)?.headline as string | undefined
+        const offLine = (reportsMap['prologue'] as any)?.off_why_main as string | undefined
         return (
           <div className="prose max-w-none">
-            {prologueInline}
+            {/* 상단: My Why 한 줄 + 반대 한 줄 스위치 */}
+            {headline && (
+              <div className="card p-5 mb-6">
+                <h2 className="text-2xl font-bold mb-2">나의 Why는,</h2>
+                <WhySwitch onText={headline} offText={offLine} />
+              </div>
+            )}
             <div className="card p-6 mb-10">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{md || ''}</ReactMarkdown>
             </div>
