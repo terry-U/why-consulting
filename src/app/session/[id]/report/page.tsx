@@ -58,38 +58,49 @@ export default function ReportPage() {
         if (!user) return router.push('/auth')
 
         // 1) 존재 여부만 빠르게 점검 (생성 트리거 금지)
-        const types: ReportType[] = ['my_why','prologue','value_map','style_pattern','master_manager_spectrum','fit_triggers']
-        const existence = await Promise.all(types.map(async (t) => {
-          const res = await fetch(`/api/session/${sessionId}/report?type=${t}&check=1`)
-          return res.status === 200
-        }))
-        const firstGen = !existence.every(Boolean)
+        // 존재 판정은 'my_why'만 기준으로 단순화 (다른 서브 리포트/프롤로그는 선택적)
+        const myWhyCheck = await fetch(`/api/session/${sessionId}/report?type=my_why&check=1`)
+        const firstGen = !(myWhyCheck.status === 200)
         setIsFirstGen(firstGen)
         setShowGenerating(firstGen)
+
+        // 기본 리포트 타입(완료 판정 기준)
+        const baseTypes: ReportType[] = ['my_why','value_map','style_pattern','master_manager_spectrum','fit_triggers']
+        const optionalTypes: ReportType[] = ['prologue']
 
         let results: Array<ReportData | null> = []
         if (firstGen) {
           // 2) 최초 생성이면 온보딩 로딩을 즉시 노출한 상태에서 생성 트리거 후 폴링
           await fetch(`/api/session/${sessionId}/report?type=my_why&cascade=1`)
-          for (let attempt = 0; attempt < 10; attempt++) {
+          for (let attempt = 0; attempt < 12; attempt++) {
             await new Promise(r => setTimeout(r, 1200))
-            results = await Promise.all(types.map(t => fetchReport(t)))
-            if (results.every(Boolean)) break
+            const baseRes = await Promise.all(baseTypes.map(t => fetchReport(t)))
+            if (baseRes.every(Boolean)) {
+              results = baseRes
+              break
+            }
           }
         } else {
-          // 3) 이미 모두 존재하면 즉시 데이터 로드
-          results = await Promise.all(types.map(t => fetchReport(t)))
+          // 3) 이미 존재하는 경우: 기본 리포트 즉시 로드
+          results = await Promise.all(baseTypes.map(t => fetchReport(t)))
         }
 
         setAllReady(results.every(Boolean))
         // 캐시 맵 구성 및 초기 표시
         const map: Partial<Record<ReportType, ReportData>> = {}
-        types.forEach((t, i) => {
+        baseTypes.forEach((t, i) => {
           if (results[i]) map[t] = results[i] as ReportData
         })
+        // 선택 타입은 존재하면 추가 로드
+        for (const t of optionalTypes) {
+          try {
+            const opt = await fetchReport(t)
+            if (opt) map[t] = opt
+          } catch {}
+        }
         setReportsMap(map)
         // 프롤로그 존재 여부 캐시
-        setHasPrologue(!!(results[1]))
+        setHasPrologue(!!map['prologue'])
         // 게이트: 기존 보고서 경로에서만 사용(최초 생성 플로우에서는 스킵)
         if (!firstGen) {
           const why = map['my_why'] as WhyJson | undefined
@@ -103,8 +114,9 @@ export default function ReportPage() {
         } else {
           setGateOpen(false)
         }
-        const idx = types.indexOf(activeType)
-        const initial = (map[types[idx]] as ReportData) || (map['my_why'] as ReportData)
+        const idxTypes: ReportType[] = ['my_why','value_map','style_pattern','master_manager_spectrum','fit_triggers']
+        const idx = idxTypes.indexOf(activeType)
+        const initial = (map[idxTypes[idx]] as ReportData) || (map['my_why'] as ReportData)
         setReport(initial || null)
       } catch (e: any) {
         setError(e?.message || '보고서 생성에 실패했습니다')
