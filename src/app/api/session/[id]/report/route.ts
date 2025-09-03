@@ -377,6 +377,7 @@ Why 한 줄(headline) 생성 규칙:
     if (cascade && type === 'my_why') {
       const whyMd = (parsed?.markdown as string | undefined)
       await generateOthersIfMissing(sessionId, whyMd)
+      return NextResponse.json({ success: true, report: parsed, first: true })
     }
 
     return NextResponse.json({ success: true, report: parsed })

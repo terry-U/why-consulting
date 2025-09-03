@@ -140,12 +140,14 @@ export default function ReportPage() {
     loadActive()
   }, [activeType, allReady, sessionId, reportsMap])
 
-  // 최초 생성 중에는 온보딩형 로딩 화면과 버튼(완료 시 활성화) 표시
-  if (initializing && showGenerating && isFirstGen) {
+  // 최초 생성 중에는 온보딩형 로딩 화면만 노출
+  if (initializing && isFirstGen) {
     return (
       <LoadingStage
         ready={allReady}
-        onContinue={() => { /* 보고서 내에서 이어서 표시 */ }}
+        onContinue={() => {
+          if (allReady) router.push(`/session/${sessionId}/why`)
+        }}
       />
     )
   }
@@ -293,9 +295,6 @@ export default function ReportPage() {
         {renderBody()}
 
         <div className="mt-12 flex gap-3">
-          {hasPrologue && (
-            <button onClick={() => router.push(`/session/${sessionId}/prologue`)} className="btn">프롤로그 보기</button>
-          )}
           <button onClick={() => router.push(`/session/${sessionId}/why`)} className="btn">Why 후보 다시 보기</button>
           <button onClick={() => router.push('/home')} className="btn btn-primary text-white">홈으로</button>
         </div>
