@@ -427,17 +427,21 @@ function LoadingStage({ ready, onContinue }: { ready: boolean; onContinue: () =>
 
 function WhySwitch({ onText, offText }: { onText?: string; offText?: string }) {
   const [isOn, setIsOn] = useState(true)
+  const hasOff = typeof offText === 'string' && offText.length > 0
   return (
     <div id="why-switch">
       <div className="flex items-center gap-3 mb-2">
         <span className="pill"><strong>{isOn ? '스위치 ON' : '스위치 OFF'}</strong></span>
-        <button onClick={() => setIsOn(v => !v)} className="btn">ON/OFF 전환</button>
+        <button onClick={() => setIsOn(v => !v)} className="btn" disabled={!hasOff}>
+          ON/OFF 전환
+        </button>
       </div>
       <div className="space-y-2">
-        <p className={`text-lg font-semibold ${isOn ? 'text-gray-900' : 'text-gray-400'}`}>{onText || '-'}</p>
-        {typeof offText === 'string' && offText.length > 0 ? (
-          <p className={`text-lg font-semibold ${!isOn ? 'text-gray-900' : 'text-gray-400'}`}>{offText}</p>
-        ) : null}
+        {isOn ? (
+          <p className="text-lg font-semibold text-gray-900">{onText || '-'}</p>
+        ) : (
+          hasOff ? <p className="text-lg font-semibold text-gray-900">{offText}</p> : <p className="text-lg text-gray-400">반대 한마디가 아직 없습니다.</p>
+        )}
       </div>
     </div>
   )
