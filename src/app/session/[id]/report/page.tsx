@@ -8,7 +8,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/auth'
 import LoadingSpinner from '@/components/common/loading-spinner'
 
-type ReportType = 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers'
+type ReportType = 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers' | 'prologue'
 
 type MyWhy = { whySentence: string; rationale?: string; evidence?: string[] }
 type ValueMap = { coreValues?: string[]; supportingValues?: string[]; conflicts?: string[] }
@@ -16,7 +16,8 @@ type StylePattern = { communicationStyle?: string[]; decisionPatterns?: string[]
 type MasterManager = { position?: 'Master'|'Manager'|'Hybrid'; score?: number; explanation?: string }
 type FitTriggers = { bestFit?: string[]; antiFit?: string[]; positiveTriggers?: string[]; negativeTriggers?: string[] }
 
-type ReportData = MyWhy | ValueMap | StylePattern | MasterManager | FitTriggers | { markdown?: string }
+type Prologue = { title?: string; on_why?: string; off_why_main?: string; off_why_alternatives?: string[]; narrative?: string[]; reflection_questions?: string[]; one_line_template?: string; cta_label?: string; post_prompt?: string; html?: string }
+type ReportData = MyWhy | ValueMap | StylePattern | MasterManager | FitTriggers | { markdown?: string } | Prologue
 
 type WhyJson = { headline?: string; markdown?: string }
 
@@ -57,7 +58,7 @@ export default function ReportPage() {
         if (!user) return router.push('/auth')
 
         // 1) 존재 여부만 빠르게 점검 (생성 트리거 금지)
-        const types: ReportType[] = ['my_why','value_map','style_pattern','master_manager_spectrum','fit_triggers']
+        const types: ReportType[] = ['my_why','prologue','value_map','style_pattern','master_manager_spectrum','fit_triggers']
         const existence = await Promise.all(types.map(async (t) => {
           const res = await fetch(`/api/session/${sessionId}/report?type=${t}&check=1`)
           return res.status === 200
@@ -87,13 +88,8 @@ export default function ReportPage() {
           if (results[i]) map[t] = results[i] as ReportData
         })
         setReportsMap(map)
-        // 프롤로그 존재 여부만 별도 확인(렌더 버튼 조건)
-        try {
-          const chk = await fetch(`/api/session/${sessionId}/report?type=prologue&check=1`)
-          setHasPrologue(chk.status === 200)
-        } catch {
-          setHasPrologue(false)
-        }
+        // 프롤로그 존재 여부 캐시
+        setHasPrologue(!!(results[1]))
         // 게이트: 기존 보고서 경로에서만 사용(최초 생성 플로우에서는 스킵)
         if (!firstGen) {
           const why = map['my_why'] as WhyJson | undefined
@@ -200,12 +196,54 @@ export default function ReportPage() {
       )
     }
     // Prologue 영역을 최상단으로 배치
+    const pro = reportsMap['prologue'] as Prologue | undefined
+    const prologueInline = pro ? (
+      <div className="mb-10">
+        <h2 className="text-2xl font-bold mb-2">{pro.title || '나의 Why는,'}</h2>
+        {pro.html ? (
+          <div className="card p-5 mb-4" dangerouslySetInnerHTML={{ __html: pro.html as string }} />
+        ) : (
+          <div className="card p-5 mb-4">
+            <div className="text-sm text-gray-500 mb-2">Why 스위치</div>
+            <div className="mb-3">
+              <span className="mr-3 text-xs px-2 py-1 rounded-full border">{pro.on_why ? 'ON' : ''}</span>
+            </div>
+            <p className="text-lg font-semibold mb-2">{pro.on_why}</p>
+            {pro.off_why_main && (
+              <details className="mt-2"><summary className="cursor-pointer">OFF 대안 문장 보기</summary>
+                <ul className="ml-4 mt-2 list-disc">
+                  {(pro.off_why_alternatives || []).map((s, i) => <li key={i} className="text-sm text-gray-600">{s}</li>)}
+                </ul>
+              </details>
+            )}
+          </div>
+        )}
+        {Array.isArray(pro.narrative) && pro.narrative.length > 0 && (
+          <div className="card p-5 mb-4">
+            {pro.narrative.map((p, i) => <p key={i} className="mb-3">{p}</p>)}
+          </div>
+        )}
+        {Array.isArray(pro.reflection_questions) && pro.reflection_questions.length === 3 && (
+          <div className="card p-5">
+            <h3 className="text-lg font-semibold mb-1">어제 가장 인상깊었던 일을 떠올려볼까요?</h3>
+            <ul className="list-disc ml-5 mb-3">
+              {pro.reflection_questions.map((q, i) => <li key={i} className="mb-2">{q}</li>)}
+            </ul>
+            <div className="text-lg">어제 나는 <span className="inline-block min-w-[160px] border-b border-gray-400 align-bottom">&nbsp;</span></div>
+            {pro.post_prompt && <p className="text-xs text-gray-500 mt-2">{pro.post_prompt}</p>}
+          </div>
+        )}
+      </div>
+    ) : null
     switch (activeType) {
       case 'my_why': {
         const md = (report as any)?.markdown as string | undefined
         return (
-          <div className="card p-6 mb-10 prose max-w-none">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{md || ''}</ReactMarkdown>
+          <div className="prose max-w-none">
+            {prologueInline}
+            <div className="card p-6 mb-10">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{md || ''}</ReactMarkdown>
+            </div>
           </div>
         )
       }
