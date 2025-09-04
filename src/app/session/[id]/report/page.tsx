@@ -7,8 +7,21 @@ import remarkGfm from 'remark-gfm'
 import { useParams, useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/auth'
 import LoadingSpinner from '@/components/common/loading-spinner'
+import ValueMapStructured from '@/components/report/value-map'
+import StylePatternStructured from '@/components/report/style-pattern'
+import MasterManagerStructured from '@/components/report/master-manager'
 
-type ReportType = 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers'
+type ReportType = 
+  | 'my_why'
+  | 'value_map'
+  | 'style_pattern'
+  | 'master_manager_spectrum'
+  | 'fit_triggers'
+  | 'light_shadow'
+  | 'philosophy'
+  | 'action_recipe'
+  | 'future_path'
+  | 'epilogue'
 
 type MyWhy = { whySentence: string; rationale?: string; evidence?: string[] }
 type ValueMap = { coreValues?: string[]; supportingValues?: string[]; conflicts?: string[] }
@@ -67,7 +80,7 @@ export default function ReportPage() {
 
         // 기본 리포트 타입(완료 판정 기준)
         const baseTypes: ReportType[] = ['my_why','value_map','style_pattern','master_manager_spectrum','fit_triggers']
-        const optionalTypes: ReportType[] = []
+        const optionalTypes: ReportType[] = ['light_shadow','philosophy','action_recipe','future_path','epilogue']
 
         let results: Array<ReportData | null> = []
         if (firstGen) {
@@ -115,7 +128,7 @@ export default function ReportPage() {
         } else {
           setGateOpen(false)
         }
-        const idxTypes: ReportType[] = ['my_why','value_map','style_pattern','master_manager_spectrum','fit_triggers']
+        const idxTypes: ReportType[] = ['my_why','value_map','style_pattern','master_manager_spectrum','fit_triggers','light_shadow','philosophy','action_recipe','future_path','epilogue']
         const idx = idxTypes.indexOf(activeType)
         const initial = (map[idxTypes[idx]] as ReportData) || (map['my_why'] as ReportData)
         setReport(initial || null)
@@ -289,18 +302,241 @@ export default function ReportPage() {
       }
       case 'value_map': {
         const md = (report as any)?.markdown as string | undefined
+        const items = (report as any)?.items as any[] | undefined
+        if (Array.isArray(items) && items.length > 0) {
+          return <div className="mb-10"><ValueMapStructured data={{ items, today_actions: (report as any)?.today_actions, summary: (report as any)?.summary }} /></div>
+        }
         return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown remarkPlugins={[remarkGfm]}>{md || ''}</ReactMarkdown></div>
       }
       case 'style_pattern': {
         const md = (report as any)?.markdown as string | undefined
+        const styles = (report as any)?.styles as any[] | undefined
+        if (Array.isArray(styles) && styles.length > 0) {
+          return (
+            <div className="mb-10">
+              <StylePatternStructured data={{ styles, quick_tips: (report as any)?.quick_tips, today_checklist: (report as any)?.today_checklist, summary: (report as any)?.summary }} />
+            </div>
+          )
+        }
         return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown remarkPlugins={[remarkGfm]}>{md || ''}</ReactMarkdown></div>
       }
       case 'master_manager_spectrum': {
         const md = (report as any)?.markdown as string | undefined
+        const scores = (report as any)?.scores
+        const current_type = (report as any)?.current_type
+        if (scores && current_type) {
+          return (
+            <div className="mb-10">
+              <MasterManagerStructured data={{ scores, current_type, types: (report as any)?.types, scenes: (report as any)?.scenes }} />
+            </div>
+          )
+        }
         return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown remarkPlugins={[remarkGfm]}>{md || ''}</ReactMarkdown></div>
       }
       case 'fit_triggers': {
         const md = (report as any)?.markdown as string | undefined
+        const on = (report as any)?.on as string[] | undefined
+        const off = (report as any)?.off as string[] | undefined
+        const do_more = (report as any)?.do_more as string[] | undefined
+        const do_less = (report as any)?.do_less as string[] | undefined
+        const recovery = (report as any)?.recovery as any
+        const boundary_phrases = (report as any)?.boundary_phrases as string[] | undefined
+        const hasJson = (Array.isArray(on) || Array.isArray(off) || Array.isArray(do_more) || Array.isArray(do_less) || Array.isArray(boundary_phrases) || !!recovery)
+        if (hasJson) {
+          return (
+            <div className="mb-10 space-y-6">
+              <div className="card p-6">
+                <h3 className="text-xl font-semibold mb-2">On(켜짐) 조건</h3>
+                <ul className="list-disc ml-5">
+                  {(on || []).map((s, i) => <li key={i}>{s}</li>)}
+                </ul>
+              </div>
+              <div className="card p-6">
+                <h3 className="text-xl font-semibold mb-2">Off(꺼짐) 조건</h3>
+                <ul className="list-disc ml-5">
+                  {(off || []).map((s, i) => <li key={i}>{s}</li>)}
+                </ul>
+              </div>
+              <div className="card p-6">
+                <h3 className="text-xl font-semibold mb-2">Do more / Do less</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <ul className="list-disc ml-5">
+                    {(do_more || []).map((s, i) => <li key={i}>[ ] {s}</li>)}
+                  </ul>
+                  <ul className="list-disc ml-5">
+                    {(do_less || []).map((s, i) => <li key={i}>[ ] {s}</li>)}
+                  </ul>
+                </div>
+              </div>
+              <div className="card p-6">
+                <h3 className="text-xl font-semibold mb-2">Recovery Protocol</h3>
+                {recovery?.quick90 && <p>- 90초 루틴: {recovery.quick90}</p>}
+                {Array.isArray(recovery?.extended) && (
+                  <ul className="list-disc ml-5 mt-2">
+                    {recovery.extended.map((s: string, i: number) => <li key={i}>{s}</li>)}
+                  </ul>
+                )}
+              </div>
+              {Array.isArray(boundary_phrases) && boundary_phrases.length > 0 && (
+                <div className="card p-6">
+                  <h3 className="text-xl font-semibold mb-2">경계 문장</h3>
+                  <ul className="list-disc ml-5">
+                    {boundary_phrases.map((s, i) => <li key={i}>{s}</li>)}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )
+        }
+        return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown remarkPlugins={[remarkGfm]}>{md || ''}</ReactMarkdown></div>
+      }
+      case 'light_shadow': {
+        const md = (report as any)?.markdown as string | undefined
+        const strengths = (report as any)?.strengths as any[] | undefined
+        const shadows = (report as any)?.shadows as any[] | undefined
+        const hasJson = (Array.isArray(strengths) || Array.isArray(shadows))
+        if (hasJson) {
+          return (
+            <div className="mb-10 space-y-6">
+              {Array.isArray(strengths) && (
+                <div className="card p-6">
+                  <h3 className="text-xl font-semibold mb-2">Strengths</h3>
+                  <ul className="space-y-2">
+                    {strengths.map((s: any, i: number) => <li key={i} className="border rounded p-3"><p className="font-medium">{s.title} ({s.percentage}%)</p><p className="text-sm text-gray-600">{s.description}</p></li>)}
+                  </ul>
+                </div>
+              )}
+              {Array.isArray(shadows) && (
+                <div className="card p-6">
+                  <h3 className="text-xl font-semibold mb-2">Shadows</h3>
+                  <ul className="space-y-2">
+                    {shadows.map((s: any, i: number) => <li key={i} className="border rounded p-3"><p className="font-medium">{s.title} ({s.percentage}%)</p><p className="text-sm text-gray-600">{s.description}</p></li>)}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )
+        }
+        return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown remarkPlugins={[remarkGfm]}>{md || ''}</ReactMarkdown></div>
+      }
+      case 'philosophy': {
+        const md = (report as any)?.markdown as string | undefined
+        const letter = (report as any)?.letter_content as string | undefined
+        if (letter && letter.length > 0) {
+          return <div className="card p-6 mb-10 whitespace-pre-line">{letter}</div>
+        }
+        return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown remarkPlugins={[remarkGfm]}>{md || ''}</ReactMarkdown></div>
+      }
+      case 'action_recipe': {
+        const md = (report as any)?.markdown as string | undefined
+        const recipes = (report as any)?.recipes as any[] | undefined
+        if (Array.isArray(recipes) && recipes.length) {
+          return (
+            <div className="mb-10 space-y-6">
+              {recipes.map((r: any, i: number) => (
+                <div key={i} className="card p-6">
+                  <h3 className="text-xl font-semibold mb-2">{r.title}</h3>
+                  <p className="text-sm text-gray-600">기간: {r.duration} / 빈도: {r.frequency}</p>
+                  {Array.isArray(r.steps) && (
+                    <ul className="list-disc ml-5 mt-2">
+                      {r.steps.map((s: string, j: number) => <li key={j}>{s}</li>)}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          )
+        }
+        return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown remarkPlugins={[remarkGfm]}>{md || ''}</ReactMarkdown></div>
+      }
+      case 'future_path': {
+        const md = (report as any)?.markdown as string | undefined
+        const environment = (report as any)?.environment
+        const roadmap = (report as any)?.roadmap as any[] | undefined
+        if (environment || Array.isArray(roadmap)) {
+          return (
+            <div className="mb-10 space-y-6">
+              {environment && (
+                <div className="card p-6">
+                  <h3 className="text-xl font-semibold mb-2">환경</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="font-medium">제거</p>
+                      <ul className="list-disc ml-5">
+                        {(environment.remove || []).map((x: any, i: number) => <li key={i}>{x.category}</li>)}
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="font-medium">강화</p>
+                      <ul className="list-disc ml-5">
+                        {(environment.strengthen || []).map((x: any, i: number) => <li key={i}>{x.category}</li>)}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {Array.isArray(roadmap) && (
+                <div className="card p-6">
+                  <h3 className="text-xl font-semibold mb-2">로드맵</h3>
+                  <ul className="space-y-2">
+                    {roadmap.map((r: any, i: number) => (
+                      <li key={i} className="border rounded p-3">
+                        <p className="font-medium">{r.phase} ({r.duration})</p>
+                        {Array.isArray(r.actions) && (
+                          <ul className="list-disc ml-5 mt-1">
+                            {r.actions.map((a: string, j: number) => <li key={j}>{a}</li>)}
+                          </ul>
+                        )}
+                        {r.milestone && <p className="text-sm text-gray-600 mt-1">마일스톤: {r.milestone}</p>}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )
+        }
+        return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown remarkPlugins={[remarkGfm]}>{md || ''}</ReactMarkdown></div>
+      }
+      case 'epilogue': {
+        const md = (report as any)?.markdown as string | undefined
+        const overall_score = (report as any)?.overall_score as number | undefined
+        const insights = (report as any)?.insights as any[] | undefined
+        const action_items = (report as any)?.action_items as string[] | undefined
+        const reflection = (report as any)?.reflection as string | undefined
+        const hasJson = (overall_score != null || Array.isArray(insights) || Array.isArray(action_items) || typeof reflection === 'string')
+        if (hasJson) {
+          return (
+            <div className="mb-10 space-y-6">
+              <div className="card p-6">
+                <h3 className="text-xl font-semibold mb-2">종합 점수</h3>
+                <p>{overall_score ?? 0}</p>
+              </div>
+              {Array.isArray(insights) && (
+                <div className="card p-6">
+                  <h3 className="text-xl font-semibold mb-2">인사이트</h3>
+                  <ul className="list-disc ml-5">
+                    {insights.map((i: any, idx: number) => <li key={idx}>{i.title}: {i.description} ({i.score})</li>)}
+                  </ul>
+                </div>
+              )}
+              {Array.isArray(action_items) && (
+                <div className="card p-6">
+                  <h3 className="text-xl font-semibold mb-2">액션</h3>
+                  <ul className="list-disc ml-5">
+                    {action_items.map((a: string, idx: number) => <li key={idx}>[ ] {a}</li>)}
+                  </ul>
+                </div>
+              )}
+              {typeof reflection === 'string' && reflection.length > 0 && (
+                <div className="card p-6 whitespace-pre-line">
+                  <h3 className="text-xl font-semibold mb-2">회고</h3>
+                  <p>{reflection}</p>
+                </div>
+              )}
+            </div>
+          )
+        }
         return <div className="card p-6 mb-10 prose max-w-none"><ReactMarkdown remarkPlugins={[remarkGfm]}>{md || ''}</ReactMarkdown></div>
       }
       default:
@@ -318,7 +554,12 @@ export default function ReportPage() {
             { key: 'value_map', label: 'Value Map' },
             { key: 'style_pattern', label: 'Style Pattern' },
             { key: 'master_manager_spectrum', label: 'Master–Manager Spectrum' },
-            { key: 'fit_triggers', label: 'Fit & Triggers' }
+            { key: 'fit_triggers', label: 'Fit & Triggers' },
+            { key: 'light_shadow', label: 'Light & Shadow' },
+            { key: 'philosophy', label: 'Philosophy' },
+            { key: 'action_recipe', label: 'Action Recipe' },
+            { key: 'future_path', label: 'Future Path' },
+            { key: 'epilogue', label: 'Epilogue' }
           ].map(t => (
             <button
               key={t.key}
