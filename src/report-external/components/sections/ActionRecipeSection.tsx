@@ -53,8 +53,8 @@ const recipes = [
 ];
 
 export function ActionRecipeSection({ isPinned, onTogglePin, language }: ActionRecipeSectionProps) {
-  const [recipeStates, setRecipeStates] = useState(
-    recipes.reduce((acc, recipe) => ({
+  const [recipeStates, setRecipeStates] = useState<Record<string, boolean>>(
+    recipes.reduce<Record<string, boolean>>((acc, recipe) => ({
       ...acc,
       [recipe.id]: recipe.completed
     }), {})
