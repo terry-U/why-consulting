@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Toaster } from './components/ui/sonner';
 import { TableOfContents } from './components/TableOfContents';
 import { WhyStatementSection } from './components/sections/WhyStatementSection';
@@ -16,6 +18,9 @@ export default function App() {
   const [pinnedSections, setPinnedSections] = useState<number[]>([]);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [isTOCVisible, setIsTOCVisible] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [reports, setReports] = useState<Record<string, any>>({});
+  const [loading, setLoading] = useState<boolean>(false);
 
   // Load theme from localStorage on mount
   useEffect(() => {
@@ -37,6 +42,64 @@ export default function App() {
       document.body.style.overflow = 'unset';
     };
   }, [isTOCVisible]);
+
+  // Resolve session id from url and trigger report generation + fetch
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const parts = window.location.pathname.split('/').filter(Boolean);
+    // Expecting /session/:id/report
+    const idx = parts.indexOf('session');
+    const id = idx >= 0 && parts[idx + 1] ? parts[idx + 1] : null;
+    if (!id) return;
+    setSessionId(id);
+
+    const fetchJson = async (url: string) => {
+      const res = await fetch(url, { method: 'GET' });
+      if (res.status === 202) return { pending: true } as any;
+      return res.json();
+    };
+
+    const loadReports = async () => {
+      try {
+        setLoading(true);
+        // 1) Ensure my_why exists and cascade others
+        await fetchJson(`/api/session/${id}/report?type=my_why&cascade=1`);
+
+        const types = [
+          'my_why',
+          'value_map',
+          'style_pattern',
+          'master_manager_spectrum',
+          'fit_triggers',
+          'light_shadow',
+          'philosophy',
+          'action_recipe',
+          'future_path',
+          'epilogue'
+        ];
+
+        const maxAttempts = 6;
+        const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+        for (const t of types) {
+          let attempt = 0;
+          while (attempt < maxAttempts) {
+            const data = await fetchJson(`/api/session/${id}/report?type=${t}`);
+            if (data && (data.success || data.report)) {
+              setReports(prev => ({ ...prev, [t]: data.report || data }));
+              break;
+            }
+            attempt++;
+            await delay(500 * attempt);
+          }
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadReports();
+  }, []);
 
   const togglePin = (sectionId: number) => {
     setPinnedSections(prev => 
@@ -98,6 +161,13 @@ export default function App() {
                   onTogglePin={() => togglePin(0)}
                   language={language}
                 />
+                {reports?.my_why?.markdown && (
+                  <div className="prose dark:prose-invert max-w-none mt-6">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {reports.my_why.markdown}
+                    </ReactMarkdown>
+                  </div>
+                )}
               </section>
 
               {/* Chapter Divider */}
@@ -116,6 +186,13 @@ export default function App() {
                   onTogglePin={() => togglePin(1)}
                   language={language}
                 />
+                {reports?.value_map?.markdown && (
+                  <div className="prose dark:prose-invert max-w-none mt-6">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {reports.value_map.markdown}
+                    </ReactMarkdown>
+                  </div>
+                )}
               </section>
 
               {/* Chapter Divider */}
@@ -134,6 +211,13 @@ export default function App() {
                   onTogglePin={() => togglePin(2)}
                   language={language}
                 />
+                {reports?.style_pattern?.markdown && (
+                  <div className="prose dark:prose-invert max-w-none mt-6">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {reports.style_pattern.markdown}
+                    </ReactMarkdown>
+                  </div>
+                )}
               </section>
 
               {/* Chapter Divider */}
@@ -152,6 +236,13 @@ export default function App() {
                   onTogglePin={() => togglePin(3)}
                   language={language}
                 />
+                {reports?.master_manager_spectrum?.markdown && (
+                  <div className="prose dark:prose-invert max-w-none mt-6">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {reports.master_manager_spectrum.markdown}
+                    </ReactMarkdown>
+                  </div>
+                )}
               </section>
 
               {/* Chapter Divider */}
@@ -170,6 +261,13 @@ export default function App() {
                   onTogglePin={() => togglePin(4)}
                   language={language}
                 />
+                {reports?.light_shadow?.markdown && (
+                  <div className="prose dark:prose-invert max-w-none mt-6">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {reports.light_shadow.markdown}
+                    </ReactMarkdown>
+                  </div>
+                )}
               </section>
 
               {/* Chapter Divider */}
@@ -188,6 +286,13 @@ export default function App() {
                   onTogglePin={() => togglePin(5)}
                   language={language}
                 />
+                {reports?.philosophy?.markdown && (
+                  <div className="prose dark:prose-invert max-w-none mt-6">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {reports.philosophy.markdown}
+                    </ReactMarkdown>
+                  </div>
+                )}
               </section>
 
               {/* Chapter Divider */}
@@ -206,6 +311,46 @@ export default function App() {
                   onTogglePin={() => togglePin(6)}
                   language={language}
                 />
+                {reports?.future_path?.markdown && (
+                  <div className="prose dark:prose-invert max-w-none mt-6">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {reports.future_path.markdown}
+                    </ReactMarkdown>
+                  </div>
+                )}
+              </section>
+
+              {/* Section 7: Fit & Triggers (optional) */}
+              <section id="section-7" className="scroll-mt-24">
+                {reports?.fit_triggers?.markdown && (
+                  <div className="prose dark:prose-invert max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {reports.fit_triggers.markdown}
+                    </ReactMarkdown>
+                  </div>
+                )}
+              </section>
+
+              {/* Section 8: Action Recipe */}
+              <section id="section-8" className="scroll-mt-24">
+                {reports?.action_recipe?.markdown && (
+                  <div className="prose dark:prose-invert max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {reports.action_recipe.markdown}
+                    </ReactMarkdown>
+                  </div>
+                )}
+              </section>
+
+              {/* Section 9: Epilogue */}
+              <section id="section-9" className="scroll-mt-24">
+                {reports?.epilogue?.markdown && (
+                  <div className="prose dark:prose-invert max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {reports.epilogue.markdown}
+                    </ReactMarkdown>
+                  </div>
+                )}
               </section>
 
             </div>
