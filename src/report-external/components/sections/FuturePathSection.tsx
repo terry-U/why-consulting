@@ -191,7 +191,10 @@ export function FuturePathSection({ isPinned, onTogglePin, language }: FuturePat
       removeTitle: '제거할 것들',
       strengthenTitle: '강화할 것들',
       categoryLabel: '영역',
-      impactLabel: '기대 효과'
+      impactLabel: '기대 효과',
+      implementationTitle: '실행 로드맵',
+      actionsLabel: '실행 항목',
+      milestoneLabel: '마일스톤'
     },
     en: {
       title: 'Why Maximization Environment',
@@ -199,7 +202,10 @@ export function FuturePathSection({ isPinned, onTogglePin, language }: FuturePat
       removeTitle: 'Things to Remove',
       strengthenTitle: 'Things to Strengthen',
       categoryLabel: 'Category',
-      impactLabel: 'Expected Impact'
+      impactLabel: 'Expected Impact',
+      implementationTitle: 'Implementation Roadmap',
+      actionsLabel: 'Actions',
+      milestoneLabel: 'Milestone'
     }
   };
 
