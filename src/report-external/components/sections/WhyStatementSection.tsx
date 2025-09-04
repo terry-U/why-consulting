@@ -17,8 +17,6 @@ export function WhyStatementSection({ isPinned, onTogglePin, language, data }: W
   const [whySwitchOn, setWhySwitchOn] = useState(true);
   const [firstBlank, setFirstBlank] = useState('');
   const [secondBlank, setSecondBlank] = useState('');
-  const [thirdBlank, setThirdBlank] = useState('');
-  const [fourthBlank, setFourthBlank] = useState('');
   const [showWhy, setShowWhy] = useState(false);
 
   const content = {
@@ -87,7 +85,7 @@ The reason is that your heart responds most strongly to **'connected meaning'**.
     : undefined;
 
   const handleCheck = () => {
-    if (firstBlank.trim() && secondBlank.trim() && thirdBlank.trim() && fourthBlank.trim()) {
+    if (firstBlank.trim() && secondBlank.trim()) {
       setShowWhy(true);
     }
   };
@@ -227,27 +225,13 @@ The reason is that your heart responds most strongly to **'connected meaning'**.
                 placeholder="____"
                 className="inline-flex min-w-0 w-auto flex-1 max-w-[140px] text-center text-lg font-medium border-2 border-dashed border-primary/30"
               />
-              <span>{text.oneLinePlaceholder2}고,</span>
-              <Input
-                value={thirdBlank}
-                onChange={(e) => setThirdBlank(e.target.value)}
-                placeholder="____"
-                className="inline-flex min-w-0 w-auto flex-1 max-w-[140px] text-center text-lg font-medium border-2 border-dashed border-primary/30"
-              />
-              <span>{text.oneLinePlaceholder3}</span>
-              <Input
-                value={fourthBlank}
-                onChange={(e) => setFourthBlank(e.target.value)}
-                placeholder="____"
-                className="inline-flex min-w-0 w-auto flex-1 max-w-[140px] text-center text-lg font-medium border-2 border-dashed border-primary/30"
-              />
-              <span className="font-medium">{text.oneLinePlaceholder4}."</span>
+              <span className="font-medium">{text.oneLinePlaceholder2}."</span>
             </div>
             
             <div className="flex justify-start">
               <Button 
                 onClick={handleCheck}
-                disabled={!firstBlank.trim() || !secondBlank.trim() || !thirdBlank.trim() || !fourthBlank.trim()}
+                disabled={!firstBlank.trim() || !secondBlank.trim()}
                 className="px-8 py-3 text-lg font-medium"
                 size="lg"
               >
@@ -255,23 +239,21 @@ The reason is that your heart responds most strongly to **'connected meaning'**.
               </Button>
             </div>
 
-            {/* My Why and Final Question */}
-            {showWhy && (
-              <div className="space-y-6 pt-6 border-t border-border">
-                <div>
-                  <h4 className="text-lg font-semibold mb-4">{text.myWhyTitle}</h4>
-                  <blockquote className="text-xl leading-relaxed p-6 border-l-4 border-primary/30 bg-muted/30 rounded-r-lg font-medium">
-                    "{text.whyOn}"
-                  </blockquote>
-                </div>
-                
-                <div>
-                  <p className="text-lg leading-relaxed text-muted-foreground font-medium">
-                    {text.finalQuestion}
-                  </p>
-                </div>
+            {/* My Why and Final Question (always shown after record) */}
+            <div className="space-y-6 pt-6 border-t border-border">
+              <div>
+                <h4 className="text-lg font-semibold mb-4">{text.myWhyTitle}</h4>
+                <blockquote className="text-xl leading-relaxed p-6 border-l-4 border-primary/30 bg-muted/30 rounded-r-lg font-medium">
+                  "{apiHeadline || text.whyOn}"
+                </blockquote>
               </div>
-            )}
+              
+              <div>
+                <p className="text-lg leading-relaxed text-muted-foreground font-medium">
+                  {text.finalQuestion}
+                </p>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
