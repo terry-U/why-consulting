@@ -62,10 +62,10 @@ export default function App() {
     const loadReports = async () => {
       try {
         setLoading(true);
-        // 1) Ensure my_why exists and cascade others
-        await fetchJson(`/api/session/${id}/report?type=my_why&cascade=1`);
+        // 1) Ensure my_why exists and cascade others (force once to guarantee kick-off)
+        await fetchJson(`/api/session/${id}/report?type=my_why&cascade=1&force=1`);
 
-        const types = [
+        const types: Array<string> = [
           'my_why',
           'value_map',
           'style_pattern',
@@ -78,21 +78,23 @@ export default function App() {
           'epilogue'
         ];
 
-        const maxAttempts = 6;
         const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
-
-        for (const t of types) {
-          let attempt = 0;
-          while (attempt < maxAttempts) {
-            const data = await fetchJson(`/api/session/${id}/report?type=${t}`);
-            if (data && (data.success || data.report)) {
-              setReports(prev => ({ ...prev, [t]: data.report || data }));
-              break;
-            }
-            attempt++;
-            await delay(500 * attempt);
+        const pollType = async (t: string) => {
+          // Poll up to ~90s with backoff
+          for (let attempt = 0; attempt < 12; attempt++) {
+            try {
+              const data = await fetchJson(`/api/session/${id}/report?type=${t}`);
+              if (data && (data.success || data.report)) {
+                setReports(prev => ({ ...prev, [t]: data.report || data }));
+                return;
+              }
+            } catch {}
+            await delay(Math.min(1000 * (attempt + 1), 8000));
           }
-        }
+        };
+
+        // poll all types in parallel to reduce waiting time
+        await Promise.all(types.map(pollType));
       } finally {
         setLoading(false);
       }
