@@ -6,8 +6,8 @@ async function fetchJson(url: string, init?: RequestInit) {
   try { return await res.json() } catch { return null }
 }
 
-export default async function ReportPage({ params }: { params: { id: string } }) {
-  const { id } = params
+export default async function ReportPage(props: any) {
+  const { id } = await props?.params
   const makeUrl = (q: string) => `/api/session/${id}/report?${q}`
 
   // 1) Kick off generation (my_why + cascade). Force once
