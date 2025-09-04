@@ -560,7 +560,7 @@ export async function GET(req: Request, context: any) {
 - TRANSCRIPT: ${transcript}
 - WHY_MD: ${whyMarkdown || (whyReportContent?.markdown || 'null')}
 
-출력(JSON 스키마):
+출력(JSON 스키마, 항목은 반드시 정확히 3개):
 {
   "items": [
     {
@@ -578,7 +578,7 @@ export async function GET(req: Request, context: any) {
 }
 
 품질 체크:
-- items는 3~6개.
+- items는 정확히 3개.
 - gapLevel은 high/medium/low 중 하나.
 - scene은 실제 대화의 단서 1~2개 포함.`,
 
