@@ -37,6 +37,7 @@ export default function ReportPage() {
   const [reportsMap, setReportsMap] = useState<Partial<Record<ReportType, ReportData>>>({})
   const [gateOpen, setGateOpen] = useState(false)
   const gateKey = typeof window !== 'undefined' ? `why_gate_seen_${sessionId}` : ''
+  const [whyOn, setWhyOn] = useState(true)
 
   useEffect(() => {
     if (!sessionId) return
@@ -218,8 +219,10 @@ export default function ReportPage() {
           <div className="card p-5 mb-4">
             <div className="text-sm text-gray-500 mb-2">Why 스위치</div>
             <div className="mb-3">
-              <span className="mr-3 text-xs px-2 py-1 rounded-full border">스위치</span>
+              <span className="mr-3 text-xs px-2 py-1 rounded-full border">{whyOn ? '스위치 ON' : '스위치 OFF'}</span>
+              <button className="btn" onClick={() => setWhyOn(v => !v)} disabled={!pro?.off_why_main}>ON/OFF 전환</button>
             </div>
+            {/* 본문 문장은 my_why 탭 상단 WhySwitch에서 주로 노출됨. 여기선 스위치 상태만 유지 */}
             {pro?.off_why_main && (
               <details className="mt-2"><summary className="cursor-pointer">OFF 대안 문장 보기</summary>
                 <ul className="ml-4 mt-2 list-disc">
@@ -240,8 +243,25 @@ export default function ReportPage() {
             <ul className="list-disc ml-5 mb-3">
               {pro!.reflection_questions!.map((q: string, i: number) => <li key={i} className="mb-2">{q}</li>)}
             </ul>
-            <div className="text-lg">어제 나는 <span className="inline-block min-w-[160px] border-b border-gray-400 align-bottom">&nbsp;</span></div>
+            <div className="text-lg">어제 나는 <span className="inline-block min-w-[160px] border-b border-gray-400 align-bottom">\u00A0</span></div>
             {pro?.post_prompt && <p className="text-xs text-gray-500 mt-2">{pro.post_prompt}</p>}
+            <div className="mt-3">
+              <OneLineEntry
+                placeholder={pro?.one_line_template || '어제 나는 ______ 때문에 _____해졌고, ______ 때문에 _____해졌다.'}
+                cta={pro?.cta_label || '엔터'}
+                onEnter={async () => {
+                  try {
+                    const inputEl = document.querySelector<HTMLInputElement>('#one-line-input')
+                    const val = inputEl?.value?.trim() || ''
+                    if (!val || val.length < 8) return
+                    await fetch(`/api/session/${sessionId}/report/one-line`, {
+                      method: 'POST', headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ one_line: val, why_state: whyOn ? 'ON' : 'OFF', ts: new Date().toISOString() })
+                    })
+                  } catch {}
+                }}
+              />
+            </div>
           </div>
         )}
       </div>
@@ -263,6 +283,7 @@ export default function ReportPage() {
             <div className="card p-6 mb-10">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{md || ''}</ReactMarkdown>
             </div>
+            {prologueInline}
           </div>
         )
       }
@@ -454,6 +475,7 @@ function OneLineEntry({ placeholder, cta, onEnter }: { placeholder: string; cta:
       <div className="text-lg">
         어제 나는
         <input
+          id="one-line-input"
           value={text}
           onChange={e => setText(e.target.value)}
           placeholder={placeholder.replace('어제 나는 ', '')}
