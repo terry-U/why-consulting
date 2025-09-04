@@ -556,6 +556,8 @@ export async function GET(req: Request, context: any) {
 규칙:
 - 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
 - 스키마를 반드시 준수합니다.
+ - 출력에는 라벨(머리/마음/장면 해설 등)을 쓰지 말고, 내용만 채웁니다.
+ - 상담 대화(TRANSCRIPT)의 표현을 1~2개 자연스럽게 포함합니다.
 
 입력:
 - TRANSCRIPT: ${transcript}
@@ -565,8 +567,8 @@ export async function GET(req: Request, context: any) {
 {
   "items": [
     {
-      "head": "지표가 중요하다",
-      "heart": "사람의 표정과 감사가 더 오래 남는다",
+      "head": "문장(머리로는…)",
+      "heart": "문장(마음은…)",
       "gapLevel": "high|medium|low",
       "headDetail": "문장",
       "heartDetail": "문장",
@@ -581,7 +583,8 @@ export async function GET(req: Request, context: any) {
 품질 체크:
 - items는 정확히 3개.
 - gapLevel은 high/medium/low 중 하나.
-- scene은 실제 대화의 단서 1~2개 포함.`,
+- scene은 실제 대화의 단서 1~2개 포함.
+- 타이틀(머리/마음/장면 해설) 텍스트는 넣지 말 것.`,
 
         style_pattern: `역할: 대화와 Why를 바탕으로 Style Pattern을 JSON 객체 1개로 생성합니다.
 
