@@ -81,7 +81,7 @@ The reason is that your heart responds most strongly to **'connected meaning'**.
   const apiOff: string | undefined = data?.off_why_main || undefined;
   const apiNarrative: string | undefined = Array.isArray(data?.narrative)
     ? (data.narrative as string[]).join('\n\n')
-    : (typeof data?.markdown === 'string' ? undefined : undefined);
+    : undefined;
   const apiQuestions: string[] | undefined = Array.isArray(data?.reflection_questions)
     ? (data.reflection_questions as string[])
     : undefined;
