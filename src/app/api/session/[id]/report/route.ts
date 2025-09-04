@@ -473,7 +473,7 @@ async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
 입력:
 - Transcript(전체 대화)\n${transcript}
 - WhyReport(Markdown)\n${whyMd || 'null'}`
-    } else {
+    } else if (t === 'fit_triggers') {
       prompt = `역할: 켜짐/꺼짐 조건을 정교화하고 예방·회복 프로토콜을 제시합니다.
 
 규칙:
@@ -501,6 +501,56 @@ async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
 입력:
 - Transcript(전체 대화)\n${transcript}
 - WhyReport(Markdown)\n${whyMd || 'null'}`
+    } else if (t === 'light_shadow') {
+      prompt = `# Light & Shadow
+
+Transcript 기반으로 강점이 과도할 때의 그림자와 균형 전략을 제시하세요.
+
+입력:
+- Transcript
+${transcript}
+- WhyReport
+${whyMd || 'null'}`
+    } else if (t === 'philosophy') {
+      prompt = `# Philosophy
+
+Transcript 기반으로 삶의 철학/가치 지향을 요약하고 사례 근거를 3~5줄로 작성하세요.
+
+입력:
+- Transcript
+${transcript}
+- WhyReport
+${whyMd || 'null'}`
+    } else if (t === 'action_recipe') {
+      prompt = `# Action Recipe
+
+이번 주 실험 3개와 성공지표를 작성하세요.
+
+입력:
+- Transcript
+${transcript}
+- WhyReport
+${whyMd || 'null'}`
+    } else if (t === 'future_path') {
+      prompt = `# Future Path
+
+6~12개월 방향/마일스톤/리스크와 완충 장치를 요약하세요.
+
+입력:
+- Transcript
+${transcript}
+- WhyReport
+${whyMd || 'null'}`
+    } else if (t === 'epilogue') {
+      prompt = `# Epilogue
+
+이번 리포트의 핵심 전환점을 3줄로 요약하세요.
+
+입력:
+- Transcript
+${transcript}
+- WhyReport
+${whyMd || 'null'}`
     }
 
     const completion = await openai.chat.completions.create({
