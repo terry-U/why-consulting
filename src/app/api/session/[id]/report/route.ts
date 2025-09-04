@@ -30,15 +30,23 @@ function validateAndFillMyWhy(input: any) {
 export async function GET(req: Request, context: any) {
   const sessionId = context?.params?.id || new URL(req.url).pathname.split('/').filter(Boolean).pop()
   const { searchParams } = new URL(req.url)
-  const type = (searchParams.get('type') || 'my_why') as 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers'
+  const type = (searchParams.get('type') || 'my_why') as 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers' | 'light_shadow' | 'philosophy' | 'action_recipe' | 'future_path' | 'epilogue'
   const checkOnly = (searchParams.get('check') === '1' || searchParams.get('check') === 'true')
   const force = (searchParams.get('force') === '1' || searchParams.get('force') === 'true')
   const cascade = (searchParams.get('cascade') === '1' || searchParams.get('cascade') === 'true') && type === 'my_why'
+  const reset = (searchParams.get('reset') === '1' || searchParams.get('reset') === 'true')
   if (!sessionId) {
     return NextResponse.json({ success: false, error: 'sessionId가 필요합니다' }, { status: 400 })
   }
 
   try {
+    // reset=1: 기존 보고서 전부 삭제 후 진행
+    if (reset) {
+      await supabaseServer
+        .from('reports')
+        .delete()
+        .eq('session_id', sessionId)
+    }
     // 1) 기존 저장된 보고서가 있으면 반환 (캐싱) — force=1이면 건너뜀
     const { data: existing, error: existingErr } = force ? { data: null as any, error: null as any } : await supabaseServer
       .from('reports')
@@ -118,7 +126,7 @@ export async function GET(req: Request, context: any) {
       .map(m => `${m.role === 'assistant' ? `[${m.counselor_id || 'assistant'}]` : '[user]'} ${m.content}`)
       .join('\n')
 
-    const buildPrompt = (t: 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers', transcript: string, whyMarkdown?: string, whyHeadline?: string, userName?: string) => {
+    const buildPrompt = (t: 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers' | 'light_shadow' | 'philosophy' | 'action_recipe' | 'future_path' | 'epilogue', transcript: string, whyMarkdown?: string, whyHeadline?: string, userName?: string) => {
       const prompts: Record<typeof t, string> = {
       my_why: `역할: 상담 대화 전체를 해석해 Why 한 문장과 상세 해석 보고서를 작성합니다.
 
