@@ -1,9 +1,36 @@
-"use client"
+import ExternalReportApp from '../../../../report-external/App'
 
-import dynamic from 'next/dynamic'
+async function fetchJson(url: string, init?: RequestInit) {
+  const res = await fetch(url, { cache: 'no-store', ...init })
+  if (!res.ok && res.status !== 202) return null
+  try { return await res.json() } catch { return null }
+}
 
-const ExternalReportApp = dynamic(() => import('../../../../report-external/App'), { ssr: false })
+export default async function ReportPage({ params }: { params: { id: string } }) {
+  const base = process.env.NEXT_PUBLIC_BASE_URL || ''
+  const id = params.id
+  const makeUrl = (q: string) => `${base}/api/session/${id}/report?${q}`
 
-export default function ReportPage() {
-  return <ExternalReportApp />
+  // 1) Kick off generation (my_why + cascade). Force once
+  await fetchJson(makeUrl('type=my_why&cascade=1&force=1'))
+
+  const types = [
+    'my_why','value_map','style_pattern','master_manager_spectrum','fit_triggers','light_shadow','philosophy','action_recipe','future_path','epilogue'
+  ] as const
+
+  const reports: Record<string, any> = {}
+  const delay = (ms: number) => new Promise(r => setTimeout(r, ms))
+
+  await Promise.all(types.map(async (t) => {
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const data = await fetchJson(makeUrl(`type=${t}`))
+      if (data && (data.success || data.report)) {
+        reports[t] = data.report || data
+        return
+      }
+      await delay(400 * (attempt + 1))
+    }
+  }))
+
+  return <ExternalReportApp initialReports={reports} />
 }

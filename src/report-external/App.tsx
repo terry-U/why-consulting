@@ -13,13 +13,15 @@ import { FuturePathSection } from './components/sections/FuturePathSection';
 import { EpilogueSection } from './components/sections/EpilogueSection';
 import { ReportHeader } from './components/ReportHeader';
 
-export default function App() {
+type ReportsMap = Record<string, any>;
+
+export default function App({ initialReports }: { initialReports?: ReportsMap }) {
   const [language, setLanguage] = useState('ko');
   const [pinnedSections, setPinnedSections] = useState<number[]>([]);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [isTOCVisible, setIsTOCVisible] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [reports, setReports] = useState<Record<string, any>>({});
+  const [reports, setReports] = useState<ReportsMap>(initialReports || {});
   const [loading, setLoading] = useState<boolean>(false);
   const [statusMsg, setStatusMsg] = useState<string>('');
 
@@ -114,7 +116,11 @@ export default function App() {
         setLoading(false);
       }
     };
-
+    // If server already injected reports, skip client fetch
+    if (initialReports && Object.keys(initialReports).length > 0) {
+      setReports(initialReports);
+      return;
+    }
     loadReports();
   }, []);
 
