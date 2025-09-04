@@ -6,10 +6,9 @@ async function fetchJson(url: string, init?: RequestInit) {
   try { return await res.json() } catch { return null }
 }
 
-export default async function ReportPage({ params }: { params: { id: string } }) {
-  const base = process.env.NEXT_PUBLIC_BASE_URL || ''
-  const id = params.id
-  const makeUrl = (q: string) => `${base}/api/session/${id}/report?${q}`
+export default async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const makeUrl = (q: string) => `/api/session/${id}/report?${q}`
 
   // 1) Kick off generation (my_why + cascade). Force once
   await fetchJson(makeUrl('type=my_why&cascade=1&force=1'))
