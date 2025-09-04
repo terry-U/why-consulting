@@ -158,8 +158,15 @@ The reason is that your heart responds most strongly to **'connected meaning'**.
         </CardHeader>
         <CardContent className="pt-0">
           <blockquote className="text-xl leading-relaxed border-l-4 border-primary/30 pl-6 font-medium">
-            "{whySwitchOn ? (apiHeadline || text.whyOn) : (apiOff || text.whyOff)}"
+            "{apiHeadline || text.whyOn}"
           </blockquote>
+          { (apiOff || text.whyOff) && (
+            <div className="mt-3">
+              <blockquote className="text-base leading-relaxed border-l-4 border-muted/30 pl-6 text-muted-foreground">
+                "{apiOff || text.whyOff}"
+              </blockquote>
+            </div>
+          )}
         </CardContent>
       </Card>
 

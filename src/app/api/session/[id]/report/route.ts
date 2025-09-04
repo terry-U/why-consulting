@@ -1041,7 +1041,36 @@ ${whyMd || 'null'}`
           temperature: 0.4
         })
         const content = completion.choices[0]?.message?.content || ''
-        const parsed: any = { markdown: content.trim() }
+        let parsed: any
+        // JSON 스키마 출력 타입은 JSON→검증→Markdown 변환
+        if (t === 'style_pattern') {
+          try {
+            const json = JSON.parse(content)
+            const sp = validateAndFillStylePattern(json)
+            parsed = { ...sp, markdown: stylePatternToMarkdown(sp) }
+          } catch {
+            parsed = { markdown: content.trim() }
+          }
+        } else if (t === 'master_manager_spectrum') {
+          try {
+            const json = JSON.parse(content)
+            const mm = validateAndFillMasterManager(json)
+            parsed = { ...mm, markdown: masterManagerToMarkdown(mm) }
+          } catch {
+            parsed = { markdown: content.trim() }
+          }
+        } else if (t === 'fit_triggers') {
+          try {
+            const json = JSON.parse(content)
+            const ft = validateAndFillFitTriggers(json)
+            parsed = { ...ft, markdown: fitTriggersToMarkdown(ft) }
+          } catch {
+            parsed = { markdown: content.trim() }
+          }
+        } else {
+          // 나머지는 마크다운 템플릿 그대로
+          parsed = { markdown: content.trim() }
+        }
         if (!parsed.markdown || parsed.markdown.length < 10) {
           throw new Error(`empty or too short content for type ${t}`)
         }
