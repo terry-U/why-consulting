@@ -182,6 +182,7 @@ export default function App() {
                   isPinned={pinnedSections.includes(0)}
                   onTogglePin={() => togglePin(0)}
                   language={language}
+                  data={reports?.my_why}
                 />
                 {reports?.my_why?.markdown && (
                   <div className="prose dark:prose-invert max-w-none mt-6">
@@ -207,6 +208,7 @@ export default function App() {
                   isPinned={pinnedSections.includes(1)}
                   onTogglePin={() => togglePin(1)}
                   language={language}
+                  data={reports?.value_map}
                 />
                 {reports?.value_map?.markdown && (
                   <div className="prose dark:prose-invert max-w-none mt-6">

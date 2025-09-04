@@ -7,6 +7,7 @@ interface ValueMapSectionProps {
   isPinned: boolean;
   onTogglePin: () => void;
   language: string;
+  data?: any;
 }
 
 const valueConflicts = [
@@ -84,7 +85,7 @@ const todayActions = [
   "다음 데모에 사용자 변화 1문장을 미리 붙입니다."
 ];
 
-export function ValueMapSection({ isPinned, onTogglePin, language }: ValueMapSectionProps) {
+export function ValueMapSection({ isPinned, onTogglePin, language, data }: ValueMapSectionProps) {
   const content = {
     ko: {
       title: '밸류맵',
@@ -125,6 +126,10 @@ export function ValueMapSection({ isPinned, onTogglePin, language }: ValueMapSec
   };
 
   const text = content[language as keyof typeof content] || content.ko;
+
+  // API 데이터 매핑
+  const apiItems: Array<any> | undefined = Array.isArray(data?.items) ? data.items : undefined;
+  const apiToday: string[] | undefined = Array.isArray(data?.today_actions) ? data.today_actions : undefined;
 
   const getGapColor = (level: string) => {
     switch (level) {
@@ -216,8 +221,11 @@ export function ValueMapSection({ isPinned, onTogglePin, language }: ValueMapSec
 
       {/* Value Conflicts */}
       <div className="space-y-8">
-        {valueConflicts.map((conflict) => (
-          <Card key={conflict.id} className="shadow-lg">
+        {(apiItems || valueConflicts).map((conflict: any, i: number) => {
+          const gapLabel = conflict.gap || (conflict.gapLevel === 'high' ? '간극 큼' : conflict.gapLevel === 'medium' ? '간극 보통' : '간극 작음·잘 맞음');
+          const key = conflict.id ?? i;
+          return (
+          <Card key={key} className="shadow-lg">
             {/* Main Conflict Header */}
             <CardHeader>
               <div className="space-y-4">
@@ -235,7 +243,7 @@ export function ValueMapSection({ isPinned, onTogglePin, language }: ValueMapSec
                     </div>
                   </div>
                   <Badge className={`${getGapColor(conflict.gapLevel)} font-medium flex-shrink-0`}>
-                    {conflict.gap}
+                    {gapLabel}
                   </Badge>
                 </div>
 
@@ -280,7 +288,7 @@ export function ValueMapSection({ isPinned, onTogglePin, language }: ValueMapSec
               </div>
             </CardContent>
           </Card>
-        ))}
+        )})}
       </div>
 
       {/* Today's Actions */}
@@ -293,7 +301,7 @@ export function ValueMapSection({ isPinned, onTogglePin, language }: ValueMapSec
         </CardHeader>
         <CardContent className="pt-0">
           <div className="space-y-4">
-            {todayActions.map((action, index) => (
+            {(apiToday || todayActions).map((action, index) => (
               <div key={index} className="flex items-start gap-3 p-4 bg-muted/30 rounded-lg">
                 <div className="flex-shrink-0 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
                   {index + 1}

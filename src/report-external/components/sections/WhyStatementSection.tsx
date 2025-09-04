@@ -10,9 +10,10 @@ interface WhyStatementSectionProps {
   isPinned: boolean;
   onTogglePin: () => void;
   language: string;
+  data?: any;
 }
 
-export function WhyStatementSection({ isPinned, onTogglePin, language }: WhyStatementSectionProps) {
+export function WhyStatementSection({ isPinned, onTogglePin, language, data }: WhyStatementSectionProps) {
   const [whySwitchOn, setWhySwitchOn] = useState(true);
   const [firstBlank, setFirstBlank] = useState('');
   const [secondBlank, setSecondBlank] = useState('');
@@ -74,6 +75,16 @@ The reason is that your heart responds most strongly to **'connected meaning'**.
   };
 
   const text = content[language as keyof typeof content] || content.ko;
+
+  // API 데이터 매핑
+  const apiHeadline: string | undefined = data?.headline || undefined;
+  const apiOff: string | undefined = data?.off_why_main || undefined;
+  const apiNarrative: string | undefined = Array.isArray(data?.narrative)
+    ? (data.narrative as string[]).join('\n\n')
+    : (typeof data?.markdown === 'string' ? undefined : undefined);
+  const apiQuestions: string[] | undefined = Array.isArray(data?.reflection_questions)
+    ? (data.reflection_questions as string[])
+    : undefined;
 
   const handleCheck = () => {
     if (firstBlank.trim() && secondBlank.trim() && thirdBlank.trim() && fourthBlank.trim()) {
@@ -147,7 +158,7 @@ The reason is that your heart responds most strongly to **'connected meaning'**.
         </CardHeader>
         <CardContent className="pt-0">
           <blockquote className="text-xl leading-relaxed border-l-4 border-primary/30 pl-6 font-medium">
-            "{whySwitchOn ? text.whyOn : text.whyOff}"
+            "{whySwitchOn ? (apiHeadline || text.whyOn) : (apiOff || text.whyOff)}"
           </blockquote>
         </CardContent>
       </Card>
@@ -159,7 +170,7 @@ The reason is that your heart responds most strongly to **'connected meaning'**.
         </CardHeader>
         <CardContent className="pt-0">
           <div className="text-lg leading-relaxed whitespace-pre-line">
-            {text.narrative}
+            {apiNarrative || text.narrative}
           </div>
         </CardContent>
       </Card>
@@ -171,7 +182,7 @@ The reason is that your heart responds most strongly to **'connected meaning'**.
         </CardHeader>
         <CardContent className="pt-0">
           <div className="space-y-6">
-            {text.reflectionQuestions.map((question, index) => (
+            {(apiQuestions || text.reflectionQuestions).map((question, index) => (
               <div key={index} className="p-6 border border-border rounded-lg bg-muted/30">
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-medium">
