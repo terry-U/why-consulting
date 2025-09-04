@@ -21,6 +21,7 @@ export default function App() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [reports, setReports] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState<boolean>(false);
+  const [statusMsg, setStatusMsg] = useState<string>('');
 
   // Load theme from localStorage on mount
   useEffect(() => {
@@ -53,17 +54,30 @@ export default function App() {
     if (!id) return;
     setSessionId(id);
 
+    const base = window.location.origin;
     const fetchJson = async (url: string) => {
-      const res = await fetch(url, { method: 'GET' });
-      if (res.status === 202) return { pending: true } as any;
-      return res.json();
+      try {
+        console.log('[report] GET', url);
+        const res = await fetch(url, { method: 'GET', credentials: 'same-origin' });
+        console.log('[report] RES', res.status, url);
+        if (res.status === 202) return { pending: true } as any;
+        const text = await res.text();
+        try { return JSON.parse(text); } catch {
+          console.warn('[report] non-JSON response', text?.slice(0,200));
+          return { success: false, error: 'non-json' };
+        }
+      } catch (e) {
+        console.error('[report] fetch error', url, e);
+        return { success: false, error: String(e) };
+      }
     };
 
     const loadReports = async () => {
       try {
         setLoading(true);
         // 1) Ensure my_why exists and cascade others (force once to guarantee kick-off)
-        await fetchJson(`/api/session/${id}/report?type=my_why&cascade=1&force=1`);
+        setStatusMsg('보고서 생성 시작...');
+        await fetchJson(`${base}/api/session/${id}/report?type=my_why&cascade=1&force=1`);
 
         const types: Array<string> = [
           'my_why',
@@ -83,9 +97,10 @@ export default function App() {
           // Poll up to ~90s with backoff
           for (let attempt = 0; attempt < 12; attempt++) {
             try {
-              const data = await fetchJson(`/api/session/${id}/report?type=${t}`);
+              const data = await fetchJson(`${base}/api/session/${id}/report?type=${t}`);
               if (data && (data.success || data.report)) {
                 setReports(prev => ({ ...prev, [t]: data.report || data }));
+                setStatusMsg(`${t} 로드 완료`);
                 return;
               }
             } catch {}
@@ -152,6 +167,11 @@ export default function App() {
             onThemeChange={toggleTheme}
             onToggleMobileTOC={toggleTOC}
           />
+          {loading && (
+            <div className="max-w-4xl mx-auto px-6">
+              <div className="my-4 text-sm text-muted-foreground">{statusMsg || '보고서 로딩 중...'}</div>
+            </div>
+          )}
           
           <div className="max-w-4xl mx-auto px-6 py-8">
             <div className="space-y-20">
