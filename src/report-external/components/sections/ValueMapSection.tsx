@@ -128,7 +128,7 @@ export function ValueMapSection({ isPinned, onTogglePin, language, data }: Value
   const text = content[language as keyof typeof content] || content.ko;
 
   // API 데이터 매핑
-  const apiItems: Array<any> | undefined = Array.isArray(data?.items) ? data.items : undefined;
+  const apiItems: Array<any> | undefined = Array.isArray(data?.items) ? data.items.slice(0,3) : undefined;
   const apiToday: string[] | undefined = Array.isArray(data?.today_actions) ? data.today_actions : undefined;
 
   const getGapColor = (level: string) => {

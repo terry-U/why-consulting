@@ -37,7 +37,8 @@ function validateAndFillValueMap(input: any) {
     scene: typeof it?.scene === 'string' ? it.scene.trim() : '',
     bridge: typeof it?.bridge === 'string' ? it.bridge.trim() : ''
   })
-  const items = Array.isArray(input?.items) ? input.items.slice(0, 6).map(toItem) : []
+  const rawItems = Array.isArray(input?.items) ? input.items : []
+  const items = rawItems.slice(0, 3).map(toItem)
   const today_actions = Array.isArray(input?.today_actions) ? input.today_actions.slice(0, 3).map((s: any) => (typeof s === 'string' ? s.trim() : '')) : []
   const summary = typeof input?.summary === 'string' ? input.summary.trim() : ''
   return { items, today_actions, summary }
