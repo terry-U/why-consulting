@@ -126,87 +126,45 @@ export async function GET(req: Request, context: any) {
       .map(m => `${m.role === 'assistant' ? `[${m.counselor_id || 'assistant'}]` : '[user]'} ${m.content}`)
       .join('\n')
 
-    const buildPrompt = (t: 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers' | 'light_shadow' | 'philosophy' | 'action_recipe' | 'future_path' | 'epilogue', transcript: string, whyMarkdown?: string, whyHeadline?: string, userName?: string) => {
-      const prompts: Record<typeof t, string> = {
-      my_why: `역할: 상담 대화 전체를 해석해 Why 한 문장과 상세 해석 보고서를 작성합니다.
+    const buildPrompt = (
+      t: 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers' | 'light_shadow' | 'philosophy' | 'action_recipe' | 'future_path' | 'epilogue',
+      transcript: string,
+      whyMarkdown?: string,
+      whyHeadline?: string,
+      userName?: string
+    ) => {
+      const prompts: Record<string, string> = {
+        my_why: `역할: 당신은 공감형 스토리텔러이자 동기심리 코치입니다. 이 출력은 서비스의 '나의 Why' 섹션(JSON 전용)에 그대로 사용됩니다.
 
-출력 형식: 반드시 JSON만 출력합니다. 프리텍스트 금지. 다음 스키마를 지키세요.
+규칙:
+- 한국어만 사용. 임상적 진단/라벨링/교정 어휘 금지.
+- 프리텍스트 없이 JSON 객체 1개만 반환.
+- 상투어(확산, 전달, 임팩트, 영향, 세상을 바꾸, 가치를 전)는 TRANSCRIPT에 실제 등장한 경우에만 허용.
+
+입력:
+- USER_NAME: ${userName || '사용자'}
+- WHY_REFINED(headline): ${whyHeadline || '(미정)'}
+- TRANSCRIPT(대화 전체):\n${transcript}
+
+출력 형식(JSON만):
 {
-  "headline": string, // Why 한 줄 문장만. 따옴표·불릿 금지
-  "markdown": string,  // 아래 마크다운 템플릿을 그대로 채워 반환
-  // 아래 필드는 프롤로그(서사/질문/반대 Why) 기능을 위해 추가되었습니다.
-  "off_why_main": string,                  // Why의 반대 한마디(담백 1문장)
-  "off_why_alternatives": string[],       // 2~3개 대안
-  "narrative": string[],                  // 2~3단락, 각 2~4문장
-  "reflection_questions": string[],       // 정확히 3개
-  "one_line_template": string,            // 예: "어제 나는 ______ 때문에 _____해졌다."
-  "cta_label": string,                    // 기본 "엔터"
-  "post_prompt": string                   // 예: "어때요. 나의 Why와 비슷한 모습인가요?"
+  "headline": "${whyHeadline || ''}",
+  "markdown": "# My 'Why'\\n- Why 한 줄: [headline 그대로]\\n- 가치 Top3: [3개]\\n- 스타일 3개: [3개]\\n- 자기/타자 경향 한줄 해석: (예: \\\"자기 영향에 약간 더 치우친 편…\\\")\\n\\n## 해석(결정론 금지, 근거 중심)\\n- 당신은 어떤 스타일의 사람인지(핵심 습관·선택 기준)\\n- 지금까지 어떻게 살아왔는지(반복 패턴·의미)\\n- 그 결과 어떤 일이 생겼는지(강점·리스크·전환점)\\n- 앞으로 어떻게 살아가면 좋은지(핵심 조언 3가지: 구체·측정 가능)",
+  "off_why_main": "<담백 1문장(18~40자)>",
+  "off_why_alternatives": ["<대안1>", "<대안2>"],
+  "narrative": ["<단락1(2~4문장)>", "<단락2(2~4문장)>", "<단락3(선택)>"] ,
+  "reflection_questions": ["<질문1>", "<질문2>", "<질문3>"],
+  "one_line_template": "어제 나는 ______ 때문에 _____해졌고, ______ 때문에 _____해졌다.",
+  "cta_label": "엔터",
+  "post_prompt": "어때요. 나의 Why와 비슷한 모습인가요?"
 }
 
-function validateAndFillMyWhy(input: any) {
-  const result: any = {
-    headline: typeof input?.headline === 'string' ? input.headline.trim() : '',
-    markdown: typeof input?.markdown === 'string' ? input.markdown.trim() : '',
-    off_why_main: typeof input?.off_why_main === 'string' ? input.off_why_main.trim() : '',
-    off_why_alternatives: Array.isArray(input?.off_why_alternatives) ? input.off_why_alternatives.slice(0, 3) : [],
-    narrative: Array.isArray(input?.narrative) ? input.narrative.slice(0, 3) : [],
-    reflection_questions: Array.isArray(input?.reflection_questions) ? input.reflection_questions.slice(0, 3) : [],
-    one_line_template: typeof input?.one_line_template === 'string' ? input.one_line_template : '어제 나는 ______ 때문에 _____해졌다.',
-    cta_label: typeof input?.cta_label === 'string' ? input.cta_label : '엔터',
-    post_prompt: typeof input?.post_prompt === 'string' ? input.post_prompt : '어때요. 나의 Why와 비슷한 모습인가요?'
-  }
-  // 최소 보장: 질문 3개 미만이면 기본 질문으로 채움
-  const defaults = [
-    '어제, 일이 잘 풀렸던 장면을 떠올리면 누구의 얼굴이 함께 떠오르나요?',
-    '그 순간 당신의 에너지는 올라갔나요, 유지됐나요, 줄었나요? 이유는 무엇이었나요?',
-    '숫자만 남은 성과였다면 무엇이 빠져 있었나요? (얼굴/목소리/이야기의 맥락)'
-  ]
-  if (result.reflection_questions.length < 3) {
-    result.reflection_questions = defaults.slice(0, 3)
-  }
-  return result
-}
+품질 체크:
+- narrative는 2~3단락, 단락당 2~4문장.
+- reflection_questions는 정확히 3개.
+- TRANSCRIPT 어휘 1~2개 자연스럽게 포함.`,
 
-Why 한 줄(headline) 생성 규칙:
-- 다음 구조로, 자연스러운 한국어 문장 한 줄:
-  "[남들을 위해 적극적으로 하는 일을 함]으로써 [그런 기여가 이뤄졌을 때 실제로 일어나는 일] 한다."
-- 기여 파트: "[대상]을[에게] [스타일/방법] 함으로"
-- 영향력 파트: 내가 중요하게 여기는 좋은 것을 타인도 느끼게 되는 실제 결과(예: 행복, 성취감, 안도감, 성장 등).
-
-보고서(markdown) 템플릿(그대로 출력)
-
-:
-# My 'Why'
-- Why 한 줄: [headline 그대로]
-- 가치 Top3: [3개]
-- 스타일 3개: [3개]
-- 자기/타자 경향 한줄 해석: (예: "자기 영향에 약간 더 치우친 편…")
-
-## 해석(결정론 금지, 근거 중심)
-- 당신은 어떤 스타일의 사람인지(핵심 습관·선택 기준)
-- 지금까지 어떻게 살아왔는지(반복 패턴·의미)
-- 그 결과 어떤 일이 생겼는지(강점·리스크·전환점)
-- 앞으로 어떻게 살아가면 좋은지(핵심 조언 3가지: 구체·측정 가능)
-
-입력 Transcript(전체 대화):\n${transcript}
-
-추가 작성 규칙(프롤로그 통합 필드):
-- off_why_main: headline의 의미가 부정·좌절·고립된 상태로 나타날 때의 한 문장(18~40자), 담백체. 아래 금지 상투어를 사용하지 마세요.
-- off_why_alternatives: off_why_main에 준하는 2~3개의 대안 문장(톤: 따뜻/철학 혼합, 과장 금지).
-- narrative: 아래 장면들을 TRANSCRIPT 어휘를 1~2개 ‘재서술’해 자연스럽게 엮은 2~3단락(단락당 2~4문장).
-  · 숫자는 괜찮았지만 공허했던 날, 짧은 “덕분에”가 오래 남은 순간, “고마워요”가 에너지를 채운 경험,
-  · 혼자 버티며 실마리를 찾아 방향 전환/작은 실험을 밀어붙인 장면,
-  · 왜 ‘연결된 의미’가 이 사람의 심장에 크게 반응하는지(평가·판단 금지).
-- reflection_questions: 정확히 3문항(‘어제’ 프레임, 얼굴/에너지/덕분에/숫자만 남은 성과에서 빠진 요소 질문).
-- one_line_template: 반드시 "어제 나는 ______ 때문에 _____해졌다." 그대로.
-- cta_label: "엔터".
-- post_prompt: "어때요. 나의 Why와 비슷한 모습인가요?".
-- 금지 상투어(BAN_TEMPLATES): [확산, 전달, 임팩트, 영향, 세상을 바꾸, 가치를 전] — TRANSCRIPT에 실제 등장한 경우만 예외.
-
-반환은 JSON 한 개 객체만. 프리텍스트·코멘트 금지.`,
-
-      value_map: `역할: 전체 대화와 Why 보고서를 바탕으로 가치의 "생각 vs 실제" 간극까지 분석하고 해소 지침을 제시하는 보고서 작성자입니다.
+        value_map: `역할: 전체 대화와 Why 보고서를 바탕으로 가치의 "생각 vs 실제" 간극까지 분석하고 해소 지침을 제시하는 보고서 작성자입니다.
 
 규칙:
 - 아래 템플릿을 마크다운 그대로 사용하여 한국어로만 작성합니다.
@@ -233,7 +191,7 @@ Why 한 줄(headline) 생성 규칙:
 - Transcript(전체 대화)\n${transcript}
 - WhyReport(Markdown)\n${whyMarkdown || (whyReportContent?.markdown || 'null')}`,
 
-      style_pattern: `역할: 가치를 만들어내는 스타일의 일치/불일치를 진단하고 정교한 조언을 제시합니다.
+        style_pattern: `역할: 가치를 만들어내는 스타일의 일치/불일치를 진단하고 정교한 조언을 제시합니다.
 
 규칙:
 - 아래 템플릿을 마크다운 그대로 사용하여 한국어로만 작성합니다.
@@ -256,7 +214,7 @@ Why 한 줄(headline) 생성 규칙:
 - Transcript(전체 대화)\n${transcript}
 - WhyReport(Markdown)\n${whyMarkdown || (whyReportContent?.markdown || 'null')}`,
 
-      master_manager_spectrum: `역할: Master–Manager 스펙트럼 개념을 요약하고, 개인 성향을 해석하여 운영 가이드를 제시합니다.
+        master_manager_spectrum: `역할: Master–Manager 스펙트럼 개념을 요약하고, 개인 성향을 해석하여 운영 가이드를 제시합니다.
 
 규칙:
 - 아래 템플릿을 마크다운 그대로 사용하여 한국어로만 작성합니다.
@@ -280,7 +238,7 @@ Why 한 줄(headline) 생성 규칙:
 - Transcript(전체 대화)\n${transcript}
 - WhyReport(Markdown)\n${whyMarkdown || (whyReportContent?.markdown || 'null')}`,
 
-      fit_triggers: `역할: 켜짐/꺼짐 조건을 정교화하고 예방·회복 프로토콜을 제시합니다.
+        fit_triggers: `역할: 켜짐/꺼짐 조건을 정교화하고 예방·회복 프로토콜을 제시합니다.
 
 규칙:
 - 아래 템플릿을 마크다운 그대로 사용하여 한국어로만 작성합니다.
@@ -306,7 +264,13 @@ Why 한 줄(headline) 생성 규칙:
 
 입력:
 - Transcript(전체 대화)\n${transcript}
-- WhyReport(Markdown)\n${whyMarkdown || (whyReportContent?.markdown || 'null')}`
+- WhyReport(Markdown)\n${whyMarkdown || (whyReportContent?.markdown || 'null')}`,
+
+        light_shadow: `# Light & Shadow\n\nTranscript 기반으로 강점이 과도할 때의 그림자와 균형 전략을 제시하세요.\n\n입력:\n- Transcript\n${transcript}\n- WhyReport\n${whyMarkdown || (whyReportContent?.markdown || 'null')}`,
+        philosophy: `# Philosophy\n\nTranscript 기반으로 삶의 철학/가치 지향을 요약하고 사례 근거를 3~5줄로 작성하세요.\n\n입력:\n- Transcript\n${transcript}\n- WhyReport\n${whyMarkdown || (whyReportContent?.markdown || 'null')}`,
+        action_recipe: `# Action Recipe\n\n이번 주 실험 3개와 성공지표를 작성하세요.\n\n입력:\n- Transcript\n${transcript}\n- WhyReport\n${whyMarkdown || (whyReportContent?.markdown || 'null')}`,
+        future_path: `# Future Path\n\n6~12개월 방향/마일스톤/리스크와 완충 장치를 요약하세요.\n\n입력:\n- Transcript\n${transcript}\n- WhyReport\n${whyMarkdown || (whyReportContent?.markdown || 'null')}`,
+        epilogue: `# Epilogue\n\n이번 리포트의 핵심 전환점을 3줄로 요약하세요.\n\n입력:\n- Transcript\n${transcript}\n- WhyReport\n${whyMarkdown || (whyReportContent?.markdown || 'null')}`
       }
       return prompts[t]
     }
@@ -392,8 +356,8 @@ Why 한 줄(headline) 생성 규칙:
 
 async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  const types: Array<'value_map'|'style_pattern'|'master_manager_spectrum'|'fit_triggers'> = [
-    'value_map','style_pattern','master_manager_spectrum','fit_triggers'
+  const types: Array<'value_map'|'style_pattern'|'master_manager_spectrum'|'fit_triggers'|'light_shadow'|'philosophy'|'action_recipe'|'future_path'|'epilogue'> = [
+    'value_map','style_pattern','master_manager_spectrum','fit_triggers','light_shadow','philosophy','action_recipe','future_path','epilogue'
   ]
   // Load messages to build transcript
   const { data: messages } = await supabaseServer

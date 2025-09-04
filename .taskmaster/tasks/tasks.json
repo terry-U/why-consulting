@@ -527,5 +527,296 @@
       "updated": "2025-09-01T07:51:03.770Z",
       "description": "Design refresh applying design-ref across all pages/components"
     }
+  },
+  "feature-report-v2": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Report v2 Restructuring Initiative - Schema and Type Definitions",
+        "description": "Define comprehensive type definitions for all report sections (Ch0-Ch9) in src/types/report.ts, ensuring proper versioning and type safety across the entire report structure.",
+        "details": "This task involves creating a complete type system for the report v2 restructuring initiative:\n\n1. Update src/types/report.ts to include type definitions for all report sections (Ch0-Ch9)\n2. Implement proper versioning for each section type to support backward compatibility\n3. Define interfaces for all data structures used in the report\n4. Create type guards and utility types to ensure type safety during report generation\n5. Document each type with JSDoc comments explaining its purpose and usage\n6. Ensure types align with the JSON schema expected by the API\n7. Create specific types for different report sections:\n   - Base report type that all sections extend\n   - Section-specific types (Ch0-Ch9) with their unique properties\n   - Types for my_why JSON-only section\n   - Types for markdown template sections\n8. Add validation type predicates to help with runtime type checking\n9. Ensure exported types are properly named and organized for easy imports\n10. Consider edge cases like optional fields, nullable values, and array types\n\nExample structure:\n```typescript\n// Base report type\nexport interface ReportBase {\n  version: string;\n  lastUpdated: string;\n  // Common fields\n}\n\n// Chapter-specific types\nexport interface Ch0Section extends ReportBase {\n  // Ch0-specific fields\n}\n\n// ... other chapter types\n\n// Type guards\nexport function isCh0Section(section: any): section is Ch0Section {\n  // Implementation\n}\n\n// Utility types\nexport type AllReportSections = Ch0Section | Ch1Section | /* ... */;\n```",
+        "testStrategy": "1. Create unit tests for all type definitions:\n   - Test type guards with valid and invalid inputs\n   - Verify type compatibility with mock data\n   - Test edge cases like null/undefined values\n\n2. Integration testing:\n   - Import types in relevant components and verify no type errors\n   - Test serialization/deserialization of typed objects to/from JSON\n   - Verify API responses conform to defined types\n\n3. Manual verification:\n   - Review type definitions with team members\n   - Ensure all required fields from the specification are included\n   - Check that types are properly exported and accessible\n\n4. Documentation validation:\n   - Verify JSDoc comments are complete and accurate\n   - Ensure type examples are provided where helpful\n   - Check that naming conventions are consistent\n\n5. Compatibility testing:\n   - Test with existing code that will use these types\n   - Verify backward compatibility with previous report versions\n   - Check that version handling works as expected\n\n6. Static analysis:\n   - Run TypeScript compiler in strict mode to catch any issues\n   - Use tools like tsc --noEmit to verify type correctness",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define Base Report Type and Common Interfaces",
+            "description": "Create the foundational ReportBase interface and common utility types that all report sections will extend. Include version control fields and shared properties.",
+            "dependencies": [],
+            "details": "In src/types/report.ts, define the ReportBase interface with version, lastUpdated, and other common fields. Create utility types for handling versioning (e.g., VersionedType<T>). Include JSDoc comments for each type. Define enums for report section identifiers and status values that will be used across all sections.",
+            "status": "pending",
+            "testStrategy": "Create unit tests to verify the structure of the base types. Test with sample objects to ensure they conform to the expected interface."
+          },
+          {
+            "id": 2,
+            "title": "Implement Ch0-Ch3 Section Type Definitions",
+            "description": "Define specific type interfaces for the first four report chapters (Ch0-Ch3), ensuring they extend the base report type and include their unique properties.",
+            "dependencies": [],
+            "details": "Create interfaces for Ch0Section, Ch1Section, Ch2Section, and Ch3Section that extend ReportBase. Include all section-specific fields with proper types and JSDoc documentation. Define nested types for complex structures within these sections. Implement version-specific interfaces if backward compatibility is needed.",
+            "status": "pending",
+            "testStrategy": "Test each section type with mock data representing real-world usage. Verify type compatibility and inheritance from ReportBase."
+          },
+          {
+            "id": 3,
+            "title": "Implement Ch4-Ch9 Section Type Definitions",
+            "description": "Define specific type interfaces for the remaining report chapters (Ch4-Ch9), following the same pattern established for the earlier chapters.",
+            "dependencies": [],
+            "details": "Create interfaces for Ch4Section through Ch9Section that extend ReportBase. Include all section-specific fields with proper types and JSDoc documentation. Define nested types for complex structures within these sections. Ensure consistency with the type patterns established in the previous subtask.",
+            "status": "pending",
+            "testStrategy": "Test each section type with mock data representing real-world usage. Verify type compatibility and inheritance from ReportBase."
+          },
+          {
+            "id": 4,
+            "title": "Create my_why JSON-only Section Types",
+            "description": "Implement specialized types for the my_why section which has a JSON-only structure different from other report sections.",
+            "dependencies": [],
+            "details": "Define MyWhySection interface extending ReportBase with specific fields for the my_why content. Create nested types for the unique JSON structure of this section. Include types for any special processing or formatting requirements specific to my_why content.",
+            "status": "pending",
+            "testStrategy": "Test the my_why types with sample JSON data. Verify that the types accurately represent the expected structure and handle edge cases appropriately."
+          },
+          {
+            "id": 5,
+            "title": "Implement Type Guards and Type Predicates",
+            "description": "Create type guard functions for runtime type checking of report sections and implement validation predicates for each section type.",
+            "dependencies": [],
+            "details": "Implement functions like isCh0Section, isCh1Section, etc., that validate if an object conforms to the expected type structure. Create a comprehensive isReportSection function that can identify any section type. Add specific validation predicates for checking required fields and data integrity within each section type.",
+            "status": "pending",
+            "testStrategy": "Create unit tests with valid and invalid inputs for each type guard. Verify that the guards correctly identify matching and non-matching objects."
+          },
+          {
+            "id": 6,
+            "title": "Define Union Types and Type Utilities",
+            "description": "Create union types representing all possible report sections and implement utility types for common operations on report data.",
+            "dependencies": [],
+            "details": "Define AllReportSections as a union of all section types. Create utility types like ReportSectionMap for mapping section IDs to their respective types. Implement helper types for common transformations (e.g., PartialReport, ReportSectionKeys). Add type utilities for handling optional fields and nullable values consistently across the report structure.",
+            "status": "pending",
+            "testStrategy": "Test the union and utility types with various combinations of report sections. Verify that type inference works correctly when using these types in sample code."
+          },
+          {
+            "id": 7,
+            "title": "Add Markdown Template Section Types",
+            "description": "Implement specialized types for sections that use markdown templates, including any parsing or rendering metadata needed.",
+            "dependencies": [],
+            "details": "Create MarkdownTemplateSection interface that extends ReportBase with fields for template content, variables, and rendering options. Define types for template variable substitution and markdown processing options. Include types for template metadata like author, creation date, and template version.",
+            "status": "pending",
+            "testStrategy": "Test the markdown template types with sample template data. Verify that the types support all required template features and variable substitution patterns."
+          },
+          {
+            "id": 8,
+            "title": "Ensure API Schema Compatibility and Export Type Definitions",
+            "description": "Finalize the type system to ensure compatibility with the API's JSON schema and organize exports for easy consumption by other modules.",
+            "dependencies": [],
+            "details": "Review all types to ensure alignment with the API's expected JSON schema. Add any missing fields or constraints required by the API. Organize type exports with named exports for individual types and namespace exports for related type groups. Create index files if needed for simplified imports. Add comprehensive JSDoc comments to all exported types explaining their purpose, usage, and any special considerations.",
+            "status": "pending",
+            "testStrategy": "Perform integration testing by importing the types in components that use the API. Verify that sample API responses can be properly typed with the defined interfaces. Test the export structure by importing types in various ways to ensure they're accessible as expected."
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "API Session Report Prompt Reconstruction and Type Integration",
+        "description": "Restore and restructure the buildPrompt functionality for /api/session/[id]/report endpoint with type-based prompt branching, integrating my_why JSON schema options and maintaining markdown templates for other types.",
+        "details": "This task involves reconstructing the buildPrompt functionality for the session report API with the following implementation steps:\n\n1. Restore the broken buildPrompt functionality in the /api/session/[id]/report endpoint\n2. Implement type-based prompt branching logic to handle different prompt types:\n   - Identify and remove broken text segments from the current implementation\n   - Integrate the my_why JSON schema with the following options:\n     - ON/OFF states\n     - narrative format\n     - questions format\n     - one_line format\n     - cta (call to action) format\n     - post_prompt format\n   - Maintain existing markdown templates for all other prompt types\n3. Implement and verify the following control operations:\n   - check: Verify prompt structure without modifying\n   - force: Override existing prompt with new structure\n   - cascade: Apply changes to dependent prompts\n   - reset: Restore default prompt structure\n4. Update the API handler to properly process the reconstructed prompt based on type\n5. Ensure type safety by leveraging the report type definitions from Task #1\n6. Add error handling for malformed prompts or invalid type specifications\n7. Document the new prompt structure and branching logic for future reference\n\nCode structure should follow:\n```typescript\n// Example prompt branching logic\nfunction buildPrompt(session: Session, type: PromptType, options: PromptOptions): string {\n  // Remove broken text segments\n  const cleanedSession = removeInvalidTextSegments(session);\n  \n  switch(type) {\n    case 'my_why':\n      return buildMyWhyPrompt(cleanedSession, options);\n    // Other cases for different prompt types\n    default:\n      return existingMarkdownTemplates[type] || '';\n  }\n}\n\n// my_why JSON schema integration\nfunction buildMyWhyPrompt(session: Session, options: MyWhyOptions): string {\n  const { state, format } = options;\n  \n  if (state === 'OFF') return '';\n  \n  switch(format) {\n    case 'narrative': \n      return `${narrativeTemplate}`;\n    case 'questions':\n      return `${questionsTemplate}`;\n    // Other format cases\n  }\n}\n```",
+        "testStrategy": "1. Unit Testing:\n   - Create unit tests for each prompt type to verify correct structure\n   - Test all my_why JSON schema options (ON/OFF/narrative/questions/one_line/cta/post_prompt)\n   - Verify proper handling of broken text segments\n   - Test each control operation (check/force/cascade/reset) with various inputs\n\n2. Integration Testing:\n   - Test the API endpoint with various session IDs and prompt types\n   - Verify correct prompt generation for each type\n   - Test error handling with malformed requests\n   - Validate JSON schema compliance for my_why prompt types\n\n3. End-to-End Testing:\n   - Create test sessions and generate reports through the API\n   - Verify the generated prompts match expected output\n   - Test the full workflow from session creation to report generation\n\n4. Regression Testing:\n   - Ensure existing functionality for other prompt types is preserved\n   - Verify backward compatibility with existing reports\n\n5. Manual Testing:\n   - Review generated prompts for correctness and formatting\n   - Verify proper handling of edge cases like empty sessions or missing data",
+        "status": "in-progress",
+        "dependencies": [
+          1
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 3,
+        "title": "Ch0 My Why Integration: Data Structure, Prompt Formatting, and UI Binding",
+        "description": "Finalize the Ch0 My Why and Prologue integration by establishing data structures, formatting JSON prompts, enhancing API validation, and implementing UI bindings for interactive elements.",
+        "details": "This task involves finalizing the Ch0 My Why and Prologue integration with the following implementation steps:\n\n1. Data Structure Finalization:\n   - Define and document all data states (ON/OFF toggles)\n   - Structure narrative content format requirements\n   - Formalize question formats and validation rules\n   - Define one-line summary data structure\n   - Document call-to-action (CTA) format requirements\n   - Establish post-prompt data structure\n\n2. JSON Prompt Formatting:\n   - Create standardized JSON templates for My Why prompts\n   - Implement proper nesting and hierarchy for all prompt components\n   - Ensure all prompts follow the established schema from Task #1\n   - Document the JSON structure with examples for each prompt type\n   - Implement serialization/deserialization utilities for the prompt data\n\n3. API Validation Enhancement:\n   - Extend the validateAndFill function to handle all Ch0 data types\n   - Implement validation rules for each data component\n   - Add error handling for malformed or incomplete data\n   - Create data normalization functions to ensure consistency\n   - Document API validation requirements and error codes\n\n4. UI Binding Implementation:\n   - Connect toggle switches to the ON/OFF state data\n   - Bind narrative sections to the corresponding data fields\n   - Implement question rendering and response handling\n   - Create one-line summary input and display components\n   - Ensure all UI elements properly reflect the underlying data state\n   - Implement real-time validation feedback for user inputs\n\n5. Integration with Existing Systems:\n   - Ensure compatibility with the prompt building system from Task #2\n   - Verify type safety using the schema definitions from Task #1\n   - Document integration points and dependencies",
+        "testStrategy": "1. Unit Testing:\n   - Test each data structure component with valid and invalid inputs\n   - Verify JSON prompt formatting produces valid output for all scenarios\n   - Test validateAndFill function with various input combinations\n   - Validate UI binding functions with mock data\n\n2. Integration Testing:\n   - Test the complete flow from UI interaction to data storage\n   - Verify API responses with different combinations of input data\n   - Test error handling and validation feedback in the UI\n   - Ensure proper state management across UI components\n\n3. UI Component Testing:\n   - Test toggle switches for proper ON/OFF state management\n   - Verify narrative sections render and update correctly\n   - Test question components for proper rendering and response handling\n   - Validate one-line summary input and display functionality\n\n4. End-to-End Testing:\n   - Create test scenarios covering the complete user journey\n   - Verify data persistence across page refreshes\n   - Test integration with the report generation system\n   - Validate proper display of all UI elements based on data state\n\n5. Regression Testing:\n   - Ensure changes don't break existing functionality\n   - Verify compatibility with other report sections\n   - Test backward compatibility with existing data",
+        "status": "pending",
+        "dependencies": [
+          1,
+          2
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 4,
+        "title": "Ch1 Value Map: Data Field Definition, Template Markdown Prompt, API Storage/Cascade, and UI Section Binding",
+        "description": "Define and implement the Ch1 Value Map component by finalizing data fields, creating markdown prompt templates, establishing API storage with cascade functionality, and binding UI sections to the data structure.",
+        "details": "This task involves implementing the Ch1 Value Map component with the following steps:\n\n1. Data Field Definition:\n   - Define all required data fields for the Value Map component\n   - Document field types, validation rules, and constraints\n   - Establish relationships between fields\n   - Create schema validation for input data\n   - Define default values and initialization logic\n\n2. Template Markdown Prompt:\n   - Create standardized markdown templates for the Value Map prompts\n   - Implement variable substitution in templates\n   - Design prompt structure with clear sections for user guidance\n   - Ensure proper formatting and readability\n   - Include conditional sections based on user progress\n\n3. API Storage and Cascade Implementation:\n   - Extend the session report API to handle Value Map data\n   - Implement storage logic for saving Value Map responses\n   - Create cascade functionality to update dependent fields\n   - Add validation middleware for incoming data\n   - Implement versioning for backward compatibility\n   - Create endpoints for retrieving and updating Value Map data\n\n4. UI Section Binding:\n   - Create UI components for Value Map sections\n   - Implement data binding between UI and API\n   - Add real-time validation and feedback\n   - Ensure responsive design for all screen sizes\n   - Implement state management for form interactions\n   - Add accessibility features for all interactive elements\n\n5. Integration with Existing Components:\n   - Connect Value Map with Ch0 My Why data where relevant\n   - Ensure proper navigation between chapters\n   - Maintain consistent user experience across sections\n   - Implement progress tracking between chapters",
+        "testStrategy": "1. Unit Testing:\n   - Test each data field with valid and invalid inputs\n   - Verify markdown template rendering with various data inputs\n   - Test API endpoints for storing and retrieving Value Map data\n   - Validate cascade functionality with different update scenarios\n   - Test UI components in isolation with mock data\n\n2. Integration Testing:\n   - Verify data flow between UI components and API\n   - Test navigation between Ch0 and Ch1 sections\n   - Ensure proper state management across the application\n   - Validate form submission and error handling\n   - Test cascade updates across dependent components\n\n3. End-to-End Testing:\n   - Create test scenarios covering the complete user journey\n   - Verify data persistence across page refreshes\n   - Test performance with large datasets\n   - Validate responsive design across different devices\n   - Ensure accessibility compliance\n\n4. User Acceptance Testing:\n   - Prepare test scripts for manual verification\n   - Document expected behavior for each interaction\n   - Verify content accuracy and prompt clarity\n   - Test edge cases and recovery scenarios\n   - Validate overall user experience",
+        "status": "pending",
+        "dependencies": [
+          1,
+          2,
+          3
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 5,
+        "title": "Ch2 Style Pattern: Data Field Definition, Template Markdown Prompt, API Storage/Cascade, and UI Section Binding",
+        "description": "Define and implement the Ch2 Style Pattern component by finalizing data fields, creating markdown prompt templates, establishing API storage with cascade functionality, and binding UI sections to the data structure.",
+        "details": "This task involves implementing the Ch2 Style Pattern component with the following steps:\n\n1. Data Field Definition:\n   - Define all required data fields for the Style Pattern component\n   - Document field types, validation rules, and constraints\n   - Establish relationships between fields\n   - Create schema validation for input data\n   - Define default values and initialization logic\n   - Ensure compatibility with the overall report structure defined in Task #1\n\n2. Template Markdown Prompt:\n   - Create standardized markdown templates for the Style Pattern prompts\n   - Implement variable substitution for dynamic content\n   - Design templates for different user interaction states\n   - Ensure proper formatting and readability\n   - Implement conditional sections based on user inputs\n   - Document template structure and usage guidelines\n\n3. API Storage/Cascade:\n   - Implement API endpoints for storing Style Pattern data\n   - Develop cascade functionality to update dependent sections\n   - Ensure proper validation before storage\n   - Implement error handling and recovery mechanisms\n   - Create data transformation functions for API requests/responses\n   - Document API endpoints and expected payloads\n   - Implement versioning support for backward compatibility\n\n4. UI Section Binding:\n   - Create UI components for the Style Pattern section\n   - Bind UI elements to the data structure\n   - Implement real-time validation and feedback\n   - Ensure responsive design for different screen sizes\n   - Develop interactive elements for user engagement\n   - Implement state management for the UI components\n   - Create animations and transitions for improved UX\n   - Ensure accessibility compliance\n\n5. Integration with Previous Chapters:\n   - Establish data flow between Ch1 Value Map and Ch2 Style Pattern\n   - Ensure consistent user experience across chapters\n   - Implement navigation between related sections\n   - Create visual indicators for completed sections",
+        "testStrategy": "1. Unit Testing:\n   - Test each data field with valid and invalid inputs\n   - Verify markdown template rendering with various data inputs\n   - Test API endpoints for storing and retrieving Style Pattern data\n   - Validate cascade functionality with different update scenarios\n   - Test UI components in isolation with mock data\n   - Verify state management with different user interactions\n\n2. Integration Testing:\n   - Test the integration between data fields, templates, and UI components\n   - Verify data flow between API and UI components\n   - Test navigation between Ch1 Value Map and Ch2 Style Pattern\n   - Validate cascade updates across dependent sections\n   - Test the complete user journey through the Style Pattern section\n\n3. Regression Testing:\n   - Ensure changes don't break existing functionality\n   - Verify compatibility with previous chapters\n   - Test backward compatibility with existing data\n\n4. User Acceptance Testing:\n   - Verify the Style Pattern section meets design requirements\n   - Test usability with different user personas\n   - Validate content clarity and guidance\n\n5. Performance Testing:\n   - Measure rendering time for complex templates\n   - Test API response times under load\n   - Verify UI responsiveness during data operations",
+        "status": "pending",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Ch3 Master-Manager Spectrum: Data Field Definition, Template Markdown Prompt, API Storage/Cascade, and UI Section Binding",
+        "description": "Define and implement the Ch3 Master-Manager Spectrum component by finalizing data fields, creating markdown prompt templates, establishing API storage with cascade functionality, and binding UI sections to the data structure.",
+        "details": "This task involves implementing the Ch3 Master-Manager Spectrum component with the following steps:\n\n1. Data Field Definition:\n   - Define all required data fields for the Master-Manager Spectrum component\n   - Document field types, validation rules, and constraints\n   - Establish relationships between fields\n   - Create schema validation for input data\n   - Define default values and initialization logic\n   - Ensure compatibility with the overall report structure defined in Task #1\n\n2. Template Markdown Prompt:\n   - Create standardized markdown templates for the Master-Manager Spectrum prompts\n   - Implement variable substitution for dynamic content\n   - Design templates for different sections of the spectrum analysis\n   - Include conditional rendering logic based on user inputs\n   - Ensure templates follow the established style guidelines\n   - Create helper functions for formatting complex data structures\n\n3. API Storage/Cascade:\n   - Implement API endpoints for storing Master-Manager Spectrum data\n   - Develop cascade functionality to propagate changes to dependent sections\n   - Create validation middleware for incoming data\n   - Implement versioning for data structure changes\n   - Design efficient data retrieval methods\n   - Establish error handling and recovery mechanisms\n   - Implement transaction support for multi-step operations\n\n4. UI Section Binding:\n   - Create UI components for the Master-Manager Spectrum section\n   - Bind UI elements to the data structure\n   - Implement real-time validation and feedback\n   - Design interactive elements for spectrum positioning\n   - Create visualization components for spectrum data\n   - Implement state management for complex interactions\n   - Ensure responsive design for different screen sizes\n   - Add accessibility features for all interactive elements\n\n5. Integration with Previous Chapters:\n   - Ensure proper data flow between Ch2 Style Pattern and Ch3 Master-Manager Spectrum\n   - Implement references to previous chapter data where appropriate\n   - Maintain consistent user experience across chapter transitions",
+        "testStrategy": "1. Unit Testing:\n   - Test each data field with valid and invalid inputs\n   - Verify markdown template rendering with various data inputs\n   - Test API endpoints for storing and retrieving Master-Manager Spectrum data\n   - Validate cascade functionality with different update scenarios\n   - Test UI components in isolation with mock data\n   - Verify state management with complex interaction sequences\n\n2. Integration Testing:\n   - Test data flow between Ch2 Style Pattern and Ch3 Master-Manager Spectrum\n   - Verify UI rendering with real API responses\n   - Test end-to-end user flows through the Master-Manager Spectrum section\n   - Validate cross-component interactions\n   - Test error handling and recovery scenarios\n   - Verify performance under load conditions\n\n3. User Acceptance Testing:\n   - Create test scenarios for common user journeys\n   - Verify that the Master-Manager Spectrum accurately represents user inputs\n   - Test the intuitiveness of the spectrum positioning interface\n   - Validate that the generated content meets business requirements\n   - Ensure the UI is accessible and responsive across devices\n\n4. Regression Testing:\n   - Verify that changes don't affect functionality in Ch0-Ch2\n   - Test backward compatibility with existing report data\n   - Validate that the cascade functionality properly updates dependent sections",
+        "status": "pending",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Ch4 Fit & Triggers: Data Field Definition, Template Markdown Prompt, API Storage/Cascade, and UI Section Binding",
+        "description": "Define and implement the Ch4 Fit & Triggers component by finalizing data fields, creating markdown prompt templates, establishing API storage with cascade functionality, and binding UI sections to the data structure.",
+        "details": "This task involves implementing the Ch4 Fit & Triggers component with the following steps:\n\n1. Data Field Definition:\n   - Define all required data fields for the Fit & Triggers component\n   - Document field types, validation rules, and constraints\n   - Establish relationships between fields\n   - Create schema validation for input data\n   - Define default values and initialization logic\n   - Ensure compatibility with the overall report structure defined in Task #1\n\n2. Template Markdown Prompt:\n   - Create standardized markdown templates for the Fit & Triggers prompts\n   - Implement variable substitution for dynamic content\n   - Design templates for different user interaction scenarios\n   - Ensure proper formatting and readability\n   - Include conditional sections based on user inputs\n   - Document template usage and customization options\n\n3. API Storage/Cascade:\n   - Implement API endpoints for storing Fit & Triggers data\n   - Develop cascade functionality to update dependent components when data changes\n   - Ensure proper validation before storage\n   - Implement error handling and recovery mechanisms\n   - Create documentation for API usage\n   - Optimize for performance with potential caching strategies\n\n4. UI Section Binding:\n   - Bind UI components to the Fit & Triggers data structure\n   - Implement real-time updates when data changes\n   - Create interactive elements for user input\n   - Ensure responsive design for different screen sizes\n   - Implement validation feedback for user inputs\n   - Design intuitive navigation between related sections\n   - Ensure accessibility compliance\n\n5. Integration with Previous Chapters:\n   - Ensure proper data flow between Ch3 Master-Manager Spectrum and Ch4 Fit & Triggers\n   - Implement cross-referencing between related components\n   - Maintain consistency in UI/UX patterns established in previous chapters\n   - Document dependencies and integration points",
+        "testStrategy": "1. Unit Testing:\n   - Test each data field with valid and invalid inputs\n   - Verify markdown template rendering with various data inputs\n   - Test API endpoints for storing and retrieving Fit & Triggers data\n   - Validate cascade functionality with different update scenarios\n   - Test UI components in isolation with mock data\n   - Verify error handling for all edge cases\n\n2. Integration Testing:\n   - Test data flow between Ch3 Master-Manager Spectrum and Ch4 Fit & Triggers\n   - Verify UI updates when API data changes\n   - Test end-to-end user workflows involving multiple components\n   - Validate cross-component references and dependencies\n   - Test performance under realistic data loads\n\n3. User Acceptance Testing:\n   - Create test scenarios for common user workflows\n   - Verify intuitive navigation between sections\n   - Test responsiveness on different devices and screen sizes\n   - Validate accessibility features\n   - Gather feedback on user experience and make necessary adjustments\n\n4. Regression Testing:\n   - Ensure changes don't break functionality in previous chapters\n   - Verify data integrity across the entire report structure\n   - Test backward compatibility with existing data\n   - Validate consistent behavior across all integrated components",
+        "status": "pending",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "Ch5 Light & Shadow: Data Field Definition, Template Markdown Prompt, API Storage/Cascade, and UI Section Binding",
+        "description": "Define and implement the Ch5 Light & Shadow component by finalizing data fields, creating markdown prompt templates, establishing API storage with cascade functionality, and binding UI sections to the data structure.",
+        "details": "This task involves implementing the Ch5 Light & Shadow component with the following steps:\n\n1. Data Field Definition:\n   - Define all required data fields for the Light & Shadow component\n   - Document field types, validation rules, and constraints\n   - Establish relationships between fields\n   - Create schema validation for input data\n   - Define default values and initialization logic\n   - Ensure compatibility with the overall report structure defined in Task #1\n\n2. Template Markdown Prompt:\n   - Create standardized markdown templates for the Light & Shadow prompts\n   - Implement variable substitution for dynamic content\n   - Design templates for different states (initial, partially completed, fully completed)\n   - Establish formatting rules for consistent presentation\n   - Create helper functions for template rendering\n   - Document template usage guidelines\n\n3. API Storage/Cascade:\n   - Implement API endpoints for storing Light & Shadow data\n   - Create data retrieval endpoints with appropriate filtering\n   - Establish cascade functionality to update dependent components\n   - Implement validation middleware for data integrity\n   - Set up error handling and response formatting\n   - Document API usage with examples\n   - Ensure proper integration with authentication system\n\n4. UI Section Binding:\n   - Create UI components for the Light & Shadow section\n   - Implement data binding between UI and API\n   - Set up form validation and error handling\n   - Create interactive elements for user input\n   - Implement state management for the component\n   - Ensure responsive design for different devices\n   - Add accessibility features for inclusive user experience\n   - Integrate with navigation and overall UI flow\n\n5. Integration with Previous Chapters:\n   - Ensure data consistency with previous chapter components\n   - Implement cross-referencing between related sections\n   - Create logical transitions between chapters\n   - Maintain consistent styling and user experience",
+        "testStrategy": "1. Unit Testing:\n   - Test each data field with valid and invalid inputs\n   - Verify markdown template rendering with various data inputs\n   - Test API endpoints for storing and retrieving Light & Shadow data\n   - Validate cascade functionality with different update scenarios\n   - Test UI components in isolation with mock data\n   - Verify form validation logic with edge cases\n\n2. Integration Testing:\n   - Test the interaction between UI components and API endpoints\n   - Verify data flow between frontend and backend systems\n   - Test cascade updates across dependent components\n   - Validate cross-chapter references and data consistency\n   - Ensure proper state management across the application\n\n3. User Acceptance Testing:\n   - Verify the Light & Shadow component meets design specifications\n   - Test the user flow for completing the Light & Shadow section\n   - Validate the rendering of completed content in report view\n   - Test the component on different devices and screen sizes\n   - Verify accessibility compliance with WCAG standards\n\n4. Performance Testing:\n   - Measure API response times for data operations\n   - Test UI rendering performance with various data loads\n   - Verify memory usage during component interactions\n   - Test concurrent user scenarios\n\n5. Documentation Verification:\n   - Review API documentation for completeness\n   - Verify user guide sections for the Light & Shadow component\n   - Validate technical documentation for developers",
+        "status": "pending",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Ch6 Philosophy: Data Field Definition, Template Markdown Prompt, API Storage/Cascade, and UI Section Binding",
+        "description": "Define and implement the Ch6 Philosophy component by finalizing data fields, creating markdown prompt templates, establishing API storage with cascade functionality, and binding UI sections to the data structure.",
+        "details": "This task involves implementing the Ch6 Philosophy component with the following steps:\n\n1. Data Field Definition:\n   - Define all required data fields for the Philosophy component\n   - Document field types, validation rules, and constraints\n   - Establish relationships between fields\n   - Create schema validation for input data\n   - Define default values and initialization logic\n   - Ensure compatibility with the overall report structure defined in Task #1\n\n2. Template Markdown Prompt:\n   - Create standardized markdown templates for the Philosophy prompts\n   - Implement variable substitution for dynamic content\n   - Design templates for different sections of the Philosophy component\n   - Ensure templates follow the established style guidelines\n   - Create helper functions for template rendering\n   - Document template usage and customization options\n\n3. API Storage/Cascade:\n   - Implement API endpoints for storing Philosophy component data\n   - Design database schema for Philosophy data storage\n   - Implement cascade functionality to propagate changes to dependent components\n   - Create data validation middleware for API endpoints\n   - Implement error handling and response formatting\n   - Document API usage with examples and parameter descriptions\n   - Ensure proper authentication and authorization for data access\n\n4. UI Section Binding:\n   - Create UI components for the Philosophy section\n   - Implement data binding between UI elements and the data model\n   - Design form controls for data input and editing\n   - Implement validation feedback for user inputs\n   - Create visualization components for Philosophy data representation\n   - Ensure responsive design for different screen sizes\n   - Implement accessibility features for UI components\n   - Document component usage and customization options",
+        "testStrategy": "1. Unit Testing:\n   - Test each data field with valid and invalid inputs\n   - Verify markdown template rendering with various data inputs\n   - Test API endpoints for storing and retrieving Philosophy data\n   - Validate cascade functionality with different update scenarios\n   - Test UI components in isolation with mock data\n\n2. Integration Testing:\n   - Verify data flow between UI components and API endpoints\n   - Test cascade updates across dependent components\n   - Validate form submission and data persistence\n   - Test error handling and user feedback mechanisms\n   - Verify template rendering in the context of the full application\n\n3. User Acceptance Testing:\n   - Validate that the Philosophy component meets business requirements\n   - Test the component with real user scenarios\n   - Verify that the UI is intuitive and user-friendly\n   - Ensure all functionality is accessible and works as expected\n   - Validate that the component integrates properly with other report sections\n\n4. Performance Testing:\n   - Measure API response times under various load conditions\n   - Test UI rendering performance with large datasets\n   - Validate cascade update performance with complex dependency chains\n   - Ensure template rendering is efficient and responsive\n\n5. Cross-browser Testing:\n   - Verify functionality across major browsers (Chrome, Firefox, Safari, Edge)\n   - Test responsive design on different devices and screen sizes\n   - Ensure accessibility features work across all supported platforms",
+        "status": "pending",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "Ch7 Action Recipe: Data Field Definition, Template Markdown Prompt, API Storage/Cascade, and UI Section Binding",
+        "description": "Define and implement the Ch7 Action Recipe component by finalizing data fields, creating markdown prompt templates, establishing API storage with cascade functionality, and binding UI sections to the data structure.",
+        "details": "This task involves implementing the Ch7 Action Recipe component with the following steps:\n\n1. Data Field Definition:\n   - Define all required data fields for the Action Recipe component\n   - Document field types, validation rules, and constraints\n   - Establish relationships between fields\n   - Create schema validation for input data\n   - Define default values and initialization logic\n   - Ensure compatibility with the overall report structure defined in Task #1\n\n2. Template Markdown Prompt:\n   - Create markdown templates for generating Action Recipe content\n   - Define variable placeholders within templates\n   - Implement conditional rendering logic for different scenarios\n   - Design templates that maintain consistent formatting with other report sections\n   - Include guidance text for AI-assisted content generation\n   - Ensure templates support multilingual content\n\n3. API Storage/Cascade:\n   - Implement API endpoints for storing Action Recipe data\n   - Create data retrieval endpoints with appropriate filtering\n   - Establish cascade update functionality to propagate changes to dependent components\n   - Implement versioning for tracking changes to Action Recipe data\n   - Set up data validation middleware\n   - Create error handling for API operations\n   - Document API endpoints and usage examples\n\n4. UI Section Binding:\n   - Develop UI components for displaying and editing Action Recipe data\n   - Bind UI elements to the data structure\n   - Implement real-time validation and feedback\n   - Create interactive elements for modifying Action Recipe content\n   - Design responsive layouts for different device sizes\n   - Implement accessibility features\n   - Ensure consistent styling with the overall application theme\n\n5. Integration:\n   - Connect the Action Recipe component with related report sections\n   - Ensure data flow between interdependent components\n   - Implement event handlers for cross-component interactions\n   - Test integration points with dependent components\n   - Document integration requirements and dependencies",
+        "testStrategy": "1. Unit Testing:\n   - Test each data field with valid and invalid inputs\n   - Verify markdown template rendering with various data inputs\n   - Test API endpoints for storing and retrieving Action Recipe data\n   - Validate cascade functionality with different update scenarios\n   - Test UI components in isolation with mock data\n\n2. Integration Testing:\n   - Verify data flow between Action Recipe and related components\n   - Test cascade updates across multiple components\n   - Validate that UI changes properly reflect in the data model\n   - Test API interactions in an integrated environment\n   - Verify template rendering in the context of the full report\n\n3. User Acceptance Testing:\n   - Validate that Action Recipe content meets business requirements\n   - Test the editing workflow from end-user perspective\n   - Verify that generated content follows expected patterns\n   - Test responsiveness and usability on different devices\n   - Validate accessibility compliance\n\n4. Performance Testing:\n   - Measure API response times under various load conditions\n   - Test UI rendering performance with complex Action Recipe data\n   - Validate cascade update performance with large datasets\n   - Benchmark template rendering times\n\n5. Regression Testing:\n   - Ensure changes don't break existing functionality\n   - Verify compatibility with previously created reports\n   - Test backward compatibility with older data formats",
+        "status": "pending",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 11,
+        "title": "Ch8 Future Path: Data Field Definition, Template Markdown Prompt, API Storage/Cascade, and UI Section Binding",
+        "description": "Define and implement the Ch8 Future Path component by finalizing data fields, creating markdown prompt templates, establishing API storage with cascade functionality, and binding UI sections to the data structure.",
+        "details": "This task involves implementing the Ch8 Future Path component with the following steps:\n\n1. Data Field Definition:\n   - Define all required data fields for the Future Path component\n   - Document field types, validation rules, and constraints\n   - Establish relationships between fields\n   - Create schema validation for input data\n   - Define default values and initialization logic\n   - Ensure compatibility with the overall report structure defined in Task #1\n   - Include fields for future goals, development areas, and recommended next steps\n   - Define data structures for timeline projections and milestone tracking\n\n2. Template Markdown Prompt:\n   - Create markdown templates for the Future Path section\n   - Design prompts that guide users to articulate future development paths\n   - Implement variable substitution in templates\n   - Create conditional sections based on user inputs\n   - Design templates that adapt based on previous chapter inputs\n   - Include formatting guidelines for consistency\n   - Develop helper text and examples for each prompt section\n   - Ensure templates support multilingual content\n\n3. API Storage/Cascade:\n   - Implement API endpoints for storing Future Path data\n   - Create data validation middleware\n   - Establish cascade functionality to update dependent sections\n   - Implement version control for Future Path data\n   - Create data retrieval endpoints with filtering options\n   - Design batch update capabilities\n   - Implement data migration strategies for schema changes\n   - Ensure proper error handling and logging\n   - Add security measures for data protection\n\n4. UI Section Binding:\n   - Develop UI components for the Future Path section\n   - Bind UI elements to the data structure\n   - Implement real-time validation and feedback\n   - Create interactive timeline visualization components\n   - Design responsive layouts for different devices\n   - Implement state management for complex form interactions\n   - Add progress indicators and save functionality\n   - Ensure accessibility compliance\n   - Create print-friendly views of the Future Path section\n\n5. Integration with Previous Chapters:\n   - Establish data relationships with previous chapter components\n   - Implement data inheritance where appropriate\n   - Create summary views that incorporate insights from earlier chapters\n   - Design navigation between related sections\n   - Ensure consistent styling and interaction patterns",
+        "testStrategy": "1. Unit Testing:\n   - Test each data field with valid and invalid inputs\n   - Verify markdown template rendering with various data inputs\n   - Test API endpoints for storing and retrieving Future Path data\n   - Validate cascade functionality with different update scenarios\n   - Test UI components in isolation with mock data\n   - Verify form validation logic\n   - Test conditional rendering based on different input combinations\n\n2. Integration Testing:\n   - Verify data flow between UI components and API endpoints\n   - Test cascade updates across related components\n   - Validate that changes in previous chapters correctly influence Future Path content\n   - Test navigation between connected sections\n   - Verify data persistence across page refreshes\n   - Test import/export functionality with the Future Path data\n\n3. User Acceptance Testing:\n   - Conduct usability testing with representative users\n   - Verify that the Future Path section meets business requirements\n   - Test the complete workflow from data entry to final report generation\n   - Validate that the Future Path content properly reflects insights from previous chapters\n   - Verify that the UI is intuitive and responsive\n\n4. Performance Testing:\n   - Measure load times for the Future Path section with various data sizes\n   - Test API response times under different load conditions\n   - Verify client-side performance with profiling tools\n   - Test memory usage with large datasets\n\n5. Cross-browser and Device Testing:\n   - Verify functionality across major browsers\n   - Test responsive design on various device sizes\n   - Validate touch interactions on mobile devices\n   - Test print functionality for the Future Path section",
+        "status": "pending",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 12,
+        "title": "Ch9 Epilogue: Data Field Definition, Template Markdown Prompt, API Storage/Cascade, and UI Section Binding",
+        "description": "Define and implement the Ch9 Epilogue component by finalizing data fields, creating markdown prompt templates, establishing API storage with cascade functionality, and binding UI sections to the data structure.",
+        "details": "This task involves implementing the Ch9 Epilogue component with the following steps:\n\n1. Data Field Definition:\n   - Define all required data fields for the Epilogue component\n   - Document field types, validation rules, and constraints\n   - Establish relationships between fields\n   - Create schema validation for input data\n   - Define default values and initialization logic\n   - Ensure compatibility with the overall report structure defined in Task #1\n   - Include fields for conclusion summaries, final reflections, and future recommendations\n\n2. Template Markdown Prompt:\n   - Create markdown templates for the Epilogue section\n   - Design prompts that guide users to provide meaningful closing reflections\n   - Implement variable substitution in templates\n   - Create helper functions for formatting complex data\n   - Ensure templates maintain consistent styling with other report sections\n   - Include conditional rendering logic for optional epilogue elements\n   - Design templates to reference key insights from previous chapters\n\n3. API Storage/Cascade:\n   - Implement API endpoints for storing and retrieving Epilogue data\n   - Establish data validation before storage\n   - Create cascade functionality to update dependent data when Epilogue content changes\n   - Implement versioning for Epilogue data\n   - Set up proper error handling and response formatting\n   - Create documentation for API endpoints\n   - Implement caching strategies for frequently accessed data\n\n4. UI Section Binding:\n   - Develop UI components for the Epilogue section\n   - Bind UI elements to the data structure\n   - Implement form validation for user inputs\n   - Create interactive elements for editing Epilogue content\n   - Ensure responsive design for various screen sizes\n   - Implement real-time preview of markdown rendering\n   - Add navigation elements to connect with previous chapters\n   - Design visual indicators for incomplete or invalid sections\n\n5. Integration:\n   - Connect the Epilogue component with the overall report structure\n   - Ensure proper data flow between chapters\n   - Implement navigation between the Epilogue and previous chapters\n   - Test the complete report generation with the Epilogue included\n   - Verify that all cross-references between chapters work correctly",
+        "testStrategy": "1. Unit Testing:\n   - Test each data field with valid and invalid inputs\n   - Verify markdown template rendering with various data inputs\n   - Test API endpoints for storing and retrieving Epilogue data\n   - Validate cascade functionality with different update scenarios\n   - Test UI components in isolation with mock data\n   - Verify form validation logic for all input fields\n   - Test conditional rendering logic in templates\n\n2. Integration Testing:\n   - Verify proper integration with previous chapter components\n   - Test data flow between connected components\n   - Validate that changes in previous chapters correctly reflect in the Epilogue\n   - Test navigation between the Epilogue and other report sections\n   - Verify that the complete report generates correctly with the Epilogue included\n\n3. User Acceptance Testing:\n   - Conduct usability testing with representative users\n   - Verify that the Epilogue UI is intuitive and easy to use\n   - Test the complete report workflow from start to finish\n   - Gather feedback on the Epilogue template prompts and adjust as needed\n   - Verify that the Epilogue effectively summarizes the report content\n\n4. Performance Testing:\n   - Measure load times for the Epilogue section with various data sizes\n   - Test API response times under different load conditions\n   - Verify that cascade updates complete within acceptable time limits\n   - Test markdown rendering performance with complex content\n\n5. Regression Testing:\n   - Ensure that implementing the Epilogue doesn't break existing functionality\n   - Verify that all previous chapter components still work correctly\n   - Test the complete report generation process end-to-end",
+        "status": "pending",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11
+        ],
+        "priority": "high",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-09-04T06:54:32.984Z",
+      "updated": "2025-09-04T07:06:21.462Z",
+      "description": "차세대 보고서(전 섹션) 재설계/재구현 태그"
+    }
   }
 }
