@@ -256,7 +256,7 @@ export function LightShadowSection({ isPinned, onTogglePin, language, data }: Li
                       {text.situationsLabel}:
                     </h5>
                     <ul className="space-y-2">
-                      {strength.situations.map((situation, index) => (
+                      {strength.situations.map((situation: string, index: number) => (
                         <li key={index} className="text-green-700 dark:text-green-300 font-medium">
                           • {situation}
                         </li>
@@ -268,7 +268,7 @@ export function LightShadowSection({ isPinned, onTogglePin, language, data }: Li
                       {text.rolesLabel}:
                     </h5>
                     <ul className="space-y-2">
-                      {strength.roles.map((role, index) => (
+                      {strength.roles.map((role: string, index: number) => (
                         <li key={index} className="text-green-700 dark:text-green-300 font-medium">
                           • {role}
                         </li>
@@ -347,7 +347,7 @@ export function LightShadowSection({ isPinned, onTogglePin, language, data }: Li
                     {text.examplesLabel}:
                   </h5>
                   <ul className="space-y-2">
-                    {shadow.examples.map((example, index) => (
+                    {shadow.examples.map((example: string, index: number) => (
                       <li key={index} className="text-slate-600 dark:text-slate-400">
                         • {example}
                       </li>
@@ -362,7 +362,7 @@ export function LightShadowSection({ isPinned, onTogglePin, language, data }: Li
                     {text.solutionsLabel}:
                   </h5>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {shadow.solutions.map((solution, index) => (
+                    {shadow.solutions.map((solution: { title: string; method: string }, index: number) => (
                       <Card key={index} className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-green-200 dark:border-green-800">
                         <CardContent className="pt-4">
                           <h6 className="font-semibold mb-2 text-green-800 dark:text-green-200">
