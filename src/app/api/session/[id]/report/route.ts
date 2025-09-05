@@ -4,6 +4,22 @@ import { OpenAI } from 'openai'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
+function parseJsonFlex(raw: string): any {
+  // direct parse
+  try { return JSON.parse(raw) } catch {}
+  // strip code fences
+  const noFence = raw.replace(/^```[a-zA-Z0-9]*\n?|```$/g, '').trim()
+  try { return JSON.parse(noFence) } catch {}
+  // find first "{" and last "}"
+  const start = raw.indexOf('{')
+  const end = raw.lastIndexOf('}')
+  if (start !== -1 && end !== -1 && end > start) {
+    const slice = raw.slice(start, end + 1)
+    try { return JSON.parse(slice) } catch {}
+  }
+  throw new Error('Unable to parse JSON content')
+}
+
 function validateAndFillMyWhy(input: any) {
   const result: any = {
     headline: typeof input?.headline === 'string' ? input.headline.trim() : '',
@@ -620,29 +636,23 @@ export async function GET(req: Request, context: any) {
 - fitLevel은 high/medium/conditional 중 하나.
 - story는 실제 장면 설명 포함.`,
 
-        master_manager_spectrum: `역할: Master–Manager 스펙트럼 개념을 요약하고, 개인 성향을 해석하여 운영 가이드를 제시합니다.
+        master_manager_spectrum: `역할: 대화와 Why를 바탕으로 Master–Manager Spectrum을 JSON 1개로 생성합니다.
 
 규칙:
-- 아래 템플릿을 마크다운 그대로 사용하여 한국어로만 작성합니다.
-- 루틴/브릿지 언어/성장 과제에는 지표 또는 확인 방법을 포함합니다.
-
-템플릿(그대로 출력):
-# Master–Manager Spectrum
-## 개념 요약
-- 마스터: 스스로 가치를 만들어내려는 경향(자율·성취·변화 주도).
-- 매니저: 타인/환경에 영향 주어 가치를 만들려는 경향(관계·기여·확산).
-
-## 나의 성향과 해석
-- 어디에 치우쳐 있는지, 맥락별로 어떻게 달라지는지(3~5문장).
-
-## 앞으로의 운영 가이드
-- 일하는 법(핵심 루틴 3개, 지표 포함).
-- 협업 팁(브릿지 언어 2개 예: “목표→방법→마감”, “역할→책임→완료정의”).
-- 성장 과제 3가지 & 리스크/완충 장치 1줄씩.
+- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
+- 스키마를 반드시 준수합니다.
 
 입력:
-- Transcript(전체 대화)\n${transcript}
-- WhyReport(Markdown)\n${whyMarkdown || (whyReportContent?.markdown || 'null')}`,
+- Transcript: ${transcript}
+- WhyReport: ${whyMarkdown || (whyReportContent?.markdown || 'null')}
+
+출력(JSON 스키마):
+{
+  "scores": { "others": 0-100, "master": 0-100 },
+  "current_type": { "id": "id", "name": "이름", "position": "설명", "description": "문장", "traits": ["특성1","특성2"] },
+  "types": [ { "id": "id", "name": "이름", "position": "설명", "description": "문장", "traits": ["특성"] } ],
+  "scenes": [ { "category": "맥락", "evidence": ["근거"], "analysis": "해석", "conclusion": "결론" } ]
+}`,
 
         fit_triggers: `역할: 켜짐/꺼짐 조건과 회복 프로토콜을 JSON 하나로 구조화합니다.
 
@@ -666,11 +676,64 @@ export async function GET(req: Request, context: any) {
 품질 체크:
 - on/off 항목에 실제 대화 근거 1~2개 포함.`,
 
-        light_shadow: `# Light & Shadow\n\nTranscript 기반으로 강점이 과도할 때의 그림자와 균형 전략을 제시하세요.\n\n입력:\n- Transcript\n${transcript}\n- WhyReport\n${whyMarkdown || (whyReportContent?.markdown || 'null')}`,
-        philosophy: `# Philosophy\n\nTranscript 기반으로 삶의 철학/가치 지향을 요약하고 사례 근거를 3~5줄로 작성하세요.\n\n입력:\n- Transcript\n${transcript}\n- WhyReport\n${whyMarkdown || (whyReportContent?.markdown || 'null')}`,
-        action_recipe: `# Action Recipe\n\n이번 주 실험 3개와 성공지표를 작성하세요.\n\n입력:\n- Transcript\n${transcript}\n- WhyReport\n${whyMarkdown || (whyReportContent?.markdown || 'null')}`,
-        future_path: `# Future Path\n\n6~12개월 방향/마일스톤/리스크와 완충 장치를 요약하세요.\n\n입력:\n- Transcript\n${transcript}\n- WhyReport\n${whyMarkdown || (whyReportContent?.markdown || 'null')}`,
-        epilogue: `# Epilogue\n\n이번 리포트의 핵심 전환점을 3줄로 요약하세요.\n\n입력:\n- Transcript\n${transcript}\n- WhyReport\n${whyMarkdown || (whyReportContent?.markdown || 'null')}`
+        light_shadow: `역할: Transcript 기반 Light & Shadow를 JSON으로 생성합니다.
+
+규칙:
+- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
+
+입력:
+- Transcript: ${transcript}
+- WhyReport: ${whyMarkdown || (whyReportContent?.markdown || 'null')}
+
+출력(JSON 스키마):
+{
+  "strengths": [ { "title": "제목", "percentage": 0-100, "description": "문장", "insight": "문장", "situations": ["상황"], "roles": ["역할"], "impact": "문장" } ],
+  "shadows": [ { "title": "제목", "percentage": 0-100, "description": "문장", "insight": "문장", "examples": ["예시"], "solutions": [ { "title": "제목", "method": "방법" } ] } ]
+}`,
+        philosophy: `역할: Transcript 기반 Philosophy(편지 본문)를 JSON으로 생성합니다.
+
+규칙:
+- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
+
+입력:
+- Transcript: ${transcript}
+- WhyReport: ${whyMarkdown || (whyReportContent?.markdown || 'null')}
+
+출력(JSON 스키마):
+{ "letter_content": "3~7문장 내외 본문" }`,
+        action_recipe: `역할: Transcript 기반 Action Recipe를 JSON으로 생성합니다.
+
+규칙:
+- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
+
+입력:
+- Transcript: ${transcript}
+- WhyReport: ${whyMarkdown || (whyReportContent?.markdown || 'null')}
+
+출력(JSON 스키마):
+{ "recipes": [ { "id": "A", "title": "제목", "duration": "기간", "frequency": "빈도", "steps": ["단계"] } ] }`,
+        future_path: `역할: 6~12개월 방향을 JSON으로 생성합니다.
+
+규칙:
+- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
+
+입력:
+- Transcript: ${transcript}
+- WhyReport: ${whyMarkdown || (whyReportContent?.markdown || 'null')}
+
+출력(JSON 스키마):
+{ "environment": { "remove": [ { "category": "카테고리", "items": ["항목"], "impact": "문장" } ], "strengthen": [ { "category": "카테고리", "items": ["항목"], "impact": "문장" } ] }, "roadmap": [ { "phase": "단계", "duration": "기간", "actions": ["행동"], "milestone": "마일스톤" } ] }`,
+        epilogue: `역할: 리포트를 JSON 에필로그로 요약합니다.
+
+규칙:
+- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
+
+입력:
+- Transcript: ${transcript}
+- WhyReport: ${whyMarkdown || (whyReportContent?.markdown || 'null')}
+
+출력(JSON 스키마):
+{ "overall_score": 0-100, "insights": [ { "title": "제목", "description": "문장", "score": 0-100 } ], "action_items": ["할 일"], "reflection": "문장" }`
       }
       return prompts[t]
     }
@@ -717,24 +780,85 @@ export async function GET(req: Request, context: any) {
     } else if (type === 'value_map') {
       // JSON 선호 파서 → 실패 시 마크다운으로 폴백
       try {
-        const json = JSON.parse(content)
-        const vm = validateAndFillValueMap(json)
+        let vm: any
+        let localContent = content
+        for (let i = 0; i < 2; i++) {
+          try {
+            const json = parseJsonFlex(localContent)
+            vm = validateAndFillValueMap(json)
+            if (Array.isArray(vm.items) && vm.items.length === 3) break
+            // 재시도: 더 엄격한 프롬프트로 재요청
+            const strictPrompt = buildPrompt('value_map', transcriptBuilder(), whyReportContent?.markdown || 'null')
+              + '\n\n반드시 items는 3개. 실패 시 다시 시도.'
+            const retry = await openai.chat.completions.create({
+              model: 'gpt-4o-mini',
+              messages: [
+                { role: 'system', content: '한국어만 사용. 프리텍스트 금지. JSON만 반환. items는 정확히 3개.' },
+                { role: 'user', content: strictPrompt }
+              ],
+              temperature: 0.2
+            })
+            localContent = retry.choices[0]?.message?.content || localContent
+          } catch (e) {
+            throw e
+          }
+        }
         parsed = { ...vm, markdown: valueMapToMarkdown(vm) }
       } catch {
         parsed = { markdown: content.trim() }
       }
     } else if (type === 'style_pattern') {
       try {
-        const json = JSON.parse(content)
-        const sp = validateAndFillStylePattern(json)
+        let sp: any
+        let localContent = content
+        for (let i = 0; i < 2; i++) {
+          try {
+            const json = parseJsonFlex(localContent)
+            sp = validateAndFillStylePattern(json)
+            if (Array.isArray(sp.styles) && sp.styles.length >= 3) break
+            const strictPrompt = buildPrompt('style_pattern', transcriptBuilder(), whyReportContent?.markdown || 'null')
+              + '\n\nstyles는 3~5개. story에는 실제 장면 단서 1개 포함. JSON만.'
+            const retry = await openai.chat.completions.create({
+              model: 'gpt-4o-mini',
+              messages: [
+                { role: 'system', content: '한국어만 사용. 프리텍스트 금지. JSON만 반환.' },
+                { role: 'user', content: strictPrompt }
+              ],
+              temperature: 0.2
+            })
+            localContent = retry.choices[0]?.message?.content || localContent
+          } catch (e) {
+            throw e
+          }
+        }
         parsed = { ...sp, markdown: stylePatternToMarkdown(sp) }
       } catch {
         parsed = { markdown: content.trim() }
       }
     } else if (type === 'master_manager_spectrum') {
       try {
-        const json = JSON.parse(content)
-        const mm = validateAndFillMasterManager(json)
+        let mm: any
+        let localContent = content
+        for (let i = 0; i < 2; i++) {
+          try {
+            const json = parseJsonFlex(localContent)
+            mm = validateAndFillMasterManager(json)
+            if (mm?.scores && typeof mm.scores.master === 'number' && typeof mm.scores.others === 'number') break
+            const strictPrompt = buildPrompt('master_manager_spectrum', transcriptBuilder(), whyReportContent?.markdown || 'null')
+              + '\n\nJSON만. scores.master/others는 0~100 정수.'
+            const retry = await openai.chat.completions.create({
+              model: 'gpt-4o-mini',
+              messages: [
+                { role: 'system', content: '한국어만 사용. 프리텍스트 금지. JSON만 반환.' },
+                { role: 'user', content: strictPrompt }
+              ],
+              temperature: 0.2
+            })
+            localContent = retry.choices[0]?.message?.content || localContent
+          } catch (e) {
+            throw e
+          }
+        }
         parsed = { ...mm, markdown: masterManagerToMarkdown(mm) }
       } catch {
         parsed = { markdown: content.trim() }
@@ -976,65 +1100,86 @@ async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
 품질 체크:
 - on/off 항목에 실제 대화 근거 1~2개 포함.`
     } else if (t === 'light_shadow') {
-      prompt = `# Light & Shadow
+      prompt = `역할: Transcript와 Why를 바탕으로 Light & Shadow를 JSON으로 생성합니다.
 
-Transcript 기반으로 강점이 과도할 때의 그림자와 균형 전략을 제시하세요.
+규칙:
+- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
 
 입력:
-- Transcript
-${transcript}
-- WhyReport
-${whyMd || 'null'}`
+- Transcript: ${transcript}
+- WhyReport: ${whyMd || 'null'}
+
+출력(JSON 스키마):
+{
+  "strengths": [
+    { "title": "제목", "percentage": 0-100, "description": "문장", "insight": "문장", "situations": ["상황"], "roles": ["역할"], "impact": "문장" }
+  ],
+  "shadows": [
+    { "title": "제목", "percentage": 0-100, "description": "문장", "insight": "문장", "examples": ["예시"], "solutions": [{"title": "제목", "method": "방법"}] }
+  ]
+}`
     } else if (t === 'philosophy') {
-      prompt = `# Philosophy
+      prompt = `역할: Transcript와 Why를 바탕으로 Philosophy(편지 형식 본문)를 JSON으로 생성합니다.
 
-Transcript 기반으로 삶의 철학/가치 지향을 요약하고 사례 근거를 3~5줄로 작성하세요.
+규칙:
+- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
 
 입력:
-- Transcript
-${transcript}
-- WhyReport
-${whyMd || 'null'}`
+- Transcript: ${transcript}
+- WhyReport: ${whyMd || 'null'}
+
+출력(JSON 스키마):
+{ "letter_content": "3~7문장 내외 본문" }`
     } else if (t === 'action_recipe') {
-      prompt = `# Action Recipe
+      prompt = `역할: Transcript/Why 기반 Action Recipe를 JSON으로 생성합니다.
 
-이번 주 실험 3개와 성공지표를 작성하세요.
+규칙:
+- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
 
 입력:
-- Transcript
-${transcript}
-- WhyReport
-${whyMd || 'null'}`
+- Transcript: ${transcript}
+- WhyReport: ${whyMd || 'null'}
+
+출력(JSON 스키마):
+{ "recipes": [ { "id": "A", "title": "제목", "duration": "기간", "frequency": "빈도", "steps": ["단계"] } ] }`
     } else if (t === 'future_path') {
-      prompt = `# Future Path
+      prompt = `역할: 6~12개월 방향을 JSON으로 생성합니다.
 
-6~12개월 방향/마일스톤/리스크와 완충 장치를 요약하세요.
+규칙:
+- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
 
 입력:
-- Transcript
-${transcript}
-- WhyReport
-${whyMd || 'null'}`
+- Transcript: ${transcript}
+- WhyReport: ${whyMd || 'null'}
+
+출력(JSON 스키마):
+{ "environment": { "remove": [ { "category": "카테고리", "items": ["항목"], "impact": "문장" } ], "strengthen": [ { "category": "카테고리", "items": ["항목"], "impact": "문장" } ] }, "roadmap": [ { "phase": "단계", "duration": "기간", "actions": ["행동"], "milestone": "마일스톤" } ] }`
     } else if (t === 'epilogue') {
-      prompt = `# Epilogue
+      prompt = `역할: 리포트를 JSON 에필로그로 요약합니다.
 
-이번 리포트의 핵심 전환점을 3줄로 요약하세요.
+규칙:
+- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
 
 입력:
-- Transcript
-${transcript}
-- WhyReport
-${whyMd || 'null'}`
+- Transcript: ${transcript}
+- WhyReport: ${whyMd || 'null'}
+
+출력(JSON 스키마):
+{ "overall_score": 0-100, "insights": [ { "title": "제목", "description": "문장", "score": 0-100 } ], "action_items": ["할 일"], "reflection": "문장" }`
     }
 
     // Retry up to 3 attempts with incremental backoff
     let lastErr: any = null
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
+        const sys = (t === 'value_map' || t === 'style_pattern' || t === 'master_manager_spectrum' || t === 'fit_triggers' || t === 'light_shadow' || t === 'philosophy' || t === 'action_recipe' || t === 'future_path' || t === 'epilogue')
+          ? '한국어로만 작성. 프리텍스트 금지. JSON만 반환.'
+          : '한국어로만 작성. 지정된 마크다운 템플릿 그대로, 불필요한 텍스트 금지. 마크다운만 반환.'
+
         const completion = await openai.chat.completions.create({
           model: 'gpt-4o-mini',
           messages: [
-            { role: 'system', content: '한국어로만 작성. 지정된 마크다운 템플릿 그대로, 불필요한 텍스트 금지. 마크다운만 반환.' },
+            { role: 'system', content: sys },
             { role: 'user', content: prompt }
           ],
           temperature: 0.4
@@ -1042,7 +1187,15 @@ ${whyMd || 'null'}`
         const content = completion.choices[0]?.message?.content || ''
         let parsed: any
         // JSON 스키마 출력 타입은 JSON→검증→Markdown 변환
-        if (t === 'style_pattern') {
+        if (t === 'value_map') {
+          try {
+            const json = JSON.parse(content)
+            const vm = validateAndFillValueMap(json)
+            parsed = { ...vm, markdown: valueMapToMarkdown(vm) }
+          } catch {
+            parsed = { markdown: content.trim() }
+          }
+        } else if (t === 'style_pattern') {
           try {
             const json = JSON.parse(content)
             const sp = validateAndFillStylePattern(json)
@@ -1066,12 +1219,91 @@ ${whyMd || 'null'}`
           } catch {
             parsed = { markdown: content.trim() }
           }
+        } else if (t === 'light_shadow') {
+          try {
+            const json = JSON.parse(content)
+            const ls = validateAndFillLightShadow(json)
+            parsed = { ...ls, markdown: lightShadowToMarkdown(ls) }
+          } catch {
+            parsed = { markdown: content.trim() }
+          }
+        } else if (t === 'philosophy') {
+          try {
+            const json = JSON.parse(content)
+            const ph = validateAndFillPhilosophy(json)
+            parsed = { ...ph, markdown: philosophyToMarkdown(ph) }
+          } catch {
+            parsed = { markdown: content.trim() }
+          }
+        } else if (t === 'action_recipe') {
+          try {
+            const json = JSON.parse(content)
+            const ar = validateAndFillActionRecipe(json)
+            parsed = { ...ar, markdown: actionRecipeToMarkdown(ar) }
+          } catch {
+            parsed = { markdown: content.trim() }
+          }
+        } else if (t === 'future_path') {
+          try {
+            const json = JSON.parse(content)
+            const fp = validateAndFillFuturePath(json)
+            parsed = { ...fp, markdown: futurePathToMarkdown(fp) }
+          } catch {
+            parsed = { markdown: content.trim() }
+          }
+        } else if (t === 'epilogue') {
+          try {
+            const json = JSON.parse(content)
+            const ep = validateAndFillEpilogue(json)
+            parsed = { ...ep, markdown: epilogueToMarkdown(ep) }
+          } catch {
+            parsed = { markdown: content.trim() }
+          }
         } else {
           // 나머지는 마크다운 템플릿 그대로
           parsed = { markdown: content.trim() }
         }
-        if (!parsed.markdown || parsed.markdown.length < 10) {
-          throw new Error(`empty or too short content for type ${t}`)
+        // 품질 체크: JSON 타입은 필수 필드 확인, 마크다운 타입은 길이 확인
+        if (t === 'value_map') {
+          if (!Array.isArray(parsed?.items) || parsed.items.length !== 3) {
+            throw new Error('value_map items invalid')
+          }
+        } else if (t === 'style_pattern') {
+          if (!Array.isArray(parsed?.styles) || parsed.styles.length < 3) {
+            throw new Error('style_pattern styles empty')
+          }
+        } else if (t === 'master_manager_spectrum') {
+          if (!parsed?.scores || typeof parsed.scores.master !== 'number' || typeof parsed.scores.others !== 'number') {
+            throw new Error('mm scores invalid')
+          }
+        } else if (t === 'fit_triggers') {
+          if (!Array.isArray(parsed?.on) || !Array.isArray(parsed?.off)) {
+            throw new Error('fit_triggers invalid')
+          }
+        } else if (t === 'light_shadow') {
+          if (!Array.isArray(parsed?.strengths) || !Array.isArray(parsed?.shadows)) {
+            throw new Error('light_shadow invalid')
+          }
+        } else if (t === 'philosophy') {
+          if (typeof parsed?.letter_content !== 'string' || parsed.letter_content.length < 10) {
+            throw new Error('philosophy empty')
+          }
+        } else if (t === 'action_recipe') {
+          if (!Array.isArray(parsed?.recipes) || parsed.recipes.length === 0) {
+            throw new Error('action_recipe empty')
+          }
+        } else if (t === 'future_path') {
+          if (!parsed?.environment || !Array.isArray(parsed?.roadmap)) {
+            throw new Error('future_path invalid')
+          }
+        } else if (t === 'epilogue') {
+          if (typeof parsed?.overall_score !== 'number') {
+            throw new Error('epilogue invalid')
+          }
+        } else {
+          if (!parsed.markdown || parsed.markdown.length < 10) {
+            throw new Error(`empty or too short content for type ${t}`)
+          }
         }
         await supabaseServer
           .from('reports')
