@@ -12,9 +12,10 @@ interface PhilosophySectionProps {
   isPinned: boolean;
   onTogglePin: () => void;
   language: string;
+  data?: any; // API 데이터
 }
 
-export function PhilosophySection({ isPinned, onTogglePin, language }: PhilosophySectionProps) {
+export function PhilosophySection({ isPinned, onTogglePin, language, data }: PhilosophySectionProps) {
   const content = {
     ko: {
       title: '철학자의 편지',
@@ -92,35 +93,7 @@ Aristotle`
               <p className="text-muted-foreground mt-1">{text.subtitle}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={() => {
-                const element = document.getElementById('section-5');
-                if (element) {
-                  navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}#section-5`);
-                }
-              }}
-              aria-label="Copy section link"
-            >
-              <Link className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onTogglePin}
-              className="shrink-0"
-              aria-label={isPinned ? 'Unpin section' : 'Pin section'}
-            >
-              {isPinned ? (
-                <Pin className="h-4 w-4 text-primary" />
-              ) : (
-                <PinOff className="h-4 w-4 text-muted-foreground" />
-              )}
-            </Button>
-          </div>
+          <div className="flex items-center gap-2" />
         </div>
       </div>
 
@@ -135,7 +108,7 @@ Aristotle`
         <CardContent>
           <div className="prose prose-gray dark:prose-invert max-w-none">
             <div className="text-philosophy whitespace-pre-line text-justify hyphens-auto">
-              {text.letterContent}
+              {data?.letter_content || text.letterContent}
             </div>
           </div>
         </CardContent>

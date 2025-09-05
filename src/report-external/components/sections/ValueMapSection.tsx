@@ -198,16 +198,16 @@ export function ValueMapSection({ isPinned, onTogglePin, language, data }: Value
             <CardHeader>
               <div className="space-y-4">
                 {/* Head vs Heart with Gap */}
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-3 overflow-hidden">
+                  <div className="flex items-center gap-3 flex-1 min-w-0 overflow-hidden flex-wrap">
                     <div className="flex items-center gap-2 min-w-0">
                       <Brain className="h-5 w-5 text-blue-600 flex-shrink-0" />
-                      <span className="text-xl font-semibold truncate">{conflict.head}</span>
+                      <span className="text-xl font-semibold break-words whitespace-normal leading-snug max-w-full">{conflict.head}</span>
                     </div>
                     <ArrowLeftRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex items-center gap-2 min-w-0 overflow-hidden">
                       <Heart className="h-5 w-5 text-red-600 flex-shrink-0" />
-                      <span className="text-xl font-semibold truncate">{conflict.heart}</span>
+                      <span className="text-xl font-semibold break-words whitespace-normal leading-snug max-w-full">{conflict.heart}</span>
                     </div>
                   </div>
                   <Badge className={`${getGapColor(conflict.gapLevel)} font-medium flex-shrink-0`}>
@@ -217,14 +217,14 @@ export function ValueMapSection({ isPinned, onTogglePin, language, data }: Value
 
                 {/* Head vs Heart Details */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-lg border-2 border-blue-500">
+                  <div className="p-4 rounded-lg border-2 border-blue-500 w-full md:w-full">
                     <div className="flex items-center gap-2 mb-2">
                       <Brain className="h-5 w-5 text-blue-600" />
                       <p className="font-semibold text-blue-800 dark:text-blue-200">{text.head}는</p>
                     </div>
                     <p className="text-lg leading-relaxed">"{conflict.headDetail}"</p>
                   </div>
-                  <div className="p-4 rounded-lg border-2 border-red-500">
+                  <div className="p-4 rounded-lg border-2 border-red-500 w-full md:w-full">
                     <div className="flex items-center gap-2 mb-2">
                       <Heart className="h-5 w-5 text-red-600" />
                       <p className="font-semibold text-red-800 dark:text-red-200">{text.heart}은</p>

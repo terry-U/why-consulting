@@ -12,27 +12,34 @@ import { MasterManagerSection } from './components/sections/MasterManagerSection
 import { LightShadowSection } from './components/sections/LightShadowSection';
 import { PhilosophySection } from './components/sections/PhilosophySection';
 import { FuturePathSection } from './components/sections/FuturePathSection';
-import { EpilogueSection } from './components/sections/EpilogueSection';
 import { ReportHeader } from './components/ReportHeader';
+import { Skeleton } from './components/ui/skeleton';
 
 type ReportsMap = Record<string, any>;
 
 export default function App({ initialReports }: { initialReports?: ReportsMap }) {
   const [language, setLanguage] = useState('ko');
   const [pinnedSections, setPinnedSections] = useState<number[]>([]);
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [isTOCVisible, setIsTOCVisible] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [reports, setReports] = useState<ReportsMap>(initialReports || {});
   const [loading, setLoading] = useState<boolean>(false);
   const [statusMsg, setStatusMsg] = useState<string>('');
+  const [createdAt, setCreatedAt] = useState<string | undefined>(undefined);
+
+  const isLikelyJson = (s?: string) => {
+    if (typeof s !== 'string') return false;
+    const t = s.trim();
+    // code fence or raw JSON array/object
+    if (t.startsWith('```')) return true;
+    return /^[\[{]/.test(t);
+  };
 
   // Load theme from localStorage on mount
   useEffect(() => {
-    const savedTheme = localStorage.getItem('goldenCircle-theme') as 'light' | 'dark' | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-    }
+    setTheme('light');
+    localStorage.setItem('goldenCircle-theme', 'light');
   }, []);
 
   // Prevent body scroll when TOC is open
@@ -62,7 +69,7 @@ export default function App({ initialReports }: { initialReports?: ReportsMap })
     const fetchJson = async (url: string) => {
       try {
         console.log('[report] GET', url);
-        const res = await fetch(url, { method: 'GET', credentials: 'same-origin' });
+        const res = await fetch(url, { method: 'GET', credentials: 'same-origin', cache: 'no-store', headers: { 'cache-control': 'no-cache' } });
         console.log('[report] RES', res.status, url);
         if (res.status === 202) return { pending: true } as any;
         const text = await res.text();
@@ -81,7 +88,10 @@ export default function App({ initialReports }: { initialReports?: ReportsMap })
         setLoading(true);
         // 1) Ensure my_why exists and cascade others (no force to use cache)
         setStatusMsg('보고서 확인 중...');
-        await fetchJson(`${base}/api/session/${id}/report?type=my_why&cascade=1`);
+        // 트리거는 비대기(캐시 응답을 빠르게 받도록 즉시 폴링 시작)
+        fetchJson(`${base}/api/session/${id}/report?type=my_why&cascade=1`).then((r) => {
+          if (r?.createdAt) setCreatedAt(r.createdAt);
+        });
 
         const types: Array<string> = [
           'my_why',
@@ -99,19 +109,24 @@ export default function App({ initialReports }: { initialReports?: ReportsMap })
         const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
         const pollType = async (t: string) => {
           // Poll up to ~90s with backoff
-          for (let attempt = 0; attempt < 12; attempt++) {
+          for (let attempt = 0; attempt < 10; attempt++) {
             try {
               const data = await fetchJson(`${base}/api/session/${id}/report?type=${t}`);
               if (data && (data.success || data.report)) {
                 setReports(prev => ({ ...prev, [t]: data.report || data }));
+                if (!createdAt && data?.createdAt) setCreatedAt(data.createdAt);
                 setStatusMsg(`${t} 로드 완료`);
+                // 첫 성공 시 로딩 해제(점진적 표시)
+                setLoading(l => (l ? false : l));
                 return;
               }
             } catch {}
-            await delay(Math.min(1000 * (attempt + 1), 8000));
+            await delay(Math.min(800 * (attempt + 1), 6000));
           }
         };
 
+        // 세션 변경 시 이전 보고서 흔적 제거
+        setReports({});
         // poll all types in parallel to reduce waiting time
         await Promise.all(types.map(pollType));
       } finally {
@@ -171,13 +186,16 @@ export default function App({ initialReports }: { initialReports?: ReportsMap })
           <ReportHeader 
             language={language}
             onLanguageChange={setLanguage}
-            theme={theme}
-            onThemeChange={toggleTheme}
             onToggleMobileTOC={toggleTOC}
+            createdAt={createdAt}
           />
           {loading && (
             <div className="max-w-4xl mx-auto px-6">
-              <div className="my-4 text-sm text-muted-foreground">{statusMsg || '보고서 로딩 중...'}</div>
+              <div className="space-y-6">
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-40 w-full" />
+                <Skeleton className="h-40 w-full" />
+              </div>
             </div>
           )}
           
@@ -186,19 +204,16 @@ export default function App({ initialReports }: { initialReports?: ReportsMap })
               
               {/* Section 0: Why Statement */}
               <section id="section-0" className="scroll-mt-24">
+                {!reports?.my_why && loading ? (
+                  <Skeleton className="h-48 w-full" />
+                ) : (
                 <WhyStatementSection 
                   isPinned={pinnedSections.includes(0)}
                   onTogglePin={() => togglePin(0)}
                   language={language}
                   data={reports?.my_why}
-                />
-                {reports?.my_why?.markdown && (
-                  <div className="prose dark:prose-invert max-w-none mt-6">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {reports.my_why.markdown}
-                    </ReactMarkdown>
-                  </div>
-                )}
+                />)}
+                {/* Raw markdown hidden: structured UI only */}
               </section>
 
               {/* Chapter Divider */}
@@ -212,19 +227,16 @@ export default function App({ initialReports }: { initialReports?: ReportsMap })
 
               {/* Section 1: Value Map */}
               <section id="section-1" className="scroll-mt-24">
+                {!reports?.value_map ? (
+                  <Skeleton className="h-64 w-full" />
+                ) : (
                 <ValueMapSection 
                   isPinned={pinnedSections.includes(1)}
                   onTogglePin={() => togglePin(1)}
                   language={language}
                   data={reports?.value_map}
-                />
-                {reports?.value_map?.markdown && (
-                  <div className="prose dark:prose-invert max-w-none mt-6">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {reports.value_map.markdown}
-                    </ReactMarkdown>
-                  </div>
-                )}
+                />)}
+                {/* Raw markdown hidden: structured UI only */}
               </section>
 
               {/* Chapter Divider */}
@@ -238,18 +250,16 @@ export default function App({ initialReports }: { initialReports?: ReportsMap })
 
               {/* Section 2: Style Pattern */}
               <section id="section-2" className="scroll-mt-24">
+                {!reports?.style_pattern ? (
+                  <Skeleton className="h-64 w-full" />
+                ) : (
                 <StylePatternSection 
                   isPinned={pinnedSections.includes(2)}
                   onTogglePin={() => togglePin(2)}
                   language={language}
-                />
-                {reports?.style_pattern?.markdown && (
-                  <div className="prose dark:prose-invert max-w-none mt-6">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {reports.style_pattern.markdown}
-                    </ReactMarkdown>
-                  </div>
-                )}
+                  data={reports?.style_pattern}
+                />)}
+                {/* Raw markdown hidden: structured UI only */}
               </section>
 
               {/* Chapter Divider */}
@@ -263,18 +273,16 @@ export default function App({ initialReports }: { initialReports?: ReportsMap })
 
               {/* Section 3: Master-Manager Spectrum */}
               <section id="section-3" className="scroll-mt-24">
+                {!reports?.master_manager_spectrum ? (
+                  <Skeleton className="h-80 w-full" />
+                ) : (
                 <MasterManagerSection 
                   isPinned={pinnedSections.includes(3)}
                   onTogglePin={() => togglePin(3)}
                   language={language}
-                />
-                {reports?.master_manager_spectrum?.markdown && (
-                  <div className="prose dark:prose-invert max-w-none mt-6">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {reports.master_manager_spectrum.markdown}
-                    </ReactMarkdown>
-                  </div>
-                )}
+                  data={reports?.master_manager_spectrum}
+                />)}
+                {/* Raw markdown hidden: structured UI only */}
               </section>
 
               {/* Chapter Divider */}
@@ -288,18 +296,16 @@ export default function App({ initialReports }: { initialReports?: ReportsMap })
 
               {/* Section 4: Light-Shadow Map */}
               <section id="section-4" className="scroll-mt-24">
+                {!reports?.light_shadow ? (
+                  <Skeleton className="h-64 w-full" />
+                ) : (
                 <LightShadowSection 
                   isPinned={pinnedSections.includes(4)}
                   onTogglePin={() => togglePin(4)}
                   language={language}
-                />
-                {reports?.light_shadow?.markdown && (
-                  <div className="prose dark:prose-invert max-w-none mt-6">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {reports.light_shadow.markdown}
-                    </ReactMarkdown>
-                  </div>
-                )}
+                  data={reports?.light_shadow}
+                />)}
+                {/* Raw markdown hidden: structured UI only */}
               </section>
 
               {/* Chapter Divider */}
@@ -313,18 +319,16 @@ export default function App({ initialReports }: { initialReports?: ReportsMap })
 
               {/* Section 5: Philosophy */}
               <section id="section-5" className="scroll-mt-24">
+                {!reports?.philosophy ? (
+                  <Skeleton className="h-56 w-full" />
+                ) : (
                 <PhilosophySection 
                   isPinned={pinnedSections.includes(5)}
                   onTogglePin={() => togglePin(5)}
                   language={language}
-                />
-                {reports?.philosophy?.markdown && (
-                  <div className="prose dark:prose-invert max-w-none mt-6">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {reports.philosophy.markdown}
-                    </ReactMarkdown>
-                  </div>
-                )}
+                  data={reports?.philosophy}
+                />)}
+                {/* Raw markdown hidden: structured UI only */}
               </section>
 
               {/* Chapter Divider */}
@@ -338,51 +342,32 @@ export default function App({ initialReports }: { initialReports?: ReportsMap })
 
               {/* Section 6: Why 극대화 환경 */}
               <section id="section-6" className="scroll-mt-24">
+                {!reports?.future_path ? (
+                  <Skeleton className="h-64 w-full" />
+                ) : (
                 <FuturePathSection 
                   isPinned={pinnedSections.includes(6)}
                   onTogglePin={() => togglePin(6)}
                   language={language}
-                />
-                {reports?.future_path?.markdown && (
-                  <div className="prose dark:prose-invert max-w-none mt-6">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {reports.future_path.markdown}
-                    </ReactMarkdown>
-                  </div>
-                )}
+                  data={reports?.future_path}
+                />)}
+                {/* Raw markdown hidden: structured UI only */}
               </section>
 
               {/* Section 7: Fit & Triggers (optional) */}
               <section id="section-7" className="scroll-mt-24">
-                {reports?.fit_triggers?.markdown && (
-                  <div className="prose dark:prose-invert max-w-none">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {reports.fit_triggers.markdown}
-                    </ReactMarkdown>
-                  </div>
-                )}
+                {/* Raw markdown hidden: structured UI only */}
               </section>
 
               {/* Section 8: Action Recipe */}
               <section id="section-8" className="scroll-mt-24">
-                {reports?.action_recipe?.markdown && (
-                  <div className="prose dark:prose-invert max-w-none">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {reports.action_recipe.markdown}
-                    </ReactMarkdown>
-                  </div>
-                )}
+                {/* Raw markdown hidden: structured UI only */}
               </section>
 
               {/* Section 9: Epilogue */}
               <section id="section-9" className="scroll-mt-24">
-                {reports?.epilogue?.markdown && (
-                  <div className="prose dark:prose-invert max-w-none">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {reports.epilogue.markdown}
-                    </ReactMarkdown>
-                  </div>
-                )}
+                {/* If we have structured epilogue data, render component; otherwise fallback to markdown */}
+                {/* Raw markdown hidden: structured UI only */}
               </section>
 
             </div>

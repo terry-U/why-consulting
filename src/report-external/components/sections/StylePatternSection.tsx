@@ -13,16 +13,14 @@ import {
   Calendar,
   Target,
   FileText,
-  Clock,
-  Pin, 
-  PinOff, 
-  Link 
+  Clock
 } from 'lucide-react';
 
 interface StylePatternSectionProps {
   isPinned: boolean;
   onTogglePin: () => void;
   language: string;
+  data?: any; // API 데이터
 }
 
 const workingStyles = [
@@ -112,7 +110,7 @@ const todayChecklist = [
   "혼자 너무 오래 고민하고 있지는 않나요?"
 ];
 
-export function StylePatternSection({ isPinned, onTogglePin, language }: StylePatternSectionProps) {
+export function StylePatternSection({ isPinned, onTogglePin, language, data }: StylePatternSectionProps) {
   const [checkedItems, setCheckedItems] = useState<boolean[]>(new Array(todayChecklist.length).fill(false));
 
   const content = {
@@ -162,6 +160,12 @@ export function StylePatternSection({ isPinned, onTogglePin, language }: StylePa
 
   const text = content[language as keyof typeof content] || content.ko;
 
+  // API 데이터 매핑
+  const apiStyles: Array<any> | undefined = Array.isArray(data?.styles) ? data.styles : undefined;
+  const apiQuickTips: Array<any> | undefined = Array.isArray(data?.quick_tips) ? data.quick_tips : undefined;
+  const apiTodayChecklist: string[] | undefined = Array.isArray(data?.today_checklist) ? data.today_checklist : undefined;
+  const apiSummary: string | undefined = typeof data?.summary === 'string' ? data.summary : undefined;
+
   const getFitColor = (level: string) => {
     switch (level) {
       case 'high': return 'text-green-600 bg-green-100 dark:bg-green-900/20 dark:text-green-400';
@@ -203,33 +207,7 @@ export function StylePatternSection({ isPinned, onTogglePin, language }: StylePa
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={() => {
-                const element = document.getElementById('section-2');
-                if (element) {
-                  navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}#section-2`);
-                }
-              }}
-              aria-label="Copy section link"
-            >
-              <Link className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onTogglePin}
-              className="shrink-0"
-              aria-label={isPinned ? 'Unpin section' : 'Pin section'}
-            >
-              {isPinned ? (
-                <Pin className="h-4 w-4 text-primary" />
-              ) : (
-                <PinOff className="h-4 w-4 text-muted-foreground" />
-              )}
-            </Button>
+            <div />
           </div>
         </div>
       </div>
@@ -245,7 +223,20 @@ export function StylePatternSection({ isPinned, onTogglePin, language }: StylePa
 
       {/* Working Styles */}
       <div className="space-y-6">
-        {workingStyles.map((style) => {
+        {(apiStyles || workingStyles).map((styleRaw, idx) => {
+          const style = apiStyles ? {
+            id: idx,
+            title: styleRaw.title,
+            subtitle: styleRaw.subtitle,
+            fitLevel: styleRaw.fitLevel,
+            icon: [Users, Zap, Brain][idx % 3],
+            color: ['blue','amber','violet'][idx % 3],
+            what: styleRaw.what,
+            example: styleRaw.example,
+            why: styleRaw.why,
+            caution: styleRaw.caution,
+            story: styleRaw.story,
+          } : styleRaw
           const IconComponent = style.icon;
           return (
             <Card key={style.id} className="shadow-lg">
@@ -328,7 +319,15 @@ export function StylePatternSection({ isPinned, onTogglePin, language }: StylePa
         </CardHeader>
         <CardContent className="pt-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {quickTips.map((tip) => {
+            {(apiQuickTips || quickTips).map((tipRaw, i) => {
+              const tip = apiQuickTips ? {
+                id: tipRaw.id || String(i + 1),
+                title: tipRaw.title,
+                method: tipRaw.method,
+                tip: tipRaw.tip,
+                icon: [Calendar, Target, FileText, Clock][i % 4],
+                color: ['blue','amber','green','violet'][i % 4]
+              } : tipRaw
               const IconComponent = tip.icon;
               return (
                 <Card key={tip.id} className="border-2 border-muted">
@@ -372,7 +371,7 @@ export function StylePatternSection({ isPinned, onTogglePin, language }: StylePa
         </CardHeader>
         <CardContent className="pt-0">
           <div className="space-y-4">
-            {todayChecklist.map((item, index) => (
+            {(apiTodayChecklist || todayChecklist).map((item, index) => (
               <div key={index} className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
                 <Checkbox
                   id={`today-${index}`}
@@ -398,7 +397,7 @@ export function StylePatternSection({ isPinned, onTogglePin, language }: StylePa
         </CardHeader>
         <CardContent className="pt-0">
           <p className="leading-relaxed whitespace-pre-line font-medium">
-            {text.summaryText}
+            {apiSummary || text.summaryText}
           </p>
         </CardContent>
       </Card>

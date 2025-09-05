@@ -104,36 +104,7 @@ The reason is that your heart responds most strongly to **'connected meaning'**.
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {/* Desktop Anchor Link */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={() => {
-                const element = document.getElementById('section-0');
-                if (element) {
-                  navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}#section-0`);
-                }
-              }}
-              aria-label="Copy section link"
-            >
-              <Link className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onTogglePin}
-              className="shrink-0"
-              aria-label={isPinned ? 'Unpin section' : 'Pin section'}
-            >
-              {isPinned ? (
-                <Pin className="h-4 w-4 text-primary" />
-              ) : (
-                <PinOff className="h-4 w-4 text-muted-foreground" />
-              )}
-            </Button>
-          </div>
+          <div className="flex items-center gap-2" />
         </div>
       </div>
 
@@ -210,20 +181,20 @@ The reason is that your heart responds most strongly to **'connected meaning'**.
         </CardHeader>
         <CardContent className="pt-0">
           <div className="space-y-8">
-            <div className="flex flex-wrap items-center gap-3 text-xl">
+            <div className="flex flex-wrap items-center gap-3 text-xl overflow-hidden">
               <span className="font-medium">"{text.oneLineTemplate}</span>
               <Input
                 value={firstBlank}
                 onChange={(e) => setFirstBlank(e.target.value)}
                 placeholder="____"
-                className="inline-flex min-w-0 w-auto flex-1 max-w-[140px] text-center text-lg font-medium border-2 border-dashed border-primary/30"
+                className="inline-flex min-w-0 w-[140px] text-center text-lg font-medium border-2 border-dashed border-primary/30"
               />
               <span>{text.oneLinePlaceholder1}</span>
               <Input
                 value={secondBlank}
                 onChange={(e) => setSecondBlank(e.target.value)}
                 placeholder="____"
-                className="inline-flex min-w-0 w-auto flex-1 max-w-[140px] text-center text-lg font-medium border-2 border-dashed border-primary/30"
+                className="inline-flex min-w-0 w-[140px] text-center text-lg font-medium border-2 border-dashed border-primary/30"
               />
               <span className="font-medium">{text.oneLinePlaceholder2}."</span>
             </div>

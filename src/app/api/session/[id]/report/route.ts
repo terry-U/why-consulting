@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase-server'
 import { OpenAI } from 'openai'
+import { buildReportPrompt, SYSTEM_KO_JSON_ONLY } from '@/lib/report-prompts'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
@@ -150,6 +151,29 @@ function validateAndFillMasterManager(input: any) {
     others: clamp(input?.scores?.others),
     master: clamp(input?.scores?.master)
   }
+  const calcOrientation = (o: number): { side: 'self'|'others'; score: number } => ({
+    side: (o >= 50 ? 'others' : 'self') as 'self'|'others',
+    score: o >= 50 ? o : 100 - o
+  })
+  const calcExecution = (m: number): { side: 'manager'|'master'; score: number } => ({
+    side: (m >= 50 ? 'master' : 'manager') as 'manager'|'master',
+    score: m >= 50 ? m : 100 - m
+  })
+  const orientationDefault = calcOrientation(scores.others)
+  const executionDefault = calcExecution(scores.master)
+
+  const normalizeInsight = (o: any, def: { side: any; score: number }) => ({
+    side: (o?.side === 'self' || o?.side === 'others') ? o.side : def.side,
+    score: clamp(o?.score ?? def.score),
+    headline: typeof o?.headline === 'string' ? o.headline.trim() : '',
+    paragraph: typeof o?.paragraph === 'string' ? o.paragraph.trim() : '',
+    evidence: Array.isArray(o?.evidence) ? o.evidence.slice(0,5).map((s: any)=> typeof s === 'string' ? s.trim() : '') : [],
+    analysis: typeof o?.analysis === 'string' ? o.analysis.trim() : '',
+    summary: typeof o?.summary === 'string' ? o.summary.trim() : ''
+  })
+
+  const orientation = normalizeInsight(input?.orientation, orientationDefault)
+  const execution = normalizeInsight(input?.execution, executionDefault)
   const normType = (t: any) => ({
     id: typeof t?.id === 'string' ? t.id : '',
     name: typeof t?.name === 'string' ? t.name.trim() : '',
@@ -167,7 +191,7 @@ function validateAndFillMasterManager(input: any) {
         conclusion: typeof s?.conclusion === 'string' ? s.conclusion.trim() : ''
       }))
     : []
-  return { scores, current_type, types, scenes }
+  return { scores, orientation, execution, current_type, types, scenes }
 }
 
 function masterManagerToMarkdown(mm: { scores: any; current_type: any; types?: any[]; scenes?: any[] }) {
@@ -291,8 +315,8 @@ function validateAndFillLightShadow(input: any) {
       method: typeof s?.method === 'string' ? s.method.trim() : ''
     })) : []
   })
-  const strengths = Array.isArray(input?.strengths) ? input.strengths.slice(0, 5).map(normalizeStrength) : []
-  const shadows = Array.isArray(input?.shadows) ? input.shadows.slice(0, 5).map(normalizeShadow) : []
+  const strengths = Array.isArray(input?.strengths) ? input.strengths.slice(0, 3).map(normalizeStrength) : []
+  const shadows = Array.isArray(input?.shadows) ? input.shadows.slice(0, 3).map(normalizeShadow) : []
   return { strengths, shadows }
 }
 
@@ -359,25 +383,17 @@ function actionRecipeToMarkdown(a: { recipes?: any[] }) {
 function validateAndFillFuturePath(input: any) {
   const normalizeEnv = (e: any) => ({
     category: typeof e?.category === 'string' ? e.category.trim() : '',
-    items: Array.isArray(e?.items) ? e.items.slice(0, 10).map((s: any) => (typeof s === 'string' ? s.trim() : '')) : [],
+    items: Array.isArray(e?.items) ? e.items.slice(0, 4).map((s: any) => (typeof s === 'string' ? s.trim() : '')) : [],
     impact: typeof e?.impact === 'string' ? e.impact.trim() : ''
   })
   const environment = {
-    remove: Array.isArray(input?.environment?.remove) ? input.environment.remove.slice(0, 5).map(normalizeEnv) : [],
-    strengthen: Array.isArray(input?.environment?.strengthen) ? input.environment.strengthen.slice(0, 5).map(normalizeEnv) : []
+    remove: Array.isArray(input?.environment?.remove) ? input.environment.remove.slice(0, 3).map(normalizeEnv) : [],
+    strengthen: Array.isArray(input?.environment?.strengthen) ? input.environment.strengthen.slice(0, 3).map(normalizeEnv) : []
   }
-  const roadmap = Array.isArray(input?.roadmap)
-    ? input.roadmap.slice(0, 8).map((r: any) => ({
-        phase: typeof r?.phase === 'string' ? r.phase.trim() : '',
-        duration: typeof r?.duration === 'string' ? r.duration.trim() : '',
-        actions: Array.isArray(r?.actions) ? r.actions.slice(0, 10).map((s: any) => (typeof s === 'string' ? s.trim() : '')) : [],
-        milestone: typeof r?.milestone === 'string' ? r.milestone.trim() : ''
-      }))
-    : []
-  return { environment, roadmap }
+  return { environment }
 }
 
-function futurePathToMarkdown(f: { environment?: any; roadmap?: any[] }) {
+function futurePathToMarkdown(f: { environment?: any }) {
   const lines: string[] = []
   lines.push('# Future Path')
   lines.push('')
@@ -386,14 +402,6 @@ function futurePathToMarkdown(f: { environment?: any; roadmap?: any[] }) {
     if (Array.isArray(f.environment.remove) && f.environment.remove.length) lines.push('- 제거: ' + f.environment.remove.map((x: any) => x.category).join(', '))
     if (Array.isArray(f.environment.strengthen) && f.environment.strengthen.length) lines.push('- 강화: ' + f.environment.strengthen.map((x: any) => x.category).join(', '))
     lines.push('')
-  }
-  if (Array.isArray(f.roadmap) && f.roadmap.length) {
-    lines.push('## 로드맵')
-    for (const r of f.roadmap) {
-      lines.push(`- ${r.phase} (${r.duration || ''})`) 
-      if (Array.isArray(r.actions) && r.actions.length) for (const a of r.actions) lines.push(`  - ${a}`)
-      if (r.milestone) lines.push(`  - 마일스톤: ${r.milestone}`)
-    }
   }
   return lines.join('\n')
 }
@@ -453,18 +461,17 @@ export async function GET(req: Request, context: any) {
     // 1) 기존 저장된 보고서가 있으면 반환 (캐싱) — force=1이면 건너뜀
     const { data: existing, error: existingErr } = force ? { data: null as any, error: null as any } : await supabaseServer
       .from('reports')
-      .select('content')
+      .select('content, created_at, updated_at')
       .eq('session_id', sessionId)
       .eq('type', type)
       .single()
 
     if (!force && !existingErr && existing?.content) {
-      // 캐시 즉시 반환 + 요청 시 연쇄 생성 보장
-      if (type === 'my_why') {
-        await markSessionCompleted(sessionId, existing.content?.markdown)
-        if (cascade) await generateOthersIfMissing(sessionId)
-      }
-      return NextResponse.json({ success: true, report: existing.content, cached: true })
+      // 캐시 즉시 반환. 보고서가 존재한다면 상태를 완료로 갱신(비동기)
+      markSessionCompleted(sessionId, existing.content?.markdown).catch(() => {})
+      // my_why + cascade는 비동기로 연쇄 생성 트리거(응답 지연 방지)
+      if (type === 'my_why' && cascade) generateOthersIfMissing(sessionId).catch(() => {})
+      return NextResponse.json({ success: true, report: existing.content, cached: true, createdAt: existing.created_at || existing.updated_at })
     }
 
     // 존재 확인만 요청한 경우: 생성 로직을 시작하지 않고 보류 응답
@@ -649,6 +656,8 @@ export async function GET(req: Request, context: any) {
 출력(JSON 스키마):
 {
   "scores": { "others": 0-100, "master": 0-100 },
+  "orientation": { "side": "self|others", "score": 0-100, "headline": "문장", "paragraph": "2~4문장", "evidence": ["3~5 예"], "analysis": "2~4문장", "summary": "1문장" },
+  "execution": { "side": "manager|master", "score": 0-100, "headline": "문장", "paragraph": "2~4문장", "evidence": ["3~5 예"], "analysis": "2~4문장", "summary": "1문장" },
   "current_type": { "id": "id", "name": "이름", "position": "설명", "description": "문장", "traits": ["특성1","특성2"] },
   "types": [ { "id": "id", "name": "이름", "position": "설명", "description": "문장", "traits": ["특성"] } ],
   "scenes": [ { "category": "맥락", "evidence": ["근거"], "analysis": "해석", "conclusion": "결론" } ]
@@ -680,6 +689,7 @@ export async function GET(req: Request, context: any) {
 
 규칙:
 - 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
+ - strengths와 shadows는 각각 정확히 3개 항목.
 
 입력:
 - Transcript: ${transcript}
@@ -687,20 +697,47 @@ export async function GET(req: Request, context: any) {
 
 출력(JSON 스키마):
 {
-  "strengths": [ { "title": "제목", "percentage": 0-100, "description": "문장", "insight": "문장", "situations": ["상황"], "roles": ["역할"], "impact": "문장" } ],
-  "shadows": [ { "title": "제목", "percentage": 0-100, "description": "문장", "insight": "문장", "examples": ["예시"], "solutions": [ { "title": "제목", "method": "방법" } ] } ]
+  "strengths": [
+    { "title": "제목", "percentage": 0-100, "description": "문장", "insight": "문장", "situations": ["상황"], "roles": ["역할"], "impact": "문장" },
+    { "title": "제목", "percentage": 0-100, "description": "문장", "insight": "문장", "situations": ["상황"], "roles": ["역할"], "impact": "문장" },
+    { "title": "제목", "percentage": 0-100, "description": "문장", "insight": "문장", "situations": ["상황"], "roles": ["역할"], "impact": "문장" }
+  ],
+  "shadows": [
+    { "title": "제목", "percentage": 0-100, "description": "문장", "insight": "문장", "examples": ["예시"], "solutions": [ { "title": "제목", "method": "방법" } ] },
+    { "title": "제목", "percentage": 0-100, "description": "문장", "insight": "문장", "examples": ["예시"], "solutions": [ { "title": "제목", "method": "방법" } ] },
+    { "title": "제목", "percentage": 0-100, "description": "문장", "insight": "문장", "examples": ["예시"], "solutions": [ { "title": "제목", "method": "방법" } ] }
+  ]
 }`,
-        philosophy: `역할: Transcript 기반 Philosophy(편지 본문)를 JSON으로 생성합니다.
+        philosophy: `역할: Transcript와 Why를 바탕으로 아리스토텔레스의 2인칭 조언 편지를 작성합니다.
 
 규칙:
 - 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
+- 문체는 아리스토텔레스 1인칭, 독자는 "자네" 2인칭.
+- 아래 구조를 엄격히 따릅니다.
 
 입력:
 - Transcript: ${transcript}
 - WhyReport: ${whyMarkdown || (whyReportContent?.markdown || 'null')}
 
 출력(JSON 스키마):
-{ "letter_content": "3~7문장 내외 본문" }`,
+{ "letter_content": "전체 편지 본문" }
+
+편지 구조(그대로 따름):
+나는 아리스토텔레스요... (간단 소개 2~3문장, 사용자의 지향을 1문장으로 요약해 호명)
+
+⸻
+
+1. <한 줄 제목>\n<근거·일화 기반 단락 2~4문장>
+2. <한 줄 제목>\n<단락 2~4문장>
+3. <한 줄 제목>\n<단락 2~4문장>
+4. <한 줄 제목>\n<단락 2~4문장>
+5. <한 줄 제목>\n<단락 2~4문장>
+6. <한 줄 제목>\n<단락 2~4문장>
+(필요 시 7~9까지 확장 가능)
+
+⸻
+
+마지막 권고(2~3문장).\n아테네의 한낮에,\n아리스토텔레스 드림`,
         action_recipe: `역할: Transcript 기반 Action Recipe를 JSON으로 생성합니다.
 
 규칙:
@@ -712,17 +749,19 @@ export async function GET(req: Request, context: any) {
 
 출력(JSON 스키마):
 { "recipes": [ { "id": "A", "title": "제목", "duration": "기간", "frequency": "빈도", "steps": ["단계"] } ] }`,
-        future_path: `역할: 6~12개월 방향을 JSON으로 생성합니다.
+        future_path: `역할: 6~12개월 동안 'Why 극대화 환경'을 설계하는 환경 목록(JSON)만 생성합니다. 로드맵(단계/기간/행동/마일스톤)은 생성하지 않습니다.
 
 규칙:
 - 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
+- remove/strengthen 카테고리는 각각 정확히 3개.
+- 각 카테고리 items는 정확히 4개. impact는 1문장.
 
 입력:
 - Transcript: ${transcript}
 - WhyReport: ${whyMarkdown || (whyReportContent?.markdown || 'null')}
 
 출력(JSON 스키마):
-{ "environment": { "remove": [ { "category": "카테고리", "items": ["항목"], "impact": "문장" } ], "strengthen": [ { "category": "카테고리", "items": ["항목"], "impact": "문장" } ] }, "roadmap": [ { "phase": "단계", "duration": "기간", "actions": ["행동"], "milestone": "마일스톤" } ] }`,
+{ "environment": { "remove": [ { "category": "카테고리", "items": ["항목"], "impact": "문장" } ], "strengthen": [ { "category": "카테고리", "items": ["항목"], "impact": "문장" } ] } }`,
         epilogue: `역할: 리포트를 JSON 에필로그로 요약합니다.
 
 규칙:
@@ -750,9 +789,14 @@ export async function GET(req: Request, context: any) {
       if (whyExisting?.content?.headline) whyHeadline = whyExisting.content.headline
     }
 
-    const prompt = buildPrompt(type as any, transcriptBuilder(), undefined, whyHeadline, (sessionData as any)?.user_name)
+    const prompt = buildReportPrompt(type as any, {
+      transcript: transcriptBuilder(),
+      whyMarkdown: whyReportContent?.markdown,
+      whyHeadline,
+      userName: (sessionData as any)?.user_name
+    })
 
-    const systemMessage = '한국어만 사용. my_why, value_map, style_pattern, master_manager_spectrum, fit_triggers, light_shadow, philosophy, action_recipe, future_path, epilogue는 반드시 JSON 하나만 반환(프리텍스트 금지). 상투어·진단 어휘 금지.'
+    const systemMessage = SYSTEM_KO_JSON_ONLY
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
@@ -788,7 +832,7 @@ export async function GET(req: Request, context: any) {
             vm = validateAndFillValueMap(json)
             if (Array.isArray(vm.items) && vm.items.length === 3) break
             // 재시도: 더 엄격한 프롬프트로 재요청
-            const strictPrompt = buildPrompt('value_map', transcriptBuilder(), whyReportContent?.markdown || 'null')
+            const strictPrompt = buildReportPrompt('value_map' as any, { transcript: transcriptBuilder(), whyMarkdown: whyReportContent?.markdown || 'null' })
               + '\n\n반드시 items는 3개. 실패 시 다시 시도.'
             const retry = await openai.chat.completions.create({
               model: 'gpt-4o-mini',
@@ -816,7 +860,7 @@ export async function GET(req: Request, context: any) {
             const json = parseJsonFlex(localContent)
             sp = validateAndFillStylePattern(json)
             if (Array.isArray(sp.styles) && sp.styles.length >= 3) break
-            const strictPrompt = buildPrompt('style_pattern', transcriptBuilder(), whyReportContent?.markdown || 'null')
+            const strictPrompt = buildReportPrompt('style_pattern' as any, { transcript: transcriptBuilder(), whyMarkdown: whyReportContent?.markdown || 'null' })
               + '\n\nstyles는 3~5개. story에는 실제 장면 단서 1개 포함. JSON만.'
             const retry = await openai.chat.completions.create({
               model: 'gpt-4o-mini',
@@ -844,7 +888,7 @@ export async function GET(req: Request, context: any) {
             const json = parseJsonFlex(localContent)
             mm = validateAndFillMasterManager(json)
             if (mm?.scores && typeof mm.scores.master === 'number' && typeof mm.scores.others === 'number') break
-            const strictPrompt = buildPrompt('master_manager_spectrum', transcriptBuilder(), whyReportContent?.markdown || 'null')
+            const strictPrompt = buildReportPrompt('master_manager_spectrum' as any, { transcript: transcriptBuilder(), whyMarkdown: whyReportContent?.markdown || 'null' })
               + '\n\nJSON만. scores.master/others는 0~100 정수.'
             const retry = await openai.chat.completions.create({
               model: 'gpt-4o-mini',
@@ -897,7 +941,7 @@ export async function GET(req: Request, context: any) {
       }
     } else if (type === 'future_path') {
       try {
-        const json = JSON.parse(content)
+        const json = parseJsonFlex(content)
         const fp = validateAndFillFuturePath(json)
         parsed = { ...fp, markdown: futurePathToMarkdown(fp) }
       } catch {
@@ -932,19 +976,17 @@ export async function GET(req: Request, context: any) {
       }
     }
 
-    // my_why 생성 시에는 성공/실패와 무관하게 세션 상태를 완료 처리하여 후속 흐름이 막히지 않도록 보장
-    if (type === 'my_why') {
+    // 어떤 타입이든 보고서가 생성/저장되면 세션 상태를 완료 처리(요약/완료)로 갱신
       await markSessionCompleted(sessionId, parsed?.markdown)
-    }
 
     // cascade: my_why 생성 완료 시 2~5 자동 생성 (이미 존재하면 스킵)
     if (cascade && type === 'my_why') {
       const whyMd = (parsed?.markdown as string | undefined)
-      await generateOthersIfMissing(sessionId, whyMd)
-      return NextResponse.json({ success: true, report: parsed, first: true })
+      generateOthersIfMissing(sessionId, whyMd).catch(() => {})
+      return NextResponse.json({ success: true, report: parsed, first: true, cascading: true, createdAt: new Date().toISOString() })
     }
 
-    return NextResponse.json({ success: true, report: parsed })
+    return NextResponse.json({ success: true, report: parsed, createdAt: new Date().toISOString() })
   } catch (e) {
     console.error('❌ Report generation error', e)
     return NextResponse.json({ success: false, error: '보고서 생성 실패' }, { status: 500 })
@@ -953,8 +995,9 @@ export async function GET(req: Request, context: any) {
 
 async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  // 토큰 절약: 현재 UI에서 사용 중인 필수 타입만 연쇄 생성 (타입은 전체 유지, 값만 축소)
   const types: Array<'value_map'|'style_pattern'|'master_manager_spectrum'|'fit_triggers'|'light_shadow'|'philosophy'|'action_recipe'|'future_path'|'epilogue'> = [
-    'value_map','style_pattern','master_manager_spectrum','fit_triggers','light_shadow','philosophy','action_recipe','future_path','epilogue'
+    'value_map','style_pattern','master_manager_spectrum','light_shadow','philosophy','future_path'
   ]
   const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
   // Load messages to build transcript
@@ -1143,17 +1186,19 @@ async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
 출력(JSON 스키마):
 { "recipes": [ { "id": "A", "title": "제목", "duration": "기간", "frequency": "빈도", "steps": ["단계"] } ] }`
     } else if (t === 'future_path') {
-      prompt = `역할: 6~12개월 방향을 JSON으로 생성합니다.
+      prompt = `역할: 6~12개월 동안 'Why 극대화 환경'을 설계하는 환경 목록(JSON)만 생성합니다. 로드맵은 생성하지 않습니다.
 
 규칙:
 - 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
+ - remove/strengthen 카테고리는 각각 정확히 3개.
+ - 각 카테고리 items는 정확히 4개. impact는 1문장.
 
 입력:
 - Transcript: ${transcript}
 - WhyReport: ${whyMd || 'null'}
 
 출력(JSON 스키마):
-{ "environment": { "remove": [ { "category": "카테고리", "items": ["항목"], "impact": "문장" } ], "strengthen": [ { "category": "카테고리", "items": ["항목"], "impact": "문장" } ] }, "roadmap": [ { "phase": "단계", "duration": "기간", "actions": ["행동"], "milestone": "마일스톤" } ] }`
+{ "environment": { "remove": [ { "category": "카테고리", "items": ["항목"], "impact": "문장" } ], "strengthen": [ { "category": "카테고리", "items": ["항목"], "impact": "문장" } ] } }`
     } else if (t === 'epilogue') {
       prompt = `역할: 리포트를 JSON 에필로그로 요약합니다.
 
@@ -1172,19 +1217,19 @@ async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
     let lastErr: any = null
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        const sys = (t === 'value_map' || t === 'style_pattern' || t === 'master_manager_spectrum' || t === 'fit_triggers' || t === 'light_shadow' || t === 'philosophy' || t === 'action_recipe' || t === 'future_path' || t === 'epilogue')
+        const sys = (t === 'value_map' || t === 'style_pattern' || t === 'master_manager_spectrum' || t === 'light_shadow' || t === 'philosophy' || t === 'future_path')
           ? '한국어로만 작성. 프리텍스트 금지. JSON만 반환.'
           : '한국어로만 작성. 지정된 마크다운 템플릿 그대로, 불필요한 텍스트 금지. 마크다운만 반환.'
 
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
-          messages: [
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
             { role: 'system', content: sys },
-            { role: 'user', content: prompt }
-          ],
-          temperature: 0.4
-        })
-        const content = completion.choices[0]?.message?.content || ''
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0.4
+    })
+    const content = completion.choices[0]?.message?.content || ''
         let parsed: any
         // JSON 스키마 출력 타입은 JSON→검증→Markdown 변환
         if (t === 'value_map') {
@@ -1293,7 +1338,7 @@ async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
             throw new Error('action_recipe empty')
           }
         } else if (t === 'future_path') {
-          if (!parsed?.environment || !Array.isArray(parsed?.roadmap)) {
+          if (!parsed?.environment || !Array.isArray(parsed.environment.remove) || !Array.isArray(parsed.environment.strengthen) || parsed.environment.remove.length !== 3 || parsed.environment.strengthen.length !== 3) {
             throw new Error('future_path invalid')
           }
         } else if (t === 'epilogue') {
@@ -1305,9 +1350,9 @@ async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
             throw new Error(`empty or too short content for type ${t}`)
           }
         }
-        await supabaseServer
-          .from('reports')
-          .upsert({ session_id: sessionId, type: t, content: parsed }, { onConflict: 'session_id,type' })
+    await supabaseServer
+      .from('reports')
+      .upsert({ session_id: sessionId, type: t, content: parsed }, { onConflict: 'session_id,type' })
         lastErr = null
         break
       } catch (e) {
@@ -1324,11 +1369,30 @@ async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
 
 async function markSessionCompleted(sessionId: string, whyMd?: string) {
   try {
-    const updates: any = { counseling_phase: 'summary', status: 'completed', updated_at: new Date().toISOString() }
-    if (whyMd) updates.generated_why = whyMd
+    const baseTime = new Date().toISOString()
+    const common: any = { status: 'completed', updated_at: baseTime }
+    const withSummary: any = { ...common, counseling_phase: 'summary' }
+    if (whyMd) withSummary.generated_why = whyMd
+    // 1차: summary로 업데이트 시도
+    const { error: err1 } = await supabaseServer
+      .from('sessions')
+      .update(withSummary)
+      .eq('id', sessionId)
+    if (!err1) return
+    // 2차: 스키마가 summary를 허용하지 않는 경우 → completed로 고정
+    const withCompleted: any = { ...common, counseling_phase: 'completed' }
+    if (whyMd) withCompleted.generated_why = whyMd
+    const { error: err2 } = await supabaseServer
+      .from('sessions')
+      .update(withCompleted)
+      .eq('id', sessionId)
+    if (!err2) return
+    // 3차: counseling_phase 갱신을 생략하고 상태만 완료 처리
+    const withStatusOnly: any = { ...common }
+    if (whyMd) withStatusOnly.generated_why = whyMd
     await supabaseServer
       .from('sessions')
-      .update(updates)
+      .update(withStatusOnly)
       .eq('id', sessionId)
   } catch (e) {
     console.warn('세션 완료 업데이트 실패(무시 가능):', e)

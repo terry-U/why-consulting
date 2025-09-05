@@ -17,6 +17,7 @@ interface LightShadowSectionProps {
   isPinned: boolean;
   onTogglePin: () => void;
   language: string;
+  data?: any;
 }
 
 const strengths = [
@@ -130,7 +131,7 @@ const shadows = [
   }
 ];
 
-export function LightShadowSection({ isPinned, onTogglePin, language }: LightShadowSectionProps) {
+export function LightShadowSection({ isPinned, onTogglePin, language, data }: LightShadowSectionProps) {
   const content = {
     ko: {
       title: '빛과 그림자',
@@ -181,6 +182,9 @@ export function LightShadowSection({ isPinned, onTogglePin, language }: LightSha
     return colors[color as keyof typeof colors]?.[type] || colors.blue[type];
   };
 
+  const apiStrengths: Array<any> | undefined = Array.isArray(data?.strengths) ? data.strengths : undefined;
+  const apiShadows: Array<any> | undefined = Array.isArray(data?.shadows) ? data.shadows : undefined;
+
   return (
     <div className="space-y-8">
       {/* Section Header */}
@@ -193,35 +197,7 @@ export function LightShadowSection({ isPinned, onTogglePin, language }: LightSha
               <p className="text-muted-foreground mt-1">{text.subtitle}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={() => {
-                const element = document.getElementById('section-4');
-                if (element) {
-                  navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}#section-4`);
-                }
-              }}
-              aria-label="Copy section link"
-            >
-              <Link className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onTogglePin}
-              className="shrink-0"
-              aria-label={isPinned ? 'Unpin section' : 'Pin section'}
-            >
-              {isPinned ? (
-                <Pin className="h-4 w-4 text-primary" />
-              ) : (
-                <PinOff className="h-4 w-4 text-muted-foreground" />
-              )}
-            </Button>
-          </div>
+          <div className="flex items-center gap-2" />
         </div>
       </div>
 
@@ -234,7 +210,19 @@ export function LightShadowSection({ isPinned, onTogglePin, language }: LightSha
           </h3>
         </CardHeader>
         <CardContent className="space-y-6">
-          {strengths.map((strength) => (
+          {(apiStrengths || strengths).map((raw, idx) => {
+            const strength = apiStrengths ? {
+              id: idx,
+              title: raw.title,
+              percentage: raw.percentage ?? 0,
+              number: String(idx + 1),
+              description: raw.description,
+              insight: raw.insight,
+              situations: Array.isArray(raw.situations) ? raw.situations : [],
+              roles: Array.isArray(raw.roles) ? raw.roles : [],
+              impact: raw.impact
+            } : raw;
+            return (
             <Card key={strength.id} className="border-2 border-muted">
               <CardHeader>
                 <div className="flex items-center gap-4">
@@ -301,7 +289,7 @@ export function LightShadowSection({ isPinned, onTogglePin, language }: LightSha
                 </div>
               </CardContent>
             </Card>
-          ))}
+          )})}
         </CardContent>
       </Card>
 
@@ -314,7 +302,18 @@ export function LightShadowSection({ isPinned, onTogglePin, language }: LightSha
           </h3>
         </CardHeader>
         <CardContent className="space-y-6">
-          {shadows.map((shadow) => (
+          {(apiShadows || shadows).map((raw, idx) => {
+            const shadow = apiShadows ? {
+              id: idx,
+              title: raw.title,
+              percentage: raw.percentage ?? 0,
+              number: String(idx + 1),
+              description: raw.description,
+              insight: raw.insight,
+              examples: Array.isArray(raw.examples) ? raw.examples : [],
+              solutions: Array.isArray(raw.solutions) ? raw.solutions : []
+            } : raw;
+            return (
             <Card key={shadow.id} className="border-2 border-muted">
               <CardHeader>
                 <div className="flex items-center gap-4">
@@ -380,7 +379,7 @@ export function LightShadowSection({ isPinned, onTogglePin, language }: LightSha
                 </div>
               </CardContent>
             </Card>
-          ))}
+          )})}
         </CardContent>
       </Card>
     </div>

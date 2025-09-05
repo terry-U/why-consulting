@@ -11,9 +11,10 @@ interface EpilogueSectionProps {
   isPinned: boolean;
   onTogglePin: () => void;
   language: string;
+  data?: any;
 }
 
-const insights = [
+const defaultInsights = [
   {
     category: 'discovery',
     title: 'Why 발견',
@@ -34,7 +35,7 @@ const insights = [
   }
 ];
 
-export function EpilogueSection({ isPinned, onTogglePin, language }: EpilogueSectionProps) {
+export function EpilogueSection({ isPinned, onTogglePin, language, data }: EpilogueSectionProps) {
   const content = {
     ko: {
       title: '에필로그',
@@ -95,7 +96,22 @@ export function EpilogueSection({ isPinned, onTogglePin, language }: EpilogueSec
   };
 
   const text = content[language as keyof typeof content] || content.ko;
-  const overallScore = Math.round(insights.reduce((sum, insight) => sum + insight.score, 0) / insights.length);
+  const insights: Array<{ title: string; description: string; score: number }> = Array.isArray(data?.insights)
+    ? data.insights.map((i: any) => ({
+        title: typeof i?.title === 'string' ? i.title : '',
+        description: typeof i?.description === 'string' ? i.description : '',
+        score: Number.isFinite(Number(i?.score)) ? Number(i.score) : 0
+      }))
+    : defaultInsights;
+  const overallScore = typeof data?.overall_score === 'number'
+    ? data.overall_score
+    : Math.round(insights.reduce((sum, insight) => sum + insight.score, 0) / insights.length);
+  const actionItems: string[] = Array.isArray(data?.action_items) && data.action_items.length
+    ? data.action_items
+    : text.actionItems;
+  const reflection: string = typeof data?.reflection === 'string' && data.reflection.length
+    ? data.reflection
+    : text.reflection;
 
   const handleExport = () => {
     toast.success('보고서 PDF 내보내기가 시작되었습니다');
@@ -195,7 +211,7 @@ export function EpilogueSection({ isPinned, onTogglePin, language }: EpilogueSec
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {text.actionItems.map((item, index) => (
+              {actionItems.map((item, index) => (
                 <div key={index} className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
                   <Badge variant="outline" className="shrink-0 mt-0.5">
                     {index + 1}
@@ -227,12 +243,8 @@ export function EpilogueSection({ isPinned, onTogglePin, language }: EpilogueSec
         <Card className="border-purple-200 dark:border-purple-800">
           <CardContent className="p-6 text-center">
             <BookOpen className="h-8 w-8 mx-auto mb-4 text-purple-500" />
-            <p className="text-lg italic text-purple-800 dark:text-purple-200 leading-relaxed">
-              "당신의 Why는 이제 시작일 뿐입니다. 매일의 선택과 행동을 통해 
-              이 목적을 살아가는 것이 진정한 여정입니다."
-            </p>
-            <p className="text-sm text-purple-600 dark:text-purple-400 mt-4">
-              — Golden Circle Why Discovery Service
+            <p className="text-lg italic text-purple-800 dark:text-purple-200 leading-relaxed whitespace-pre-line">
+              {reflection}
             </p>
           </CardContent>
         </Card>

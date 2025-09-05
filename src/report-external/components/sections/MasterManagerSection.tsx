@@ -18,6 +18,7 @@ interface MasterManagerSectionProps {
   isPinned: boolean;
   onTogglePin: () => void;
   language: string;
+  data?: any;
 }
 
 const spectrumData = {
@@ -107,7 +108,7 @@ const sceneExplanations = [
   }
 ];
 
-export function MasterManagerSection({ isPinned, onTogglePin, language }: MasterManagerSectionProps) {
+export function MasterManagerSection({ isPinned, onTogglePin, language, data }: MasterManagerSectionProps) {
   const content = {
     ko: {
       title: '매니저-마스터 스펙트럼',
@@ -155,8 +156,14 @@ export function MasterManagerSection({ isPinned, onTogglePin, language }: Master
     return colors[color as keyof typeof colors] || colors.blue;
   };
 
-  // 현재 유저의 위치 계산 (타인 지향 72, 마스터 58)
-  const currentUser = { others: 72, master: 58 };
+  // 현재 유저의 위치 (API → fallback)
+  const currentUser = {
+    others: typeof data?.scores?.others === 'number' ? data.scores.others : 72,
+    master: typeof data?.scores?.master === 'number' ? data.scores.master : 58,
+  };
+  const orientation = data?.orientation;
+  const execution = data?.execution;
+  const currentTypeName = data?.current_type?.name;
   const userType = quadrantTypes.find(type => 
     Math.abs(type.quadrant.others - currentUser.others) < 20 && 
     Math.abs((100 - type.quadrant.manager) - currentUser.master) < 20
@@ -174,35 +181,7 @@ export function MasterManagerSection({ isPinned, onTogglePin, language }: Master
               <p className="text-muted-foreground mt-1">{text.subtitle}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={() => {
-                const element = document.getElementById('section-3');
-                if (element) {
-                  navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}#section-3`);
-                }
-              }}
-              aria-label="Copy section link"
-            >
-              <Link className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onTogglePin}
-              className="shrink-0"
-              aria-label={isPinned ? 'Unpin section' : 'Pin section'}
-            >
-              {isPinned ? (
-                <Pin className="h-4 w-4 text-primary" />
-              ) : (
-                <PinOff className="h-4 w-4 text-muted-foreground" />
-              )}
-            </Button>
-          </div>
+          <div className="flex items-center gap-2" />
         </div>
       </div>
 
@@ -213,7 +192,7 @@ export function MasterManagerSection({ isPinned, onTogglePin, language }: Master
             {text.description}
           </p>
           <div className={`p-4 rounded-lg ${getColorClass(userType.color)}`}>
-            <h3 className="font-semibold mb-2">{text.currentType}</h3>
+            <h3 className="font-semibold mb-2">{currentTypeName ? `당신은 **${currentTypeName}** 타입입니다` : text.currentType}</h3>
             <p className="text-sm">{userType.description}</p>
           </div>
         </CardContent>
@@ -228,7 +207,7 @@ export function MasterManagerSection({ isPinned, onTogglePin, language }: Master
           </h3>
         </CardHeader>
         <CardContent>
-          {/* 4사분면 그래프 */}
+          {/* 4사분면 그래프 (요청: 배경 라벨/아이콘 제거) */}
           <div className="relative w-full h-96 border-2 border-muted rounded-lg bg-gradient-to-br from-background via-muted/10 to-background overflow-hidden">
             {/* 축 라벨 */}
             <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-sm font-medium text-muted-foreground">
@@ -302,7 +281,7 @@ export function MasterManagerSection({ isPinned, onTogglePin, language }: Master
               <div className="text-xs text-rose-600 dark:text-rose-400">→</div>
             </div>
 
-            {/* 4사분면 배경 영역들 */}
+            {/* 4사분면 배경 영역들 (복원) */}
             {/* 1사분면: 자기지향 + 매니저 (선지자) */}
             <div className="absolute top-0 left-0 w-1/2 h-1/2 flex items-center justify-center">
               <div className="text-center opacity-20 hover:opacity-40 transition-opacity">
@@ -312,7 +291,7 @@ export function MasterManagerSection({ isPinned, onTogglePin, language }: Master
               </div>
             </div>
             
-            {/* 2사분면: 타인지향 + 매니저 (중재자) - 현재 사용자 */}
+            {/* 2사분면: 타인지향 + 매니저 (중재자) */}
             <div className="absolute top-0 right-0 w-1/2 h-1/2 flex items-center justify-center bg-primary/5">
               <div className="text-center opacity-30 hover:opacity-50 transition-opacity">
                 <Users2 className="h-8 w-8 text-blue-500 mx-auto mb-2" />
@@ -343,62 +322,27 @@ export function MasterManagerSection({ isPinned, onTogglePin, language }: Master
             <div className="absolute top-1/2 left-0 right-0 h-px bg-border z-10"></div>
             <div className="absolute left-1/2 top-0 bottom-0 w-px bg-border z-10"></div>
 
-            {/* 현재 사용자 위치 (타인지향 72, 마스터 58) */}
+            {/* 현재 사용자 위치 */}
             <div 
               className="absolute w-6 h-6 rounded-full border-4 border-primary bg-primary shadow-lg shadow-primary/25 animate-pulse transform -translate-x-3 -translate-y-3 z-20"
               style={{
-                left: `${72}%`,
-                bottom: `${100 - 58}%`
+                left: `${currentUser.others}%`,
+                bottom: `${100 - currentUser.master}%`
               }}
             >
               <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 text-xs font-semibold text-primary whitespace-nowrap bg-background px-2 py-1 rounded shadow-md">
-                현재 위치 (72, 58)
+                현재 위치 ({currentUser.others}, {currentUser.master})
               </div>
             </div>
 
-            {/* 4개 유형 점들 */}
-            {quadrantTypes.map((type) => {
-              const IconComponent = type.icon;
-              const isCurrentType = type.id === 'mediator'; // 현재 사용자는 중재자
-              
-              return (
-                <div
-                  key={type.id}
-                  className={`absolute w-12 h-12 rounded-full border-3 transform -translate-x-6 -translate-y-6 transition-all duration-300 hover:scale-110 cursor-pointer ${
-                    isCurrentType 
-                      ? 'border-primary bg-primary shadow-lg shadow-primary/25' 
-                      : `border-${type.color}-500 bg-${type.color}-100 dark:bg-${type.color}-950/20 hover:border-${type.color}-600`
-                  }`}
-                  style={{
-                    left: `${type.quadrant.others}%`,
-                    bottom: `${100 - type.quadrant.manager}%`
-                  }}
-                  title={`${type.name}: ${type.position}`}
-                >
-                  <div className="flex items-center justify-center w-full h-full">
-                    <IconComponent 
-                      className={`h-6 w-6 ${
-                        isCurrentType ? 'text-primary-foreground' : `text-${type.color}-600 dark:text-${type.color}-400`
-                      }`} 
-                    />
-                  </div>
-                  
-                  {/* 유형 라벨 */}
-                  <div className={`absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs font-medium whitespace-nowrap ${
-                    isCurrentType ? 'text-primary font-semibold' : 'text-muted-foreground'
-                  }`}>
-                    {type.name}
-                  </div>
-                </div>
-              );
-            })}
+            {/* 요청: 그래프 위 점 아이콘(선지자/중재자/도인/등대지기) 모두 제거 */}
           </div>
 
-          {/* 범례 */}
+          {/* 범례 (현재 타입 하이라이트) */}
           <div className="mt-8 grid grid-cols-2 gap-4">
             {quadrantTypes.map((type) => {
               const IconComponent = type.icon;
-              const isCurrentType = type.id === 'mediator';
+              const isCurrentType = currentTypeName ? type.name === currentTypeName : type.id === 'mediator';
               
               return (
                 <div 
@@ -452,11 +396,11 @@ export function MasterManagerSection({ isPinned, onTogglePin, language }: Master
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">{spectrumData.motivation.label}</span>
               <span className="text-sm text-muted-foreground">
-                {text.motivationOthers} {spectrumData.motivation.others} / {text.motivationSelf} {spectrumData.motivation.self}
+                {text.motivationOthers} {currentUser.others} / {text.motivationSelf} {100 - currentUser.others}
               </span>
             </div>
             <div className="relative">
-              <Progress value={spectrumData.motivation.others} className="h-3" />
+              <Progress value={currentUser.others} className="h-3" />
               <div className="flex justify-between mt-2 text-sm text-muted-foreground">
                 <span>{text.motivationSelf}</span>
                 <span>{text.motivationOthers}</span>
@@ -469,11 +413,11 @@ export function MasterManagerSection({ isPinned, onTogglePin, language }: Master
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">{spectrumData.execution.label}</span>
               <span className="text-sm text-muted-foreground">
-                {text.executionMaster} {spectrumData.execution.master} / {text.executionManager} {spectrumData.execution.manager}
+                {text.executionMaster} {currentUser.master} / {text.executionManager} {100 - currentUser.master}
               </span>
             </div>
             <div className="relative">
-              <Progress value={spectrumData.execution.master} className="h-3" />
+              <Progress value={currentUser.master} className="h-3" />
               <div className="flex justify-between mt-2 text-sm text-muted-foreground">
                 <span>{text.executionManager}</span>
                 <span>{text.executionMaster}</span>
@@ -490,7 +434,7 @@ export function MasterManagerSection({ isPinned, onTogglePin, language }: Master
         </CardContent>
       </Card>
 
-      {/* Scene Explanation */}
+      {/* Scene Explanation (장면 해설) */}
       <Card className="shadow-lg">
         <CardHeader>
           <h3 className="text-xl font-semibold flex items-center gap-2">
@@ -499,49 +443,83 @@ export function MasterManagerSection({ isPinned, onTogglePin, language }: Master
           </h3>
         </CardHeader>
         <CardContent className="space-y-6">
-          {sceneExplanations.map((section) => {
-            const IconComponent = section.icon;
-            return (
-              <div key={section.id} className="space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className={`p-3 rounded-lg ${getColorClass(section.color)}`}>
-                    <IconComponent className="h-6 w-6" />
-                  </div>
-                  <h4 className="font-semibold text-lg">{section.category}</h4>
+          {orientation && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <div className={`p-3 rounded-lg ${getColorClass('rose')}`}>
+                  <Heart className="h-6 w-6" />
                 </div>
-                
-                <div className="pl-12 space-y-4">
-                  {/* 분석 설명 */}
-                  <div className="p-4 bg-gradient-to-r from-muted/30 to-muted/10 rounded-lg">
-                    <p className="text-insight leading-relaxed">{section.description}</p>
-                  </div>
-                  
-                  {/* 증거 사례들 */}
+                <h4 className="font-semibold text-lg">
+                  {orientation.side === 'others' ? '타인지향 가치관 — 타인 쪽으로 기울어 있음' : '자기지향 가치관 — 자기 쪽으로 기울어 있음'} ({orientation.score})
+                </h4>
+              </div>
+              <div className="pl-12 space-y-4">
+                <div className="p-4 bg-gradient-to-r from-muted/30 to-muted/10 rounded-lg">
+                  <p className="text-insight leading-relaxed">{orientation.paragraph}</p>
+                </div>
+                {Array.isArray(orientation.evidence) && orientation.evidence.length > 0 && (
                   <div>
                     <h5 className="font-medium mb-3 text-muted-foreground">구체적 증거:</h5>
                     <div className="space-y-2">
-                      {section.evidence.map((item, index) => (
-                        <p key={index} className="text-content-large leading-relaxed pl-4 border-l-2 border-muted">
-                          {item}
-                        </p>
+                      {orientation.evidence.map((item: string, index: number) => (
+                        <p key={index} className="text-content-large leading-relaxed pl-4 border-l-2 border-muted">{item}</p>
                       ))}
                     </div>
                   </div>
-                  
-                  {/* 심층 분석 */}
+                )}
+                {orientation.analysis && (
                   <div className="p-4 bg-gradient-to-r from-blue-50/50 to-violet-50/50 dark:from-blue-950/10 dark:to-violet-950/10 rounded-lg">
                     <h5 className="font-medium mb-2 text-blue-800 dark:text-blue-200">심층 분석:</h5>
-                    <p className="text-insight leading-relaxed">{section.analysis}</p>
+                    <p className="text-insight leading-relaxed">{orientation.analysis}</p>
                   </div>
-                  
-                  {/* 결론 */}
+                )}
+                {orientation.summary && (
                   <div className="p-4 bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg border-l-4 border-primary">
-                    <p className="text-content-large leading-relaxed font-medium">→ {section.conclusion}</p>
+                    <p className="text-content-large leading-relaxed font-medium">→ {orientation.summary}</p>
                   </div>
-                </div>
+                )}
               </div>
-            );
-          })}
+            </div>
+          )}
+
+          {execution && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <div className={`p-3 rounded-lg ${getColorClass('blue')}`}>
+                  <Wrench className="h-6 w-6" />
+                </div>
+                <h4 className="font-semibold text-lg">
+                  {execution.side === 'master' ? '실행 방식 — 마스터 쪽이 우세' : '실행 방식 — 매니저 쪽이 우세'} ({execution.score})
+                </h4>
+              </div>
+              <div className="pl-12 space-y-4">
+                <div className="p-4 bg-gradient-to-r from-muted/30 to-muted/10 rounded-lg">
+                  <p className="text-insight leading-relaxed">{execution.paragraph}</p>
+                </div>
+                {Array.isArray(execution.evidence) && execution.evidence.length > 0 && (
+                  <div>
+                    <h5 className="font-medium mb-3 text-muted-foreground">구체적 증거:</h5>
+                    <div className="space-y-2">
+                      {execution.evidence.map((item: string, index: number) => (
+                        <p key={index} className="text-content-large leading-relaxed pl-4 border-l-2 border-muted">{item}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {execution.analysis && (
+                  <div className="p-4 bg-gradient-to-r from-blue-50/50 to-violet-50/50 dark:from-blue-950/10 dark:to-violet-950/10 rounded-lg">
+                    <h5 className="font-medium mb-2 text-blue-800 dark:text-blue-200">심층 분석:</h5>
+                    <p className="text-insight leading-relaxed">{execution.analysis}</p>
+                  </div>
+                )}
+                {execution.summary && (
+                  <div className="p-4 bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg border-l-4 border-primary">
+                    <p className="text-content-large leading-relaxed font-medium">→ {execution.summary}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
