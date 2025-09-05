@@ -874,32 +874,27 @@ async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
 
     let prompt = ''
     if (t === 'value_map') {
-      prompt = `역할: 전체 대화와 Why 보고서를 바탕으로 가치의 "생각 vs 실제" 간극까지 분석하고 해소 지침을 제시하는 보고서 작성자입니다.
+      // JSON 스키마로 3개 항목만 생성(서버 저장시 UI에서 그대로 사용)
+      prompt = `역할: 전체 대화와 Why를 바탕으로 Value Map을 JSON 1개로 생성합니다.
 
 규칙:
-- 아래 템플릿을 마크다운 그대로 사용하여 한국어로만 작성합니다.
-- 수집 방식/상담사/캐릭터 등 메타는 본문에 드러내지 않습니다.
-- 실제 장면 근거를 간결히 제시하고, 간극 메우는 방법은 실험/지표를 포함합니다.
-
-템플릿(그대로 출력):
-# Value Map
-## 나의 가장 큰 가치(우선순위)
-- 1) …
-- 2) …
-- 3) …
-
-## 생각하는 가치 vs 실제로 드러난 가치
-| 가치 | 내가 가치 있다고 ‘생각’하는 것 | 실제 행동·장면 ‘근거’ | 간극(원인) | 메우는 방법(실험/지표) |
-|---|---|---|---|---|
-| 예시 | 자율성 | 의사결정 선호, 단독 시 빠른 실행 | 협업 시 갈등 | 회의 전 DoD 합의(리워크 -20%) |
-
-## 간극에서 발생하는 일(메커니즘)
-- 트리거 → 감정/사고 → 행동 → 결과를 3~5줄로 설명.
-- 단기/중기 개선안 각각 1~2개(측정지표 포함).
+- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
+- 항목은 정확히 3개.
+- 라벨(머리/마음/장면 해설 등) 텍스트는 넣지 말고 내용만 채웁니다.
+- Transcript 표현을 1~2개 자연스럽게 포함합니다.
 
 입력:
-- Transcript(전체 대화)\n${transcript}
-- WhyReport(Markdown)\n${whyMd || 'null'}`
+- Transcript: ${transcript}
+- WhyReport: ${whyMd || 'null'}
+
+출력(JSON 스키마):
+{
+  "items": [
+    { "head": "문장", "heart": "문장", "gapLevel": "high|medium|low", "headDetail": "문장", "heartDetail": "문장", "scene": "2~4문장", "bridge": "1문장" }
+  ],
+  "today_actions": ["실천 1", "실천 2", "실천 3"],
+  "summary": "1~2문장"
+}`
     } else if (t === 'style_pattern') {
       prompt = `역할: 대화와 Why를 바탕으로 Style Pattern을 JSON 객체 1개로 생성합니다.
 

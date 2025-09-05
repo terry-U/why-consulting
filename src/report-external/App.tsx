@@ -79,9 +79,9 @@ export default function App({ initialReports }: { initialReports?: ReportsMap })
     const loadReports = async () => {
       try {
         setLoading(true);
-        // 1) Ensure my_why exists and cascade others (force once to guarantee kick-off)
-        setStatusMsg('보고서 생성 시작...');
-        await fetchJson(`${base}/api/session/${id}/report?type=my_why&cascade=1&force=1`);
+        // 1) Ensure my_why exists and cascade others (no force to use cache)
+        setStatusMsg('보고서 확인 중...');
+        await fetchJson(`${base}/api/session/${id}/report?type=my_why&cascade=1`);
 
         const types: Array<string> = [
           'my_why',

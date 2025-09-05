@@ -10,8 +10,8 @@ export default async function ReportPage(props: any) {
   const { id } = await props?.params
   const makeUrl = (q: string) => `/api/session/${id}/report?${q}`
   try {
-    // 1) Kick off generation (my_why + cascade). Force once
-    await fetchJson(makeUrl('type=my_why&cascade=1&force=1'))
+    // 1) Kick off generation (my_why + cascade) without forcing regeneration
+    await fetchJson(makeUrl('type=my_why&cascade=1'))
 
     const types = [
       'my_why','value_map','style_pattern','master_manager_spectrum','fit_triggers','light_shadow','philosophy','action_recipe','future_path','epilogue'
