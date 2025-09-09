@@ -433,7 +433,7 @@
 
   /* Value Map Section - Comparative content */
   .text-value-item {
-    font-size: 1.125rem; /* 16px at 14px base */
+    font-size: 1.2857rem; /* 18px at 14px base */
     font-weight: 400;
     line-height: 1.6;
   }

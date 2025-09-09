@@ -88,22 +88,22 @@ export default function App({ initialReports }: { initialReports?: ReportsMap })
         setLoading(true);
         // 1) Ensure my_why exists and cascade others (no force to use cache)
         setStatusMsg('보고서 확인 중...');
-        // 트리거는 비대기(캐시 응답을 빠르게 받도록 즉시 폴링 시작)
-        fetchJson(`${base}/api/session/${id}/report?type=my_why&cascade=1`).then((r) => {
-          if (r?.createdAt) setCreatedAt(r.createdAt);
-        });
+        // 이미 저장된 값이 있으면 재생성하지 않도록 checkOnly로 먼저 확인
+        const checkUrl = `${base}/api/session/${id}/report?type=my_why&check=1`;
+        const check = await fetchJson(checkUrl);
+        if (check?.pending) {
+          await fetchJson(`${base}/api/session/${id}/report?type=my_why&cascade=1`);
+        }
 
+        // 비용 절감을 위해 실제 화면에서 쓰는 타입만 호출
         const types: Array<string> = [
           'my_why',
           'value_map',
           'style_pattern',
           'master_manager_spectrum',
-          'fit_triggers',
           'light_shadow',
           'philosophy',
-          'action_recipe',
-          'future_path',
-          'epilogue'
+          'future_path'
         ];
 
         const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
@@ -111,7 +111,8 @@ export default function App({ initialReports }: { initialReports?: ReportsMap })
           // Poll up to ~90s with backoff
           for (let attempt = 0; attempt < 10; attempt++) {
             try {
-              const data = await fetchJson(`${base}/api/session/${id}/report?type=${t}`);
+              const backfillFlag = t === 'my_why' ? '&backfill=1' : '';
+              const data = await fetchJson(`${base}/api/session/${id}/report?type=${t}${backfillFlag}`);
               if (data && (data.success || data.report)) {
                 setReports(prev => ({ ...prev, [t]: data.report || data }));
                 if (!createdAt && data?.createdAt) setCreatedAt(data.createdAt);
@@ -204,7 +205,7 @@ export default function App({ initialReports }: { initialReports?: ReportsMap })
               
               {/* Section 0: Why Statement */}
               <section id="section-0" className="scroll-mt-24">
-                {!reports?.my_why && loading ? (
+                {!reports?.my_why ? (
                   <Skeleton className="h-48 w-full" />
                 ) : (
                 <WhyStatementSection 

@@ -614,75 +614,40 @@ export async function POST(request: NextRequest) {
 
     // OpenAI API 호출
     const modelId = process.env.OPENAI_CHAT_MODEL || 'gpt-4o'
-    const temperature = Number(process.env.OPENAI_TEMPERATURE ?? 0.6)
-    const maxTokens = Number(process.env.OPENAI_MAX_TOKENS ?? 1800)
-    const topP = Number(process.env.OPENAI_TOP_P ?? 1)
     const freqPenalty = Number(process.env.OPENAI_FREQUENCY_PENALTY ?? 0.15)
     const presPenalty = Number(process.env.OPENAI_PRESENCE_PENALTY ?? 0.1)
 
     let aiResponse = '' as string
 
     if (modelId.startsWith('gpt-5')) {
-      try {
-        // Responses API 입력 스키마로 변환
-        const responsesInput = openaiMessages.map(m => {
-          const role = (m.role as any) || 'user'
-          const isAssistant = role === 'assistant'
-          const contentType = isAssistant ? 'output_text' : 'input_text'
-          return {
-            role,
-            content: [
-              { type: contentType, text: String((m as any).content || '') }
-            ]
-          }
-        })
-        const resp: any = await (openai as any).responses.create({
-          model: modelId,
-          input: responsesInput,
-          // GPT-5 Responses 일부 모델은 temperature/top_p 미지원 → 제외
-          max_output_tokens: maxTokens,
-          ...(process.env.OPENAI_REASONING_EFFORT
-            ? { reasoning_effort: process.env.OPENAI_REASONING_EFFORT }
-            : {}),
-        } as any)
-        aiResponse = (resp && (resp.output_text || resp.content?.[0]?.text || resp.choices?.[0]?.message?.content)) || ''
-      } catch (e) {
-        console.error('GPT-5 Responses API 오류, Chat Completions로 폴백:', e)
-        const completion = await openai.chat.completions.create({
-          model: modelId,
-          messages: openaiMessages,
-          temperature,
-          // GPT-5 계열은 max_tokens 대신 max_completion_tokens 사용
-          max_completion_tokens: maxTokens as any,
-          top_p: topP,
-          frequency_penalty: freqPenalty,
-          presence_penalty: presPenalty,
-        })
-        aiResponse = completion.choices[0]?.message?.content || ''
-      }
+      // gpt-5 비활성화: 강제 gpt-4o로 실행
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: openaiMessages,
+        frequency_penalty: freqPenalty,
+        presence_penalty: presPenalty,
+      })
+      aiResponse = completion.choices[0]?.message?.content || ''
     } else {
       // Chat Completions 경로 (gpt-4o). 토큰 초과 에러 시 단계적 축소 재시도
       const requestOnce = async (tokens: number) => {
         const completion = await openai.chat.completions.create({
           model: modelId,
           messages: openaiMessages,
-          temperature,
-          max_tokens: tokens,
-          top_p: topP,
           frequency_penalty: freqPenalty,
           presence_penalty: presPenalty,
         })
         return completion.choices[0]?.message?.content || ''
       }
       try {
-        aiResponse = await requestOnce(maxTokens)
+        aiResponse = await requestOnce(0 as any)
       } catch (e: any) {
         console.warn('ℹ️ max_tokens 재시도(1):', e?.message)
         try {
-          aiResponse = await requestOnce(Math.floor(maxTokens * 0.6))
+          aiResponse = await requestOnce(0 as any)
         } catch (e2: any) {
           console.warn('ℹ️ max_tokens 재시도(2):', e2?.message)
-          aiResponse = await requestOnce(Math.floor(maxTokens * 0.4))
+          aiResponse = await requestOnce(0 as any)
         }
       }
     }

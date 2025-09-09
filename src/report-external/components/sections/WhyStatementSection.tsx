@@ -75,14 +75,40 @@ The reason is that your heart responds most strongly to **'connected meaning'**.
   const text = content[language as keyof typeof content] || content.ko;
 
   // API 데이터 매핑
+  // Structured fields only
+  const apiOn: string | undefined = data?.on_why_main || undefined;
   const apiHeadline: string | undefined = data?.headline || undefined;
   const apiOff: string | undefined = data?.off_why_main || undefined;
+  const apiAlternatives: string[] | undefined = Array.isArray(data?.off_why_alternatives)
+    ? (data.off_why_alternatives as string[])
+    : undefined;
   const apiNarrative: string | undefined = Array.isArray(data?.narrative)
     ? (data.narrative as string[]).join('\n\n')
     : undefined;
   const apiQuestions: string[] | undefined = Array.isArray(data?.reflection_questions)
     ? (data.reflection_questions as string[])
     : undefined;
+  // Try to recover structured fields from markdown if it actually contains JSON
+  const markdownRaw: string | undefined = typeof data?.markdown === 'string' ? data.markdown.trim() : undefined;
+  let mdJson: any = undefined;
+  if (markdownRaw) {
+    const text = markdownRaw.replace(/^```[a-zA-Z0-9]*\n?|```$/g, '').trim();
+    if (text.startsWith('{') || text.startsWith('[')) {
+      try { mdJson = JSON.parse(text); } catch {}
+    }
+  }
+
+  // Display only ON/OFF/Narrative using structured fields or recovered ones
+  const displayHeadline = apiOn || mdJson?.on_why_main || apiHeadline;
+  const displayOff = apiOff || mdJson?.off_why_main;
+  const displayNarrative = apiNarrative || (Array.isArray(mdJson?.narrative) ? mdJson.narrative.join('\n\n') : undefined);
+  const narrativeParagraphs: string[] = Array.isArray(data?.narrative)
+    ? (data.narrative as string[])
+    : (Array.isArray(mdJson?.narrative)
+      ? (mdJson.narrative as string[])
+      : (typeof displayNarrative === 'string'
+        ? displayNarrative.split(/\r?\n\r?\n/).map(s => s.trim()).filter(Boolean)
+        : []));
 
   const handleCheck = () => {
     if (firstBlank.trim() && secondBlank.trim()) {
@@ -127,13 +153,14 @@ The reason is that your heart responds most strongly to **'connected meaning'**.
         </CardHeader>
         <CardContent className="pt-0">
           <blockquote className="text-xl leading-relaxed border-l-4 border-primary/30 pl-6 font-medium">
-            "{apiHeadline || text.whyOn}"
+            "{displayHeadline || text.whyOn}"
           </blockquote>
-          { (apiOff || text.whyOff) && (
+          { (displayOff || text.whyOff) && (
             <div className="mt-3">
               <blockquote className="text-base leading-relaxed border-l-4 border-muted/30 pl-6 text-muted-foreground">
-                "{apiOff || text.whyOff}"
+                "{displayOff || text.whyOff}"
               </blockquote>
+              {/* Alternatives intentionally not shown per requirement */}
             </div>
           )}
         </CardContent>
@@ -145,8 +172,12 @@ The reason is that your heart responds most strongly to **'connected meaning'**.
           <h3 className="text-xl font-semibold">당신의 이야기</h3>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="text-lg leading-relaxed whitespace-pre-line">
-            {apiNarrative || text.narrative}
+          <div className="text-lg leading-relaxed">
+            {narrativeParagraphs.length > 0
+              ? narrativeParagraphs.map((p, i) => (
+                  <p key={i} className="mb-4 whitespace-pre-wrap">{p}</p>
+                ))
+              : <p className="whitespace-pre-wrap">{text.narrative}</p>}
           </div>
         </CardContent>
       </Card>
@@ -215,7 +246,7 @@ The reason is that your heart responds most strongly to **'connected meaning'**.
               <div>
                 <h4 className="text-lg font-semibold mb-4">{text.myWhyTitle}</h4>
                 <blockquote className="text-xl leading-relaxed p-6 border-l-4 border-primary/30 bg-muted/30 rounded-r-lg font-medium">
-                  "{apiHeadline || text.whyOn}"
+                  "{displayHeadline || text.whyOn}"
                 </blockquote>
               </div>
               

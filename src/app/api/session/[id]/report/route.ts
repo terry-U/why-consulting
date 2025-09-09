@@ -439,10 +439,21 @@ function epilogueToMarkdown(e: { overall_score?: number; insights?: any[]; actio
   return lines.join('\n')
 }
 export async function GET(req: Request, context: any) {
-  const sessionId = context?.params?.id || new URL(req.url).pathname.split('/').filter(Boolean).pop()
+  // Robust sessionId resolution: await params (Next 15) and safe URL fallback
+  let sessionId: string | undefined
+  try {
+    const params = await (context?.params)
+    sessionId = params?.id
+  } catch {}
+  if (!sessionId) {
+    const parts = new URL(req.url).pathname.split('/').filter(Boolean)
+    const idx = parts.indexOf('session')
+    sessionId = idx >= 0 && parts[idx + 1] ? parts[idx + 1] : parts.slice(-2, -1)[0]
+  }
   const { searchParams } = new URL(req.url)
   const type = (searchParams.get('type') || 'my_why') as 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers' | 'light_shadow' | 'philosophy' | 'action_recipe' | 'future_path' | 'epilogue'
   const checkOnly = (searchParams.get('check') === '1' || searchParams.get('check') === 'true')
+  const backfill = false
   const force = (searchParams.get('force') === '1' || searchParams.get('force') === 'true')
   const cascade = (searchParams.get('cascade') === '1' || searchParams.get('cascade') === 'true') && type === 'my_why'
   const reset = (searchParams.get('reset') === '1' || searchParams.get('reset') === 'true')
@@ -465,8 +476,9 @@ export async function GET(req: Request, context: any) {
       .eq('session_id', sessionId)
       .eq('type', type)
       .single()
+    const needsBackfill = false
 
-    if (!force && !existingErr && existing?.content) {
+    if (!force && !existingErr && existing?.content && !needsBackfill) {
       // 캐시 즉시 반환. 보고서가 존재한다면 상태를 완료로 갱신(비동기)
       markSessionCompleted(sessionId, existing.content?.markdown).catch(() => {})
       // my_why + cascade는 비동기로 연쇄 생성 트리거(응답 지연 방지)
@@ -536,430 +548,53 @@ export async function GET(req: Request, context: any) {
       .map(m => `${m.role === 'assistant' ? `[${m.counselor_id || 'assistant'}]` : '[user]'} ${m.content}`)
       .join('\n')
 
-    const buildPrompt = (
-      t: 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers' | 'light_shadow' | 'philosophy' | 'action_recipe' | 'future_path' | 'epilogue',
-      transcript: string,
-      whyMarkdown?: string,
-      whyHeadline?: string,
-      userName?: string
-    ) => {
-      const prompts: Record<string, string> = {
-        my_why: `역할: 당신은 공감형 스토리텔러이자 동기심리 코치입니다. 이 출력은 서비스의 '나의 Why' 섹션(JSON 전용)에 그대로 사용됩니다.
-
-규칙:
-- 한국어만 사용. 임상적 진단/라벨링/교정 어휘 금지.
-- 프리텍스트 없이 JSON 객체 1개만 반환.
-- 상투어(확산, 전달, 임팩트, 영향, 세상을 바꾸, 가치를 전)는 TRANSCRIPT에 실제 등장한 경우에만 허용.
-
-입력:
-- USER_NAME: ${userName || '사용자'}
-- WHY_REFINED(headline): ${whyHeadline || '(미정)'}
-- TRANSCRIPT(대화 전체):\n${transcript}
-
-출력 형식(JSON만):
-{
-  "headline": "${whyHeadline || ''}",
-  "markdown": "# My 'Why'\\n- Why 한 줄: [headline 그대로]\\n- 가치 Top3: [3개]\\n- 스타일 3개: [3개]\\n- 자기/타자 경향 한줄 해석: (예: \\\"자기 영향에 약간 더 치우친 편…\\\")\\n\\n## 해석(결정론 금지, 근거 중심)\\n- 당신은 어떤 스타일의 사람인지(핵심 습관·선택 기준)\\n- 지금까지 어떻게 살아왔는지(반복 패턴·의미)\\n- 그 결과 어떤 일이 생겼는지(강점·리스크·전환점)\\n- 앞으로 어떻게 살아가면 좋은지(핵심 조언 3가지: 구체·측정 가능)",
-  "off_why_main": "<담백 1문장(18~40자)>",
-  "off_why_alternatives": ["<대안1>", "<대안2>"],
-  "narrative": ["<단락1(2~4문장)>", "<단락2(2~4문장)>", "<단락3(선택)>"] ,
-  "reflection_questions": ["<질문1>", "<질문2>", "<질문3>"],
-  "one_line_template": "어제 나는 ______ 때문에 _____해졌고, ______ 때문에 _____해졌다.",
-  "cta_label": "엔터",
-  "post_prompt": "어때요. 나의 Why와 비슷한 모습인가요?"
-}
-
-품질 체크:
-- narrative는 2~3단락, 단락당 2~4문장.
-- reflection_questions는 정확히 3개.
-- TRANSCRIPT 어휘 1~2개 자연스럽게 포함.`,
-
-        value_map: `역할: 전체 대화와 Why 보고서를 바탕으로 Value Map을 JSON 객체 1개로만 생성합니다.
-
-규칙:
-- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
-- 스키마를 반드시 준수합니다.
- - 출력에는 라벨(머리/마음/장면 해설 등)을 쓰지 말고, 내용만 채웁니다.
- - 상담 대화(TRANSCRIPT)의 표현을 1~2개 자연스럽게 포함합니다.
-
-입력:
-- TRANSCRIPT: ${transcript}
-- WHY_MD: ${whyMarkdown || (whyReportContent?.markdown || 'null')}
-
-출력(JSON 스키마, 항목은 반드시 정확히 3개):
-{
-  "items": [
-    {
-      "head": "문장(머리로는…)",
-      "heart": "문장(마음은…)",
-      "gapLevel": "high|medium|low",
-      "headDetail": "문장",
-      "heartDetail": "문장",
-      "scene": "장면 설명 2~4문장",
-      "bridge": "작은 실천 1문장"
-    }
-  ],
-  "today_actions": ["실천 1", "실천 2", "실천 3"],
-  "summary": "간단 요약 1~2문장"
-}
-
-품질 체크:
-- items는 정확히 3개.
-- gapLevel은 high/medium/low 중 하나.
-- scene은 실제 대화의 단서 1~2개 포함.
-- 타이틀(머리/마음/장면 해설) 텍스트는 넣지 말 것.`,
-
-        style_pattern: `역할: 대화와 Why를 바탕으로 Style Pattern을 JSON 객체 1개로 생성합니다.
-
-규칙:
-- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
-- 스키마를 반드시 준수합니다.
-
-입력:
-- Transcript: ${transcript}
-- WhyReport: ${whyMarkdown || (whyReportContent?.markdown || 'null')}
-
-출력(JSON 스키마):
-{
-  "styles": [
-    {
-      "title": "사람들과 함께 일하기",
-      "subtitle": "중간 공유와 피드백",
-      "fitLevel": "high|medium|conditional",
-      "what": "문장",
-      "example": "문장",
-      "why": "문장",
-      "caution": "문장",
-      "story": "2~5문장"
-    }
-  ],
-  "quick_tips": [ { "id": "A", "title": "제목", "method": "방법", "tip": "팁" } ],
-  "today_checklist": ["체크 1", "체크 2"],
-  "summary": "요약 1~2문장"
-}
-
-품질 체크:
-- styles는 3~5개.
-- fitLevel은 high/medium/conditional 중 하나.
-- story는 실제 장면 설명 포함.`,
-
-        master_manager_spectrum: `역할: 대화와 Why를 바탕으로 Master–Manager Spectrum을 JSON 1개로 생성합니다.
-
-규칙:
-- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
-- 스키마를 반드시 준수합니다.
-
-입력:
-- Transcript: ${transcript}
-- WhyReport: ${whyMarkdown || (whyReportContent?.markdown || 'null')}
-
-출력(JSON 스키마):
-{
-  "scores": { "others": 0-100, "master": 0-100 },
-  "orientation": { "side": "self|others", "score": 0-100, "headline": "문장", "paragraph": "2~4문장", "evidence": ["3~5 예"], "analysis": "2~4문장", "summary": "1문장" },
-  "execution": { "side": "manager|master", "score": 0-100, "headline": "문장", "paragraph": "2~4문장", "evidence": ["3~5 예"], "analysis": "2~4문장", "summary": "1문장" },
-  "current_type": { "id": "id", "name": "이름", "position": "설명", "description": "문장", "traits": ["특성1","특성2"] },
-  "types": [ { "id": "id", "name": "이름", "position": "설명", "description": "문장", "traits": ["특성"] } ],
-  "scenes": [ { "category": "맥락", "evidence": ["근거"], "analysis": "해석", "conclusion": "결론" } ]
-}`,
-
-        fit_triggers: `역할: 켜짐/꺼짐 조건과 회복 프로토콜을 JSON 하나로 구조화합니다.
-
-규칙:
-- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
-
-입력:
-- Transcript: ${transcript}
-- WhyReport: ${whyMarkdown || (whyReportContent?.markdown || 'null')}
-
-출력(JSON 스키마):
-{
-  "on": ["환경/사람/리듬/업무 유형별 5~7개"],
-  "off": ["방해 요인 5~7개 + 초기 경고 신호"],
-  "do_more": ["3개"],
-  "do_less": ["3개"],
-  "recovery": { "quick90": "호흡→라벨→다음 한 걸음", "extended": ["3단계"] },
-  "boundary_phrases": ["회의/마감/우선순위 맥락 3문장"]
-}
-
-품질 체크:
-- on/off 항목에 실제 대화 근거 1~2개 포함.`,
-
-        light_shadow: `역할: Transcript 기반 Light & Shadow를 JSON으로 생성합니다.
-
-규칙:
-- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
- - strengths와 shadows는 각각 정확히 3개 항목.
-
-입력:
-- Transcript: ${transcript}
-- WhyReport: ${whyMarkdown || (whyReportContent?.markdown || 'null')}
-
-출력(JSON 스키마):
-{
-  "strengths": [
-    { "title": "제목", "percentage": 0-100, "description": "문장", "insight": "문장", "situations": ["상황"], "roles": ["역할"], "impact": "문장" },
-    { "title": "제목", "percentage": 0-100, "description": "문장", "insight": "문장", "situations": ["상황"], "roles": ["역할"], "impact": "문장" },
-    { "title": "제목", "percentage": 0-100, "description": "문장", "insight": "문장", "situations": ["상황"], "roles": ["역할"], "impact": "문장" }
-  ],
-  "shadows": [
-    { "title": "제목", "percentage": 0-100, "description": "문장", "insight": "문장", "examples": ["예시"], "solutions": [ { "title": "제목", "method": "방법" } ] },
-    { "title": "제목", "percentage": 0-100, "description": "문장", "insight": "문장", "examples": ["예시"], "solutions": [ { "title": "제목", "method": "방법" } ] },
-    { "title": "제목", "percentage": 0-100, "description": "문장", "insight": "문장", "examples": ["예시"], "solutions": [ { "title": "제목", "method": "방법" } ] }
-  ]
-}`,
-        philosophy: `역할: Transcript와 Why를 바탕으로 아리스토텔레스의 2인칭 조언 편지를 작성합니다.
-
-규칙:
-- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
-- 문체는 아리스토텔레스 1인칭, 독자는 "자네" 2인칭.
-- 아래 구조를 엄격히 따릅니다.
-
-입력:
-- Transcript: ${transcript}
-- WhyReport: ${whyMarkdown || (whyReportContent?.markdown || 'null')}
-
-출력(JSON 스키마):
-{ "letter_content": "전체 편지 본문" }
-
-편지 구조(그대로 따름):
-나는 아리스토텔레스요... (간단 소개 2~3문장, 사용자의 지향을 1문장으로 요약해 호명)
-
-⸻
-
-1. <한 줄 제목>\n<근거·일화 기반 단락 2~4문장>
-2. <한 줄 제목>\n<단락 2~4문장>
-3. <한 줄 제목>\n<단락 2~4문장>
-4. <한 줄 제목>\n<단락 2~4문장>
-5. <한 줄 제목>\n<단락 2~4문장>
-6. <한 줄 제목>\n<단락 2~4문장>
-(필요 시 7~9까지 확장 가능)
-
-⸻
-
-마지막 권고(2~3문장).\n아테네의 한낮에,\n아리스토텔레스 드림`,
-        action_recipe: `역할: Transcript 기반 Action Recipe를 JSON으로 생성합니다.
-
-규칙:
-- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
-
-입력:
-- Transcript: ${transcript}
-- WhyReport: ${whyMarkdown || (whyReportContent?.markdown || 'null')}
-
-출력(JSON 스키마):
-{ "recipes": [ { "id": "A", "title": "제목", "duration": "기간", "frequency": "빈도", "steps": ["단계"] } ] }`,
-        future_path: `역할: 6~12개월 동안 'Why 극대화 환경'을 설계하는 환경 목록(JSON)만 생성합니다. 로드맵(단계/기간/행동/마일스톤)은 생성하지 않습니다.
-
-규칙:
-- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
-- remove/strengthen 카테고리는 각각 정확히 3개.
-- 각 카테고리 items는 정확히 4개. impact는 1문장.
-
-입력:
-- Transcript: ${transcript}
-- WhyReport: ${whyMarkdown || (whyReportContent?.markdown || 'null')}
-
-출력(JSON 스키마):
-{ "environment": { "remove": [ { "category": "카테고리", "items": ["항목"], "impact": "문장" } ], "strengthen": [ { "category": "카테고리", "items": ["항목"], "impact": "문장" } ] } }`,
-        epilogue: `역할: 리포트를 JSON 에필로그로 요약합니다.
-
-규칙:
-- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
-
-입력:
-- Transcript: ${transcript}
-- WhyReport: ${whyMarkdown || (whyReportContent?.markdown || 'null')}
-
-출력(JSON 스키마):
-{ "overall_score": 0-100, "insights": [ { "title": "제목", "description": "문장", "score": 0-100 } ], "action_items": ["할 일"], "reflection": "문장" }`
-      }
-      return prompts[t]
-    }
-
-    // WHY headline 확보 (prologue 등에서 활용)
-    let whyHeadline: string | undefined
-    if (!whyHeadline) {
-      const { data: whyExisting } = await supabaseServer
-        .from('reports')
-        .select('content')
-        .eq('session_id', sessionId)
-        .eq('type', 'my_why')
-        .single()
-      if (whyExisting?.content?.headline) whyHeadline = whyExisting.content.headline
-    }
-
     const prompt = buildReportPrompt(type as any, {
       transcript: transcriptBuilder(),
       whyMarkdown: whyReportContent?.markdown,
-      whyHeadline,
+      whyHeadline: (sessionData as any)?.user_name,
       userName: (sessionData as any)?.user_name
     })
 
     const systemMessage = SYSTEM_KO_JSON_ONLY
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',
       messages: [
         { role: 'system', content: systemMessage },
         { role: 'user', content: prompt }
-      ],
-      temperature: 0.4
+      ]
     })
 
     const content = completion.choices[0]?.message?.content || ''
+    // 5) 응답 파싱: 실패 시 1회 엄격 재시도(JSON만)
     let parsed: any
-    if (type === 'my_why') {
+    const tryParse = (raw: string) => {
+      try { return parseJsonFlex(raw) } catch { return null }
+    }
+    parsed = tryParse(content)
+    if (!parsed || typeof parsed !== 'object') {
       try {
-        parsed = JSON.parse(content)
-        // 안전 가드
-        if (typeof parsed?.headline !== 'string' || typeof parsed?.markdown !== 'string') {
-          throw new Error('invalid json shape')
-        }
-        parsed = validateAndFillMyWhy(parsed)
-      } catch {
-        // JSON 실패 시 전체를 마크다운으로 간주
-        parsed = validateAndFillMyWhy({ headline: '', markdown: content.trim() } as any)
-      }
-    } else if (type === 'value_map') {
-      // JSON 선호 파서 → 실패 시 마크다운으로 폴백
-      try {
-        let vm: any
-        let localContent = content
-        for (let i = 0; i < 2; i++) {
-          try {
-            const json = parseJsonFlex(localContent)
-            vm = validateAndFillValueMap(json)
-            if (Array.isArray(vm.items) && vm.items.length === 3) break
-            // 재시도: 더 엄격한 프롬프트로 재요청
-            const strictPrompt = buildReportPrompt('value_map' as any, { transcript: transcriptBuilder(), whyMarkdown: whyReportContent?.markdown || 'null' })
-              + '\n\n반드시 items는 3개. 실패 시 다시 시도.'
-            const retry = await openai.chat.completions.create({
-              model: 'gpt-4o-mini',
-              messages: [
-                { role: 'system', content: '한국어만 사용. 프리텍스트 금지. JSON만 반환. items는 정확히 3개.' },
-                { role: 'user', content: strictPrompt }
-              ],
-              temperature: 0.2
-            })
-            localContent = retry.choices[0]?.message?.content || localContent
-          } catch (e) {
-            throw e
-          }
-        }
-        parsed = { ...vm, markdown: valueMapToMarkdown(vm) }
+        const strictPrompt = buildReportPrompt(type as any, {
+          transcript: transcriptBuilder(),
+          whyMarkdown: whyReportContent?.markdown,
+          whyHeadline: (sessionData as any)?.user_name,
+          userName: (sessionData as any)?.user_name,
+        }) + '\n\n프리텍스트 금지. JSON만 반환.'
+        const retry = await openai.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [
+            { role: 'system', content: SYSTEM_KO_JSON_ONLY },
+            { role: 'user', content: strictPrompt }
+          ]
+        })
+        const retryContent = retry.choices[0]?.message?.content || ''
+        parsed = tryParse(retryContent) || { markdown: retryContent.trim() }
       } catch {
         parsed = { markdown: content.trim() }
       }
-    } else if (type === 'style_pattern') {
-      try {
-        let sp: any
-        let localContent = content
-        for (let i = 0; i < 2; i++) {
-          try {
-            const json = parseJsonFlex(localContent)
-            sp = validateAndFillStylePattern(json)
-            if (Array.isArray(sp.styles) && sp.styles.length >= 3) break
-            const strictPrompt = buildReportPrompt('style_pattern' as any, { transcript: transcriptBuilder(), whyMarkdown: whyReportContent?.markdown || 'null' })
-              + '\n\nstyles는 3~5개. story에는 실제 장면 단서 1개 포함. JSON만.'
-            const retry = await openai.chat.completions.create({
-              model: 'gpt-4o-mini',
-              messages: [
-                { role: 'system', content: '한국어만 사용. 프리텍스트 금지. JSON만 반환.' },
-                { role: 'user', content: strictPrompt }
-              ],
-              temperature: 0.2
-            })
-            localContent = retry.choices[0]?.message?.content || localContent
-          } catch (e) {
-            throw e
-          }
-        }
-        parsed = { ...sp, markdown: stylePatternToMarkdown(sp) }
-      } catch {
-        parsed = { markdown: content.trim() }
-      }
-    } else if (type === 'master_manager_spectrum') {
-      try {
-        let mm: any
-        let localContent = content
-        for (let i = 0; i < 2; i++) {
-          try {
-            const json = parseJsonFlex(localContent)
-            mm = validateAndFillMasterManager(json)
-            if (mm?.scores && typeof mm.scores.master === 'number' && typeof mm.scores.others === 'number') break
-            const strictPrompt = buildReportPrompt('master_manager_spectrum' as any, { transcript: transcriptBuilder(), whyMarkdown: whyReportContent?.markdown || 'null' })
-              + '\n\nJSON만. scores.master/others는 0~100 정수.'
-            const retry = await openai.chat.completions.create({
-              model: 'gpt-4o-mini',
-              messages: [
-                { role: 'system', content: '한국어만 사용. 프리텍스트 금지. JSON만 반환.' },
-                { role: 'user', content: strictPrompt }
-              ],
-              temperature: 0.2
-            })
-            localContent = retry.choices[0]?.message?.content || localContent
-          } catch (e) {
-            throw e
-          }
-        }
-        parsed = { ...mm, markdown: masterManagerToMarkdown(mm) }
-      } catch {
-        parsed = { markdown: content.trim() }
-      }
-    } else if (type === 'fit_triggers') {
-      try {
-        const json = JSON.parse(content)
-        const ft = validateAndFillFitTriggers(json)
-        parsed = { ...ft, markdown: fitTriggersToMarkdown(ft) }
-      } catch {
-        parsed = { markdown: content.trim() }
-      }
-    } else if (type === 'light_shadow') {
-      try {
-        const json = JSON.parse(content)
-        const ls = validateAndFillLightShadow(json)
-        parsed = { ...ls, markdown: lightShadowToMarkdown(ls) }
-      } catch {
-        parsed = { markdown: content.trim() }
-      }
-    } else if (type === 'philosophy') {
-      try {
-        const json = JSON.parse(content)
-        const ph = validateAndFillPhilosophy(json)
-        parsed = { ...ph, markdown: philosophyToMarkdown(ph) }
-      } catch {
-        parsed = { markdown: content.trim() }
-      }
-    } else if (type === 'action_recipe') {
-      try {
-        const json = JSON.parse(content)
-        const ar = validateAndFillActionRecipe(json)
-        parsed = { ...ar, markdown: actionRecipeToMarkdown(ar) }
-      } catch {
-        parsed = { markdown: content.trim() }
-      }
-    } else if (type === 'future_path') {
-      try {
-        const json = parseJsonFlex(content)
-        const fp = validateAndFillFuturePath(json)
-        parsed = { ...fp, markdown: futurePathToMarkdown(fp) }
-      } catch {
-        parsed = { markdown: content.trim() }
-      }
-    } else if (type === 'epilogue') {
-      try {
-        const json = JSON.parse(content)
-        const ep = validateAndFillEpilogue(json)
-        parsed = { ...ep, markdown: epilogueToMarkdown(ep) }
-      } catch {
-        parsed = { markdown: content.trim() }
-      }
-    } else {
-      parsed = { markdown: content.trim() }
     }
 
-    // 6) 저장(UPSERT)
+    // 6) 저장(UPSERT) — 검증 없이 그대로 저장
     const { error: upErr } = await supabaseServer
       .from('reports')
       .upsert({ session_id: sessionId, type, content: parsed }, { onConflict: 'session_id,type' })
@@ -976,8 +611,8 @@ export async function GET(req: Request, context: any) {
       }
     }
 
-    // 어떤 타입이든 보고서가 생성/저장되면 세션 상태를 완료 처리(요약/완료)로 갱신
-      await markSessionCompleted(sessionId, parsed?.markdown)
+    // 어떤 타입이든 생성/저장 후 세션 상태 완료 처리 (why markdown만 동기화)
+    await markSessionCompleted(sessionId, parsed?.markdown)
 
     // cascade: my_why 생성 완료 시 2~5 자동 생성 (이미 존재하면 스킵)
     if (cascade && type === 'my_why') {
@@ -1039,179 +674,11 @@ async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
       .single()
     if (existing?.content) continue
 
-    let prompt = ''
-    if (t === 'value_map') {
-      // JSON 스키마로 3개 항목만 생성(서버 저장시 UI에서 그대로 사용)
-      prompt = `역할: 전체 대화와 Why를 바탕으로 Value Map을 JSON 1개로 생성합니다.
-
-규칙:
-- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
-- 항목은 정확히 3개.
-- 라벨(머리/마음/장면 해설 등) 텍스트는 넣지 말고 내용만 채웁니다.
-- Transcript 표현을 1~2개 자연스럽게 포함합니다.
-
-입력:
-- Transcript: ${transcript}
-- WhyReport: ${whyMd || 'null'}
-
-출력(JSON 스키마):
-{
-  "items": [
-    { "head": "문장", "heart": "문장", "gapLevel": "high|medium|low", "headDetail": "문장", "heartDetail": "문장", "scene": "2~4문장", "bridge": "1문장" }
-  ],
-  "today_actions": ["실천 1", "실천 2", "실천 3"],
-  "summary": "1~2문장"
-}`
-    } else if (t === 'style_pattern') {
-      prompt = `역할: 대화와 Why를 바탕으로 Style Pattern을 JSON 객체 1개로 생성합니다.
-
-규칙:
-- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
-- 스키마를 반드시 준수합니다.
-
-입력:
-- Transcript: ${transcript}
-- WhyReport: ${whyMd || 'null'}
-
-출력(JSON 스키마):
-{
-  "styles": [
-    {
-      "title": "사람들과 함께 일하기",
-      "subtitle": "중간 공유와 피드백",
-      "fitLevel": "high|medium|conditional",
-      "what": "문장",
-      "example": "문장",
-      "why": "문장",
-      "caution": "문장",
-      "story": "2~5문장"
-    }
-  ],
-  "quick_tips": [
-    { "id": "A", "title": "제목", "method": "방법", "tip": "팁" }
-  ],
-  "today_checklist": ["체크 1", "체크 2"],
-  "summary": "요약 1~2문장"
-}
-
-품질 체크:
-- styles는 3~5개.
-- fitLevel은 high/medium/conditional 중 하나.
-- story는 실제 장면 설명 포함.`
-    } else if (t === 'master_manager_spectrum') {
-      prompt = `역할: 대화와 Why를 바탕으로 Master–Manager Spectrum을 JSON 1개로 생성합니다.
-
-규칙:
-- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
-- 스키마를 반드시 준수합니다.
-
-입력:
-- Transcript: ${transcript}
-- WhyReport: ${whyMd || 'null'}
-
-출력(JSON 스키마):
-{
-  "scores": { "others": 0-100, "master": 0-100 },
-  "current_type": { "id": "id", "name": "이름", "position": "설명", "description": "문장", "traits": ["특성1", "특성2"] },
-  "types": [ { "id": "id", "name": "이름", "position": "설명", "description": "문장", "traits": ["특성"] } ],
-  "scenes": [ { "category": "맥락", "evidence": ["근거"], "analysis": "해석", "conclusion": "결론" } ]
-}
-
-품질 체크:
-- scores는 0~100 정수.
-- scenes는 실제 대화 근거를 1~2개 포함.`
-    } else if (t === 'fit_triggers') {
-      prompt = `역할: 켜짐/꺼짐 조건과 회복 프로토콜을 JSON 하나로 구조화합니다.
-
-규칙:
-- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
-
-입력:
-- Transcript: ${transcript}
-- WhyReport: ${whyMd || 'null'}
-
-출력(JSON 스키마):
-{
-  "on": ["환경/사람/리듬/업무 유형별 5~7개"],
-  "off": ["방해 요인 5~7개 + 초기 경고 신호"],
-  "do_more": ["3개"],
-  "do_less": ["3개"],
-  "recovery": { "quick90": "호흡→라벨→다음 한 걸음", "extended": ["3단계"] },
-  "boundary_phrases": ["회의/마감/우선순위 맥락 3문장"]
-}
-
-품질 체크:
-- on/off 항목에 실제 대화 근거 1~2개 포함.`
-    } else if (t === 'light_shadow') {
-      prompt = `역할: Transcript와 Why를 바탕으로 Light & Shadow를 JSON으로 생성합니다.
-
-규칙:
-- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
-
-입력:
-- Transcript: ${transcript}
-- WhyReport: ${whyMd || 'null'}
-
-출력(JSON 스키마):
-{
-  "strengths": [
-    { "title": "제목", "percentage": 0-100, "description": "문장", "insight": "문장", "situations": ["상황"], "roles": ["역할"], "impact": "문장" }
-  ],
-  "shadows": [
-    { "title": "제목", "percentage": 0-100, "description": "문장", "insight": "문장", "examples": ["예시"], "solutions": [{"title": "제목", "method": "방법"}] }
-  ]
-}`
-    } else if (t === 'philosophy') {
-      prompt = `역할: Transcript와 Why를 바탕으로 Philosophy(편지 형식 본문)를 JSON으로 생성합니다.
-
-규칙:
-- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
-
-입력:
-- Transcript: ${transcript}
-- WhyReport: ${whyMd || 'null'}
-
-출력(JSON 스키마):
-{ "letter_content": "3~7문장 내외 본문" }`
-    } else if (t === 'action_recipe') {
-      prompt = `역할: Transcript/Why 기반 Action Recipe를 JSON으로 생성합니다.
-
-규칙:
-- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
-
-입력:
-- Transcript: ${transcript}
-- WhyReport: ${whyMd || 'null'}
-
-출력(JSON 스키마):
-{ "recipes": [ { "id": "A", "title": "제목", "duration": "기간", "frequency": "빈도", "steps": ["단계"] } ] }`
-    } else if (t === 'future_path') {
-      prompt = `역할: 6~12개월 동안 'Why 극대화 환경'을 설계하는 환경 목록(JSON)만 생성합니다. 로드맵은 생성하지 않습니다.
-
-규칙:
-- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
- - remove/strengthen 카테고리는 각각 정확히 3개.
- - 각 카테고리 items는 정확히 4개. impact는 1문장.
-
-입력:
-- Transcript: ${transcript}
-- WhyReport: ${whyMd || 'null'}
-
-출력(JSON 스키마):
-{ "environment": { "remove": [ { "category": "카테고리", "items": ["항목"], "impact": "문장" } ], "strengthen": [ { "category": "카테고리", "items": ["항목"], "impact": "문장" } ] } }`
-    } else if (t === 'epilogue') {
-      prompt = `역할: 리포트를 JSON 에필로그로 요약합니다.
-
-규칙:
-- 한국어만 사용. 프리텍스트 금지. JSON 1개만 반환.
-
-입력:
-- Transcript: ${transcript}
-- WhyReport: ${whyMd || 'null'}
-
-출력(JSON 스키마):
-{ "overall_score": 0-100, "insights": [ { "title": "제목", "description": "문장", "score": 0-100 } ], "action_items": ["할 일"], "reflection": "문장" }`
-    }
+    const prompt = buildReportPrompt(t as any, {
+      transcript,
+      whyMarkdown: whyMd,
+      userName: undefined
+    })
 
     // Retry up to 3 attempts with incremental backoff
     let lastErr: any = null
@@ -1222,19 +689,20 @@ async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
           : '한국어로만 작성. 지정된 마크다운 템플릿 그대로, 불필요한 텍스트 금지. 마크다운만 반환.'
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',
       messages: [
             { role: 'system', content: sys },
         { role: 'user', content: prompt }
       ],
-      temperature: 0.4
+      temperature: 0.2,
+      response_format: { type: 'json_object' }
     })
     const content = completion.choices[0]?.message?.content || ''
         let parsed: any
         // JSON 스키마 출력 타입은 JSON→검증→Markdown 변환
         if (t === 'value_map') {
           try {
-            const json = JSON.parse(content)
+            const json = parseJsonFlex(content)
             const vm = validateAndFillValueMap(json)
             parsed = { ...vm, markdown: valueMapToMarkdown(vm) }
           } catch {
@@ -1242,7 +710,7 @@ async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
           }
         } else if (t === 'style_pattern') {
           try {
-            const json = JSON.parse(content)
+            const json = parseJsonFlex(content)
             const sp = validateAndFillStylePattern(json)
             parsed = { ...sp, markdown: stylePatternToMarkdown(sp) }
           } catch {
@@ -1250,7 +718,7 @@ async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
           }
         } else if (t === 'master_manager_spectrum') {
           try {
-            const json = JSON.parse(content)
+            const json = parseJsonFlex(content)
             const mm = validateAndFillMasterManager(json)
             parsed = { ...mm, markdown: masterManagerToMarkdown(mm) }
           } catch {
@@ -1258,7 +726,7 @@ async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
           }
         } else if (t === 'fit_triggers') {
           try {
-            const json = JSON.parse(content)
+            const json = parseJsonFlex(content)
             const ft = validateAndFillFitTriggers(json)
             parsed = { ...ft, markdown: fitTriggersToMarkdown(ft) }
           } catch {
@@ -1266,7 +734,7 @@ async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
           }
         } else if (t === 'light_shadow') {
           try {
-            const json = JSON.parse(content)
+            const json = parseJsonFlex(content)
             const ls = validateAndFillLightShadow(json)
             parsed = { ...ls, markdown: lightShadowToMarkdown(ls) }
           } catch {
@@ -1274,7 +742,7 @@ async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
           }
         } else if (t === 'philosophy') {
           try {
-            const json = JSON.parse(content)
+            const json = parseJsonFlex(content)
             const ph = validateAndFillPhilosophy(json)
             parsed = { ...ph, markdown: philosophyToMarkdown(ph) }
           } catch {
@@ -1282,7 +750,7 @@ async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
           }
         } else if (t === 'action_recipe') {
           try {
-            const json = JSON.parse(content)
+            const json = parseJsonFlex(content)
             const ar = validateAndFillActionRecipe(json)
             parsed = { ...ar, markdown: actionRecipeToMarkdown(ar) }
           } catch {
@@ -1290,7 +758,7 @@ async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
           }
         } else if (t === 'future_path') {
           try {
-            const json = JSON.parse(content)
+            const json = parseJsonFlex(content)
             const fp = validateAndFillFuturePath(json)
             parsed = { ...fp, markdown: futurePathToMarkdown(fp) }
           } catch {
@@ -1298,7 +766,7 @@ async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
           }
         } else if (t === 'epilogue') {
           try {
-            const json = JSON.parse(content)
+            const json = parseJsonFlex(content)
             const ep = validateAndFillEpilogue(json)
             parsed = { ...ep, markdown: epilogueToMarkdown(ep) }
           } catch {

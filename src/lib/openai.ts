@@ -55,8 +55,7 @@ async function getOrCreateAssistant() {
     const assistant = await openai.beta.assistants.create({
       name: "Why 발견 상담사",
       instructions: COUNSELING_SYSTEM_PROMPT,
-      model: "gpt-4o",
-      temperature: 0.9, // 1.0에서 0.8로 조정 (더 일관성 있게)
+      model: "gpt-4o"
     });
     
     assistantId = assistant.id;

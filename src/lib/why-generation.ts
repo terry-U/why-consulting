@@ -75,9 +75,7 @@ Why 문장은 반드시 다음 형식을 따라야 합니다:
           role: 'system',
           content: whyPrompt
         }
-      ],
-      temperature: 0.7,
-      max_tokens: 1000,
+      ]
     })
 
     const whyResponse = completion.choices[0]?.message?.content || ''

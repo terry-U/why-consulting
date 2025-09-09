@@ -78,9 +78,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           role: 'system',
           content: encouragementPrompt
         }
-      ],
-      temperature: 0.8,
-      max_tokens: 200,
+      ]
     })
 
     const encouragementMessage = completion.choices[0]?.message?.content
