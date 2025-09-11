@@ -15,9 +15,6 @@ interface WhyStatementSectionProps {
 
 export function WhyStatementSection({ isPinned, onTogglePin, language, data }: WhyStatementSectionProps) {
   const [whySwitchOn, setWhySwitchOn] = useState(true);
-  const [firstBlank, setFirstBlank] = useState('');
-  const [secondBlank, setSecondBlank] = useState('');
-  const [showWhy, setShowWhy] = useState(false);
 
   const content = {
     ko: {
@@ -85,9 +82,7 @@ The reason is that your heart responds most strongly to **'connected meaning'**.
   const apiNarrative: string | undefined = Array.isArray(data?.narrative)
     ? (data.narrative as string[]).join('\n\n')
     : undefined;
-  const apiQuestions: string[] | undefined = Array.isArray(data?.reflection_questions)
-    ? (data.reflection_questions as string[])
-    : undefined;
+  // Reflection questions removed per request
   // Try to recover structured fields from markdown if it actually contains JSON
   const markdownRaw: string | undefined = typeof data?.markdown === 'string' ? data.markdown.trim() : undefined;
   let mdJson: any = undefined;
@@ -110,11 +105,7 @@ The reason is that your heart responds most strongly to **'connected meaning'**.
         ? displayNarrative.split(/\r?\n\r?\n/).map(s => s.trim()).filter(Boolean)
         : []));
 
-  const handleCheck = () => {
-    if (firstBlank.trim() && secondBlank.trim()) {
-      setShowWhy(true);
-    }
-  };
+  // One-line record removed per request
 
   return (
     <div className="space-y-8">
@@ -189,85 +180,9 @@ The reason is that your heart responds most strongly to **'connected meaning'**.
         </CardContent>
       </Card>
 
-      {/* Reflection Questions */}
-      <Card className="shadow-lg">
-        <CardHeader>
-          <h3 className="text-xl font-semibold">{text.reflectionTitle}</h3>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="space-y-6">
-            {(apiQuestions || text.reflectionQuestions).map((question, index) => (
-              <div key={index} className="p-6 border border-border rounded-lg bg-muted/30">
-                <div className="flex items-center gap-4">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-medium">
-                    {index + 1}
-                  </div>
-                  <p className="text-base leading-relaxed whitespace-pre-line">
-                    {question}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Reflection Questions removed */}
 
-      {/* One-Line Record */}
-      <Card className="shadow-lg">
-        <CardHeader>
-          <h3 className="text-xl font-semibold">{text.oneLineRecordTitle}</h3>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="space-y-8">
-            <div className="flex flex-wrap items-center gap-3 text-xl overflow-hidden">
-              <span className="font-medium">"{text.oneLineTemplate}</span>
-              <Input
-                value={firstBlank}
-                onChange={(e) => setFirstBlank(e.target.value)}
-                placeholder="____"
-                className="inline-flex min-w-0 w-[140px] text-center text-lg font-medium border-2 border-dashed border-primary/30"
-              />
-              <span>{text.oneLinePlaceholder1}</span>
-              <Input
-                value={secondBlank}
-                onChange={(e) => setSecondBlank(e.target.value)}
-                placeholder="____"
-                className="inline-flex min-w-0 w-[140px] text-center text-lg font-medium border-2 border-dashed border-primary/30"
-              />
-              <span className="font-medium">{text.oneLinePlaceholder4}."</span>
-            </div>
-            
-            <div className="flex justify-start">
-              <Button 
-                onClick={handleCheck}
-                disabled={!firstBlank.trim() || !secondBlank.trim()}
-                className="px-8 py-3 text-lg font-medium"
-                size="lg"
-              >
-                {text.checkButton}
-              </Button>
-            </div>
-
-            {/* My Why and Final Question (shown after clicking Check) */}
-            {showWhy && (
-              <div className="space-y-6 pt-6 border-t border-border">
-                <div>
-                  <h4 className="text-lg font-semibold mb-4">{text.myWhyTitle}</h4>
-                  <blockquote className="text-xl leading-relaxed p-6 border-l-4 border-primary/30 bg-muted/30 rounded-r-lg font-medium">
-                    "{displayHeadline || text.whyOn}"
-                  </blockquote>
-                </div>
-                
-                <div>
-                  <p className="text-lg leading-relaxed text-muted-foreground font-medium">
-                    {text.finalQuestion}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      {/* One-Line Record removed */}
     </div>
   );
 }

@@ -350,21 +350,7 @@ export default function App({ initialReports }: { initialReports?: ReportsMap })
                 {/* Raw markdown hidden: structured UI only */}
               </section>
 
-              {/* Section 7: Fit & Triggers (optional) */}
-              <section id="section-7" className="scroll-mt-24">
-                {/* Raw markdown hidden: structured UI only */}
-              </section>
-
-              {/* Section 8: Action Recipe */}
-              <section id="section-8" className="scroll-mt-24">
-                {/* Raw markdown hidden: structured UI only */}
-              </section>
-
-              {/* Section 9: Epilogue */}
-              <section id="section-9" className="scroll-mt-24">
-                {/* If we have structured epilogue data, render component; otherwise fallback to markdown */}
-                {/* Raw markdown hidden: structured UI only */}
-              </section>
+              {/* Optional sections removed per request: Fit & Triggers, Action Recipe, Epilogue */}
 
             </div>
           </div>
