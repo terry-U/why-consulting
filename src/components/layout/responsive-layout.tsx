@@ -33,7 +33,8 @@ export default function ResponsiveLayout({
       style={keyboardAwareStyle}
     >
       <div className={`${maxWidthClass} mx-auto ${
-        isSmallScreen ? 'px-4 py-4' : isMobile ? 'px-6 py-6' : 'px-8 py-8'
+        // 모바일 좌우 여백 10px (px-2.5)
+        isSmallScreen ? 'px-2.5 py-4' : isMobile ? 'px-2.5 py-6' : 'px-8 py-8'
       }`}>
         {children}
       </div>

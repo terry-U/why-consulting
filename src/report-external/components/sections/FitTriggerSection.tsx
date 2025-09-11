@@ -104,13 +104,15 @@ export function FitTriggerSection({ isPinned, onTogglePin, language }: FitTrigge
           </CardHeader>
           <CardContent className="space-y-3">
             {fitTriggers.map((trigger) => (
-              <div key={trigger.id} className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
+              <div key={trigger.id} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                 <div className="flex items-center gap-3">
-                  {switchStates[trigger.id] ? (
-                    <Zap className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <ZapOff className="h-4 w-4 text-muted-foreground" />
-                  )}
+                  <div className="flex items-center justify-center w-7 h-7 rounded-full bg-white border border-green-200 flex-none">
+                    {switchStates[trigger.id] ? (
+                      <Zap className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <ZapOff className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </div>
                   <span className={switchStates[trigger.id] ? 'font-medium' : 'text-muted-foreground'}>
                     {trigger.label}
                   </span>
@@ -136,14 +138,16 @@ export function FitTriggerSection({ isPinned, onTogglePin, language }: FitTrigge
           </CardHeader>
           <CardContent className="space-y-3">
             {negativeTriggers.map((trigger) => (
-              <div key={trigger.id} className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-950/20 rounded-lg">
+              <div key={trigger.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
                 <div className="flex items-center gap-3">
-                  {switchStates[trigger.id] ? (
-                    <XCircle className="h-4 w-4 text-red-500" />
-                  ) : (
-                    <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                  )}
-                  <span className={switchStates[trigger.id] ? 'font-medium text-red-600 dark:text-red-400' : 'text-muted-foreground'}>
+                  <div className="flex items-center justify-center w-7 h-7 rounded-full bg-white border border-red-200 flex-none">
+                    {switchStates[trigger.id] ? (
+                      <XCircle className="h-4 w-4 text-red-500" />
+                    ) : (
+                      <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </div>
+                  <span className={switchStates[trigger.id] ? 'font-medium text-red-600' : 'text-muted-foreground'}>
                     {trigger.label}
                   </span>
                 </div>

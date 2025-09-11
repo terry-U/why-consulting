@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WHY - 홈 (디자인 핸드오프)</title>
+    <style>
+      :root {
+        --bg-white: #ffffff;
+        --fg: #0f172a;
+        --muted: #6b7280;
+        --border: #e5e9f0;
+        --card-bg: rgba(255,255,255,0.88);
+        --radius-lg: 16px;
+        --radius-md: 12px;
+      }
+
+      html, body { height: 100%; }
+      html { font-size: 16px; }
+      body {
+        margin: 0;
+        color: var(--fg);
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+        background: transparent;
+      }
+
+      /* Root fixed animated background */
+      .root-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; user-select: none; }
+      .wash {
+        position: absolute; inset: 0;
+        background:
+          radial-gradient(1200px 600px at 10% -10%, #fff2d9 14%, rgba(255,242,217,0) 58%),
+          radial-gradient(1000px 500px at 90% -10%, #e6f0ff 14%, rgba(230,240,255,0) 58%),
+          linear-gradient(180deg, #fffefb 0%, #f8fbff 100%);
+      }
+      @keyframes blobA { 0%,100%{ transform:translate3d(0,0,0) scale(1)} 50%{ transform:translate3d(20px,-10px,0) scale(1.05)} }
+      @keyframes blobB { 0%,100%{ transform:translate3d(0,0,0) scale(1)} 50%{ transform:translate3d(-18px,12px,0) scale(0.98)} }
+      @keyframes attnPulse { 0%,100%{ transform:scale(1); opacity:.18 } 50%{ transform:scale(1.05); opacity:.28 } }
+      .blobA { position:absolute; top:-24vh; left:-24vw; width:70vw; height:50vh; filter: blur(36px); opacity:.8; animation: blobA 14s ease-in-out infinite; background: radial-gradient(60% 60% at 50% 50%, #fff6e5 0%, rgba(255,246,229,0) 60%); }
+      .blobB { position:absolute; top:-18vh; right:-24vw; width:60vw; height:45vh; filter: blur(36px); opacity:.8; animation: blobB 18s ease-in-out infinite; background: radial-gradient(60% 60% at 50% 50%, #eaf3ff 0%, rgba(234,243,255,0) 60%); }
+      .pinkAttn { position:absolute; left:50%; bottom:-10vh; transform:translateX(-50%); width:70vw; max-width:1200px; height:40vh; border-radius:9999px; filter: blur(42px); animation: attnPulse 6s ease-in-out infinite; background: radial-gradient(60% 60% at 50% 50%, rgba(255,182,193,.55) 0%, rgba(255,182,193,0) 60%), radial-gradient(60% 60% at 60% 40%, rgba(255,105,180,.35) 0%, rgba(255,105,180,0) 60%); }
+
+      /* Header */
+      .header { position: sticky; top: 0; z-index: 10; border-bottom: 1px solid rgba(255,255,255,.2); background: transparent; }
+      .container { max-width: 1120px; margin: 0 auto; padding: 12px 16px; }
+      .row { display:flex; align-items:center; justify-content:space-between; }
+      .brand { display:flex; align-items:center; gap:8px; color:#111827; text-decoration:none; font-weight:600; }
+      .link { color:#6b7280; text-decoration:none; }
+      .link:hover { color:#111827; }
+
+      /* Page */
+      main { position: relative; z-index: 1; }
+      .section { max-width: 1120px; margin: 0 auto; padding: 24px 16px; }
+      .h1 { font-size: 20px; font-weight: 600; margin: 0; }
+      .subtle { color: var(--muted); font-size: 13px; margin: 4px 0 0; }
+
+      .cta { display:block; border:1px solid var(--border); border-radius: 24px; padding: 24px; background: var(--card-bg); color:#fff; background-image: linear-gradient(180deg, #0f1324, #0f1324); }
+      .cta-title { font-size: 18px; font-weight: 600; margin: 0 0 6px; }
+      .cta-desc { font-size: 13px; opacity: .9; margin: 0; }
+
+      .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: none; }
+      .card.pad { padding: 24px; }
+      .wallet { display:flex; align-items:center; justify-content:space-between; }
+      .wallet h3 { margin:0 0 4px; font-size: 16px; font-weight: 600; }
+      .wallet p { margin:0; font-size: 13px; color: var(--muted); }
+
+      .sessions { display:flex; flex-direction:column; gap: 12px; }
+      .session { overflow:hidden; }
+      .session-body { padding: 16px; cursor:pointer; }
+      .session-body:hover { background: rgba(17,24,39,0.02); }
+      .badge { padding: 4px 8px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
+      .badge.completed { background: #dcfce7; color:#166534; }
+      .badge.active { background: #fef9c3; color:#854d0e; }
+      .meta { font-size: 12px; color: var(--muted); }
+      .why { margin-top: 12px; }
+      .why .label { font-size: 12px; color:#6b7280; margin:0 0 6px; }
+      .why .text { font-weight: 600; color:#0f172a; margin:0; }
+      .msg { margin-top: 12px; font-size: 14px; color:#374151; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+
+      /* helper */
+      .spacer { height: 12px; }
+      .mt24 { margin-top: 24px; }
+      .mb6 { margin-bottom: 6px; }
+    </style>
+  </head>
+  <body>
+    <div class="root-bg">
+      <div class="wash"></div>
+      <div class="blobA"></div>
+      <div class="blobB"></div>
+      <div class="pinkAttn"></div>
+    </div>
+
+    <!-- Header (maps to: AppHeader.tsx) -->
+    <header class="header">
+      <div class="container">
+        <div class="row">
+          <a class="brand" href="#" aria-label="홈으로"><span style="font-size: 20px">🌟</span><span>WHY</span></a>
+          <!-- 로그인 상태에 따라: 로그인 / 로그아웃 토글 -->
+          <a class="link" href="#">로그아웃</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- Greeting (maps to: home/page.tsx header area) -->
+      <section class="section">
+        <h1 class="h1">다시 만나서 반가워요 😊</h1>
+        <p class="subtle">kakao_4405203062님</p>
+      </section>
+
+      <!-- CTA (maps to: AsyncButton 영역) -->
+      <section class="section">
+        <a class="cta" href="#" aria-label="새로운 Why 찾기">
+          <div class="cta-title">🌟 새로운 Why 찾기</div>
+          <p class="cta-desc">8명의 질문자와 함께하는 특별한 여정</p>
+        </a>
+      </section>
+
+      <!-- Tickets Wallet (maps to: 카드 톤/타이포 가이드) -->
+      <section class="section">
+        <div class="card pad wallet">
+          <div>
+            <h3>상담권</h3>
+            <p>남은 상담 횟수</p>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size: 20px; font-weight: 700; color:#ca8a04">3장</div>
+            <a class="link" href="#" style="font-size: 13px;">구매하기</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sessions List (maps to: consultation-history-list.tsx) -->
+      <section class="section">
+        <div class="row" style="margin-bottom:8px">
+          <div class="h1" style="font-size: 18px">상담 히스토리</div>
+          <div class="subtle">총 134회</div>
+        </div>
+        <div class="sessions">
+          <!-- Completed Session Card -->
+          <div class="card session">
+            <div class="session-body">
+              <div class="row mb6">
+                <div class="row" style="gap:12px">
+                  <div style="font-weight:600">123번째 상담</div>
+                  <span class="badge completed">완료</span>
+                </div>
+                <div class="meta">2시간 전 상담 종료</div>
+              </div>
+              <div class="why card pad">
+                <p class="label">나의 Why 한문장</p>
+                <p class="text">"사람들을 지혜롭게 만들며 편견을 깨고 가능성을 열어가는 삶을 통해 환한함을 느낀다."</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active Session Card -->
+          <div class="card session">
+            <div class="session-body">
+              <div class="row mb6">
+                <div class="row" style="gap:12px">
+                  <div style="font-weight:600">134번째 상담</div>
+                  <span class="badge active">진행 중</span>
+                </div>
+                <div class="meta">3시간 전 상담 시작</div>
+              </div>
+              <div class="card pad">
+                <p class="msg">💬 안녕하세요! 만나서 반갑습니다... (진행중 메시지 3줄까지 표시)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <div class="spacer"></div>
+    </main>
+  </body>
+</html>
+
+

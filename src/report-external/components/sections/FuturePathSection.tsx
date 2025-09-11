@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
 import { 
   Plus, 
   Minus, 
@@ -10,10 +9,7 @@ import {
   Briefcase, 
   MapPin,
   Clock,
-  Heart,
-  Pin, 
-  PinOff, 
-  Link 
+  Heart
 } from 'lucide-react';
 
 interface FuturePathSectionProps {
@@ -76,7 +72,7 @@ export function FuturePathSection({ isPinned, onTogglePin, language, data }: Fut
     <div className="space-y-8">
       {/* Section Header */}
       <div className="relative group">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between pl-3 md:pl-0">
           <div className="flex items-center gap-4">
             <Badge variant="secondary" className="text-lg px-4 py-2 font-medium">6</Badge>
             <div>
@@ -98,35 +94,37 @@ export function FuturePathSection({ isPinned, onTogglePin, language, data }: Fut
               {text.removeTitle}
             </h3>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 -mx-6 md:mx-0">
             {(envRemove || []).map((factor: any, index: number) => {
               const Icon = pickRemoveIcon(factor?.category);
               return (
-                <Card key={index} className="border-red-200 dark:border-red-800">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
-                        <Icon className="h-5 w-5 text-red-600 dark:text-red-400" />
+                <div key={index} className="px-6 md:px-0">
+                  <Card className="border-red-200">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-white border border-red-200 flex items-center justify-center flex-none">
+                          <Icon className="h-5 w-5 text-red-600" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium">{factor.category}</h4>
+                          {factor.impact && (
+                            <p className="text-sm text-red-600">{factor.impact}</p>
+                          )}
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-medium">{factor.category}</h4>
-                        {factor.impact && (
-                          <p className="text-sm text-red-600 dark:text-red-400">{factor.impact}</p>
-                        )}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <ul className="space-y-2">
-                      {(factor.items || []).slice(0,4).map((item: string, idx: number) => (
-                        <li key={idx} className="flex items-center gap-2 text-content-large text-muted-foreground">
-                          <Minus className="h-3 w-3 text-red-500 shrink-0" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <ul className="space-y-2">
+                        {(factor.items || []).slice(0,4).map((item: string, idx: number) => (
+                          <li key={idx} className="flex items-center gap-2 text-content-large text-muted-foreground">
+                            <Minus className="h-3 w-3 text-red-500 shrink-0" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </div>
               );
             })}
           </CardContent>
@@ -140,35 +138,37 @@ export function FuturePathSection({ isPinned, onTogglePin, language, data }: Fut
               {text.strengthenTitle}
             </h3>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 -mx-6 md:mx-0">
             {(envStrengthen || []).map((factor: any, index: number) => {
               const Icon = pickStrengthenIcon(factor?.category);
               return (
-                <Card key={index} className="border-green-200 dark:border-green-800">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
-                        <Icon className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <div key={index} className="px-6 md:px-0">
+                  <Card className="border-green-200">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-white border border-green-200 flex items-center justify-center flex-none">
+                          <Icon className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium">{factor.category}</h4>
+                          {factor.impact && (
+                            <p className="text-sm text-green-600">{factor.impact}</p>
+                          )}
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-medium">{factor.category}</h4>
-                        {factor.impact && (
-                          <p className="text-sm text-green-600 dark:text-green-400">{factor.impact}</p>
-                        )}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <ul className="space-y-2">
-                      {(factor.items || []).slice(0,4).map((item: string, idx: number) => (
-                        <li key={idx} className="flex items-center gap-2 text-content-large text-muted-foreground">
-                          <Plus className="h-3 w-3 text-green-500 shrink-0" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <ul className="space-y-2">
+                        {(factor.items || []).slice(0,4).map((item: string, idx: number) => (
+                          <li key={idx} className="flex items-center gap-2 text-content-large text-muted-foreground">
+                            <Plus className="h-3 w-3 text-green-500 shrink-0" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </div>
               );
             })}
           </CardContent>

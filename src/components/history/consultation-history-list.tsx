@@ -111,15 +111,15 @@ export default function ConsultationHistoryList({
         <span className="text-sm text-gray-500">총 {history.length}회</span>
       </div>
       
-      <div className="space-y-3">
+      <div className="-mx-2.5 md:mx-0 divide-y divide-gray-200 md:divide-y-0 md:space-y-3">
         {history.map((session) => (
           <div 
             key={session.id}
-            className="card overflow-hidden"
+            className="overflow-hidden md:rounded-2xl md:bg-white/90 md:shadow-[0_12px_28px_rgba(15,23,42,0.08)] md:ring-1 md:ring-black/5"
           >
             {/* 기본 정보 */}
             <div 
-              className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+              className="px-2.5 py-4 cursor-pointer hover:bg-gray-50 transition-colors md:p-4"
               onClick={() => onSelectSession(session.id)}
             >
               <div className="flex items-center justify-between mb-2">
@@ -147,7 +147,7 @@ export default function ConsultationHistoryList({
               
               {/* Why 문장 (완료된 경우) */}
               {session.whyStatement && (
-                <div className="mt-3 card p-3">
+                <div className="mt-3 md:p-3">
                   <p className="text-sm font-medium text-gray-600 mb-1">나의 Why 한문장</p>
                   <p className="text-gray-900 font-medium">"{session.whyStatement}"</p>
                 </div>
@@ -155,7 +155,7 @@ export default function ConsultationHistoryList({
               
               {/* 마지막 메시지 (진행 중인 경우) */}
               {!session.whyStatement && session.lastMessage && (
-                <div className="mt-3 card p-3">
+                <div className="mt-3 md:p-3">
                   <p className="text-sm text-gray-700 line-clamp-3">💬 {session.lastMessage}</p>
                 </div>
               )}

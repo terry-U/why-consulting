@@ -4,7 +4,7 @@ import { Switch } from '../ui/switch';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { Pin, PinOff, Link } from 'lucide-react';
+import { cn } from '../ui/utils';
 
 interface WhyStatementSectionProps {
   isPinned: boolean;
@@ -120,7 +120,7 @@ The reason is that your heart responds most strongly to **'connected meaning'**.
     <div className="space-y-8">
       {/* Section Header */}
       <div className="relative group">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between pl-3 md:pl-0">
           <div className="flex items-center gap-4">
             <Badge variant="secondary" className="text-lg px-4 py-2 font-medium">0</Badge>
             <div>
@@ -135,7 +135,8 @@ The reason is that your heart responds most strongly to **'connected meaning'**.
       </div>
 
       {/* Why Switch */}
-      <Card className="shadow-lg">
+      <Card className={cn("shadow-lg", !whySwitchOn && "bg-neutral-900 text-white")}
+      >
         <CardHeader>
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-semibold">{text.whyTitle}</h3>
@@ -152,17 +153,23 @@ The reason is that your heart responds most strongly to **'connected meaning'**.
           </div>
         </CardHeader>
         <CardContent className="pt-0">
-          <blockquote className="text-xl leading-relaxed border-l-4 border-primary/30 pl-6 font-medium">
-            "{displayHeadline || text.whyOn}"
-          </blockquote>
-          { (displayOff || text.whyOff) && (
-            <div className="mt-3">
-              <blockquote className="text-base leading-relaxed border-l-4 border-muted/30 pl-6 text-muted-foreground">
-                "{displayOff || text.whyOff}"
+          {(() => {
+            const headlineOn = displayHeadline || text.whyOn;
+            const headlineOff = displayOff || text.whyOff;
+            const isOn = !!whySwitchOn;
+            const activeText = isOn ? headlineOn : (headlineOff || '');
+            if (!activeText) return null; // OFF일 때 텍스트가 없으면 미표시
+            return (
+              <blockquote className={
+                cn(
+                  "text-xl leading-relaxed border-l-4 pl-6 font-medium",
+                  isOn ? "border-primary/30" : "border-white/30"
+                )
+              }>
+                "{activeText}"
               </blockquote>
-              {/* Alternatives intentionally not shown per requirement */}
-            </div>
-          )}
+            );
+          })()}
         </CardContent>
       </Card>
 
@@ -172,7 +179,7 @@ The reason is that your heart responds most strongly to **'connected meaning'**.
           <h3 className="text-xl font-semibold">당신의 이야기</h3>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="text-lg leading-relaxed">
+          <div className="text-base leading-relaxed">
             {narrativeParagraphs.length > 0
               ? narrativeParagraphs.map((p, i) => (
                   <p key={i} className="mb-4 whitespace-pre-wrap">{p}</p>
@@ -191,11 +198,11 @@ The reason is that your heart responds most strongly to **'connected meaning'**.
           <div className="space-y-6">
             {(apiQuestions || text.reflectionQuestions).map((question, index) => (
               <div key={index} className="p-6 border border-border rounded-lg bg-muted/30">
-                <div className="flex items-start gap-4">
+                <div className="flex items-center gap-4">
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-medium">
                     {index + 1}
                   </div>
-                  <p className="text-lg leading-relaxed whitespace-pre-line">
+                  <p className="text-base leading-relaxed whitespace-pre-line">
                     {question}
                   </p>
                 </div>
@@ -227,7 +234,7 @@ The reason is that your heart responds most strongly to **'connected meaning'**.
                 placeholder="____"
                 className="inline-flex min-w-0 w-[140px] text-center text-lg font-medium border-2 border-dashed border-primary/30"
               />
-              <span className="font-medium">{text.oneLinePlaceholder2}."</span>
+              <span className="font-medium">{text.oneLinePlaceholder4}."</span>
             </div>
             
             <div className="flex justify-start">
@@ -241,21 +248,23 @@ The reason is that your heart responds most strongly to **'connected meaning'**.
               </Button>
             </div>
 
-            {/* My Why and Final Question (always shown after record) */}
-            <div className="space-y-6 pt-6 border-t border-border">
-              <div>
-                <h4 className="text-lg font-semibold mb-4">{text.myWhyTitle}</h4>
-                <blockquote className="text-xl leading-relaxed p-6 border-l-4 border-primary/30 bg-muted/30 rounded-r-lg font-medium">
-                  "{displayHeadline || text.whyOn}"
-                </blockquote>
+            {/* My Why and Final Question (shown after clicking Check) */}
+            {showWhy && (
+              <div className="space-y-6 pt-6 border-t border-border">
+                <div>
+                  <h4 className="text-lg font-semibold mb-4">{text.myWhyTitle}</h4>
+                  <blockquote className="text-xl leading-relaxed p-6 border-l-4 border-primary/30 bg-muted/30 rounded-r-lg font-medium">
+                    "{displayHeadline || text.whyOn}"
+                  </blockquote>
+                </div>
+                
+                <div>
+                  <p className="text-lg leading-relaxed text-muted-foreground font-medium">
+                    {text.finalQuestion}
+                  </p>
+                </div>
               </div>
-              
-              <div>
-                <p className="text-lg leading-relaxed text-muted-foreground font-medium">
-                  {text.finalQuestion}
-                </p>
-              </div>
-            </div>
+            )}
           </div>
         </CardContent>
       </Card>

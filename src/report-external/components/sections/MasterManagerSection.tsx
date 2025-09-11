@@ -1,14 +1,10 @@
 import { Card, CardContent, CardHeader } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
 import { Progress } from '../ui/progress';
 import { 
   Users2, 
   Wrench, 
   Target, 
-  Pin, 
-  PinOff, 
-  Link,
   Heart,
   Lightbulb,
   Compass
@@ -112,8 +108,8 @@ export function MasterManagerSection({ isPinned, onTogglePin, language, data }: 
   const content = {
     ko: {
       title: '매니저-마스터 스펙트럼',
-      subtitle: '동기는 누구를 향하고, 나는 어떤 방식으로 움직일까요?',
-      description: '이 페이지는 선생님께서 무엇을 위해 힘이 나고(자기지향 가치관 ↔ 타인지향 가치관), 어떻게 움직일 때 성과가 잘 나는지(마스터 ↔ 매니저)를 한눈에 보여드립니다. 숫자는 판단이 아니라 현재 위치를 가늠하는 눈금입니다.',
+      subtitle: '나의 동기는 누구를 향하고, 어떻게 발현하고 싶어할까요?',
+      description: '나는 누구를 위해 행동해야 힘이 나고, 어떤 방식으로 해야 행복할까요?\n한눈에 알아볼 수 있게 표를 준비했어요.',
       quadrantTitle: '매니저-마스터 스펙트럼 그래프',
       currentType: '당신은 **중재자** 타입입니다',
       overviewTitle: '한눈에 보기',
@@ -154,6 +150,19 @@ export function MasterManagerSection({ isPinned, onTogglePin, language, data }: 
       rose: 'text-rose-600 bg-rose-50 dark:bg-rose-950/20 dark:text-rose-400'
     };
     return colors[color as keyof typeof colors] || colors.blue;
+  };
+
+  // 다크모드 영향을 받지 않는 라이트 박스 색상(텍스트/배경) 고정
+  const getFixedLightBoxColor = (color: string) => {
+    switch (color) {
+      case 'blue': return 'text-blue-700 bg-blue-50';
+      case 'emerald': return 'text-emerald-700 bg-emerald-50';
+      case 'amber': return 'text-amber-700 bg-amber-50';
+      case 'violet': return 'text-violet-700 bg-violet-50';
+      case 'green': return 'text-green-700 bg-green-50';
+      case 'rose': return 'text-rose-700 bg-rose-50';
+      default: return 'text-slate-700 bg-slate-50';
+    }
   };
 
   // 현재 유저의 위치 (장면 해설 우선 → 점수 폴백)
@@ -206,7 +215,7 @@ export function MasterManagerSection({ isPinned, onTogglePin, language, data }: 
     <div className="space-y-8">
       {/* Section Header */}
       <div className="relative group">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between pl-3 md:pl-0">
           <div className="flex items-center gap-4">
             <Badge variant="secondary" className="text-lg px-4 py-2 font-medium">3</Badge>
             <div>
@@ -221,10 +230,10 @@ export function MasterManagerSection({ isPinned, onTogglePin, language, data }: 
       {/* Introduction */}
       <Card className="shadow-lg">
         <CardContent className="pt-6">
-          <p className="text-lg leading-relaxed text-muted-foreground mb-6">
+          <p className="text-[18px] leading-relaxed text-muted-foreground mb-6 whitespace-pre-line">
             {text.description}
           </p>
-          <div className={`p-4 rounded-lg ${getColorClass(userType.color)}`}>
+          <div className={`p-4 rounded-lg ${getFixedLightBoxColor(userType.color)}`}>
             <h3 className="font-semibold mb-2">{`당신은 **${currentTypeName}** 타입입니다`}</h3>
             <p className="text-sm">{userType.description}</p>
           </div>
@@ -355,17 +364,18 @@ export function MasterManagerSection({ isPinned, onTogglePin, language, data }: 
             <div className="absolute top-1/2 left-0 right-0 h-px bg-border z-10"></div>
             <div className="absolute left-1/2 top-0 bottom-0 w-px bg-border z-10"></div>
 
-            {/* 현재 사용자 위치 */}
+            {/* 현재 사용자 위치: 더 선명한 표시 + 라벨(내 성향), 숫자 좌표 제거 */}
             <div 
-              className="absolute w-6 h-6 rounded-full border-4 border-primary bg-primary shadow-lg shadow-primary/25 animate-pulse transform -translate-x-3 -translate-y-3 z-20"
+              className="absolute transform -translate-x-4 -translate-y-4 z-20"
               style={{
                 left: `${currentUser.others}%`,
                 top: `${100 - currentUser.manager}%`
               }}
             >
-              <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 text-xs font-semibold text-primary whitespace-nowrap bg-background px-2 py-1 rounded shadow-md">
-                현재 위치 ({currentUser.others}, {currentUser.manager})
+              <div className="absolute -top-10 left-1/2 -translate-x-1/2 text-xs font-semibold text-primary whitespace-nowrap bg-background px-2 py-1 rounded shadow-md">
+                내 성향
               </div>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-emerald-400 border-[6px] border-white shadow-xl ring-4 ring-white/80 mm-glow" />
             </div>
 
             {/* 요청: 그래프 위 점 아이콘(선지자/중재자/도인/등대지기) 모두 제거 */}
@@ -387,7 +397,7 @@ export function MasterManagerSection({ isPinned, onTogglePin, language, data }: 
                   }`}
                 >
                   <div className="flex items-center gap-3 mb-2">
-                    <div className={`p-2 rounded-lg ${getColorClass(type.color)}`}>
+                    <div className={`p-2 rounded-lg ${getFixedLightBoxColor(type.color)}`}>
                       <IconComponent className="h-5 w-5" />
                     </div>
                     <div>
@@ -473,12 +483,7 @@ export function MasterManagerSection({ isPinned, onTogglePin, language, data }: 
             </div>
           </div>
 
-          {/* Current Position */}
-          <div className="p-4 bg-muted/30 rounded-lg">
-            <p className="text-lg leading-relaxed font-medium">
-              {text.currentPosition}
-            </p>
-          </div>
+          {/* Current Position removed as requested */}
         </CardContent>
       </Card>
 
@@ -494,7 +499,7 @@ export function MasterManagerSection({ isPinned, onTogglePin, language, data }: 
           {orientation && (
             <div className="space-y-6">
               <div className="flex items-center gap-3">
-                <div className={`p-3 rounded-lg ${getColorClass('rose')}`}>
+                <div className={`p-3 rounded-lg ${getFixedLightBoxColor('rose')}`}>
                   <Heart className="h-6 w-6" />
                 </div>
                 <h4 className="font-semibold text-lg">
@@ -504,7 +509,7 @@ export function MasterManagerSection({ isPinned, onTogglePin, language, data }: 
                 </h4>
               </div>
               <div className="pl-12 space-y-4">
-                <div className="p-4 bg-gradient-to-r from-muted/30 to-muted/10 rounded-lg">
+                <div className="p-4 rounded-lg bg-gray-50">
                   <p className="text-insight leading-relaxed">{orientation.paragraph}</p>
                 </div>
                 {Array.isArray(orientation.evidence) && orientation.evidence.length > 0 && (
@@ -518,8 +523,8 @@ export function MasterManagerSection({ isPinned, onTogglePin, language, data }: 
                   </div>
                 )}
                 {orientation.analysis && (
-                  <div className="p-4 bg-gradient-to-r from-blue-50/50 to-violet-50/50 dark:from-blue-950/10 dark:to-violet-950/10 rounded-lg">
-                    <h5 className="font-medium mb-2 text-blue-800 dark:text-blue-200">심층 분석:</h5>
+                  <div className="p-4 rounded-lg bg-violet-50">
+                    <h5 className="font-medium mb-2 text-violet-800">심층 분석:</h5>
                     <p className="text-insight leading-relaxed">{orientation.analysis}</p>
                   </div>
                 )}
@@ -535,7 +540,7 @@ export function MasterManagerSection({ isPinned, onTogglePin, language, data }: 
           {execution && (
             <div className="space-y-6">
               <div className="flex items-center gap-3">
-                <div className={`p-3 rounded-lg ${getColorClass('blue')}`}>
+                <div className={`p-3 rounded-lg ${getFixedLightBoxColor('blue')}`}>
                   <Wrench className="h-6 w-6" />
                 </div>
                 <h4 className="font-semibold text-lg">
@@ -543,7 +548,7 @@ export function MasterManagerSection({ isPinned, onTogglePin, language, data }: 
                 </h4>
               </div>
               <div className="pl-12 space-y-4">
-                <div className="p-4 bg-gradient-to-r from-muted/30 to-muted/10 rounded-lg">
+                <div className="p-4 rounded-lg bg-gray-50">
                   <p className="text-insight leading-relaxed">{execution.paragraph}</p>
                 </div>
                 {Array.isArray(execution.evidence) && execution.evidence.length > 0 && (
@@ -557,8 +562,8 @@ export function MasterManagerSection({ isPinned, onTogglePin, language, data }: 
                   </div>
                 )}
                 {execution.analysis && (
-                  <div className="p-4 bg-gradient-to-r from-blue-50/50 to-violet-50/50 dark:from-blue-950/10 dark:to-violet-950/10 rounded-lg">
-                    <h5 className="font-medium mb-2 text-blue-800 dark:text-blue-200">심층 분석:</h5>
+                  <div className="p-4 rounded-lg bg-violet-50">
+                    <h5 className="font-medium mb-2 text-violet-800">심층 분석:</h5>
                     <p className="text-insight leading-relaxed">{execution.analysis}</p>
                   </div>
                 )}

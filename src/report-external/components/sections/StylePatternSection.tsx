@@ -60,10 +60,10 @@ export function StylePatternSection({ isPinned, onTogglePin, language, data }: S
 
   const content = {
     ko: {
-      title: '나의 일하는 방식',
-      subtitle: 'TOP 3',
-      description: '어떻게 일할 때 가장 잘 되는가',
-      introDescription: '여러 대화를 통해 발견한 나만의 일하는 패턴 3가지입니다.\n복잡한 분석보다는, 실제로 \"이렇게 하면 잘 되더라\" 하는 경험을 정리했어요.',
+      title: '스타일 패턴',
+      subtitle: '내 Why는 이렇게 해야 가장 빛나요',
+      description: '',
+      introDescription: '내 Why가 가장 잘 발현되는 스타일을 3가지 추천합니다.\n당신이 가장 빛날 수 있는 방법들이예요.',
       whatTitle: '이건 뭐예요?',
       exampleTitle: '예를 들면',
       whyTitle: '왜 잘 맞나요?',
@@ -78,10 +78,10 @@ export function StylePatternSection({ isPinned, onTogglePin, language, data }: S
       tipLabel: '팁'
     },
     en: {
-      title: 'My Working Style',
-      subtitle: 'TOP 3',
-      description: 'How I work best',
-      introDescription: 'These are 3 working patterns discovered through various conversations.\nRather than complex analysis, I organized actual experiences of "this works well for me".',
+      title: 'Style Patterns',
+      subtitle: 'My Why shines brightest when I work like this',
+      description: '',
+      introDescription: 'I recommend three styles where your Why shines brightest.\nThese are the ways you can shine.',
       whatTitle: 'What is this?',
       exampleTitle: 'For example',
       whyTitle: 'Why does it work?',
@@ -125,7 +125,7 @@ export function StylePatternSection({ isPinned, onTogglePin, language, data }: S
     <div className="space-y-8">
       {/* Section Header */}
       <div className="relative group">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between pl-3 md:pl-0">
           <div className="flex items-center gap-4">
             <Badge variant="secondary" className="text-lg px-4 py-2 font-medium">2</Badge>
             <div>
@@ -192,7 +192,7 @@ export function StylePatternSection({ isPinned, onTogglePin, language, data }: S
                   <h4 className="font-semibold mb-2 flex items-center gap-2">
                     💡 {text.whatTitle}
                   </h4>
-                  <p className="text-lg leading-relaxed pl-6">{style.what}</p>
+                  <p className="text-base leading-relaxed pl-6">{style.what}</p>
                 </div>
 
                 {/* Example */}
@@ -226,12 +226,12 @@ export function StylePatternSection({ isPinned, onTogglePin, language, data }: S
                 </div>
 
                 {/* Story */}
-                <div className="p-6 bg-gradient-to-r from-muted/30 to-muted/10 rounded-lg border-l-4 border-primary">
+                <div className="p-6 bg-gray-50 rounded-lg border-l-4 border-primary">
                   <h4 className="font-semibold mb-4 flex items-center gap-2">
                     📚 당신의 이야기
                   </h4>
                   <div className="prose prose-sm max-w-none">
-                    <p className="leading-relaxed whitespace-pre-line text-muted-foreground">
+                    <p className="leading-relaxed whitespace-pre-line text-gray-700">
                       {style.story}
                     </p>
                   </div>

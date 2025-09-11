@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
-import { Brain, Heart, ArrowLeftRight, Lightbulb, CheckCircle, Pin, PinOff, Link } from 'lucide-react';
+import { Brain, Heart, ArrowLeftRight, Lightbulb, CheckCircle } from 'lucide-react';
 
 interface ValueMapSectionProps {
   isPinned: boolean;
@@ -112,46 +111,15 @@ export function ValueMapSection({ isPinned, onTogglePin, language, data }: Value
     <div className="space-y-8">
       {/* Section Header */}
       <div className="relative group">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between pl-3 md:pl-0">
           <div className="flex items-center gap-4">
             <Badge variant="secondary" className="text-lg px-4 py-2 font-medium">1</Badge>
             <div>
               <h2 className="text-2xl font-semibold">{text.title}</h2>
               <p className="text-muted-foreground mt-1">{text.subtitle}</p>
-              {text.description && (
-                <p className="text-muted-foreground">{text.description}</p>
-              )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={() => {
-                const element = document.getElementById('section-1');
-                if (element) {
-                  navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}#section-1`);
-                }
-              }}
-              aria-label="Copy section link"
-            >
-              <Link className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onTogglePin}
-              className="shrink-0"
-              aria-label={isPinned ? 'Unpin section' : 'Pin section'}
-            >
-              {isPinned ? (
-                <Pin className="h-4 w-4 text-primary" />
-              ) : (
-                <PinOff className="h-4 w-4 text-muted-foreground" />
-              )}
-            </Button>
-          </div>
+          <div className="flex items-center gap-2" />
         </div>
       </div>
 
@@ -220,16 +188,16 @@ export function ValueMapSection({ isPinned, onTogglePin, language, data }: Value
                   <div className="p-4 rounded-lg border-2 border-blue-500 w-full md:w-full">
                     <div className="flex items-center gap-2 mb-2">
                       <Brain className="h-5 w-5 text-blue-600" />
-                      <p className="font-semibold text-blue-800 dark:text-blue-200">{text.head}는</p>
+                      <p className="font-semibold text-blue-800">{text.head}는</p>
                     </div>
-                    <p className="text-lg leading-relaxed">"{conflict.headDetail}"</p>
+                    <p className="text-base leading-relaxed">"{conflict.headDetail}"</p>
                   </div>
                   <div className="p-4 rounded-lg border-2 border-red-500 w-full md:w-full">
                     <div className="flex items-center gap-2 mb-2">
                       <Heart className="h-5 w-5 text-red-600" />
-                      <p className="font-semibold text-red-800 dark:text-red-200">{text.heart}은</p>
+                      <p className="font-semibold text-red-800">{text.heart}은</p>
                     </div>
-                    <p className="text-value-item">"{conflict.heartDetail}"</p>
+                    <p className="text-base leading-relaxed">"{conflict.heartDetail}"</p>
                   </div>
                 </div>
               </div>
@@ -242,14 +210,14 @@ export function ValueMapSection({ isPinned, onTogglePin, language, data }: Value
                   📖 {text.sceneTitle}
                 </h4>
                 <div className="p-4 bg-muted/30 rounded-lg">
-                  <p className="text-lg leading-relaxed text-muted-foreground">
+                  <p className="text-base leading-relaxed text-gray-700">
                     {conflict.scene}
                   </p>
                 </div>
                 
                 {/* Bridge content moved directly under scene */}
-                <div className="mt-4 p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border-l-4 border-green-500">
-                  <p className="text-lg leading-relaxed text-green-800 dark:text-green-200 font-medium">
+                <div className="mt-4 p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+                  <p className="text-base leading-relaxed text-green-800 font-medium">
                     💡 {conflict.bridge}
                   </p>
                 </div>

@@ -20,7 +20,7 @@ export function ReportHeader({ language, onLanguageChange, onToggleMobileTOC, cr
 
   return (
     <header className="sticky top-0 z-30 border-b border-white/20 bg-transparent">
-      <div className="container mx-auto px-4 py-3 max-w-4xl">
+      <div className="container mx-auto px-4 py-3 max-w-4xl pl-3 md:pl-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button

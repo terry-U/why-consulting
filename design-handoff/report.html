@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WHY - 보고서 (디자인 핸드오프)</title>
+    <style>
+      :root {
+        --fg: #0f172a;
+        --muted: #6b7280;
+        --border: #e5e9f0;
+        --card-bg: rgba(255,255,255,0.88);
+      }
+      html, body { height: 100%; }
+      body { margin:0; color:var(--fg); background:transparent; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+
+      .root-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; user-select: none; }
+      .wash { position:absolute; inset:0; background:
+          radial-gradient(1200px 600px at 10% -10%, #fff2d9 14%, rgba(255,242,217,0) 58%),
+          radial-gradient(1000px 500px at 90% -10%, #e6f0ff 14%, rgba(230,240,255,0) 58%),
+          linear-gradient(180deg, #fffefb 0%, #f8fbff 100%);
+      }
+      @keyframes blobA { 0%,100%{ transform:translate3d(0,0,0) scale(1)} 50%{ transform:translate3d(20px,-10px,0) scale(1.05)} }
+      @keyframes blobB { 0%,100%{ transform:translate3d(0,0,0) scale(1)} 50%{ transform:translate3d(-18px,12px,0) scale(0.98)} }
+      .blobA { position:absolute; top:-24vh; left:-24vw; width:70vw; height:50vh; filter: blur(36px); opacity:.8; animation: blobA 14s ease-in-out infinite; background: radial-gradient(60% 60% at 50% 50%, #fff6e5 0%, rgba(255,246,229,0) 60%); }
+      .blobB { position:absolute; top:-18vh; right:-24vw; width:60vw; height:45vh; filter: blur(36px); opacity:.8; animation: blobB 18s ease-in-out infinite; background: radial-gradient(60% 60% at 50% 50%, #eaf3ff 0%, rgba(234,243,255,0) 60%); }
+
+      .header { position: sticky; top: 0; z-index: 10; border-bottom: 1px solid rgba(255,255,255,.2); background: transparent; }
+      .container { max-width: 720px; margin: 0 auto; padding: 12px 16px; }
+      .row { display:flex; align-items:center; justify-content:space-between; }
+      .back { color:#6b7280; text-decoration:none; display:flex; align-items:center; gap:8px; }
+      .back:hover { color:#111827; }
+      .btn { border:1px solid var(--border); background: var(--card-bg); padding: 6px 10px; border-radius: 10px; text-decoration:none; color:#111827; font-size: 13px; }
+
+      main { position: relative; z-index: 1; }
+      .section { max-width: 720px; margin: 0 auto; padding: 24px 16px; }
+      .divider { display:flex; align-items:center; justify-content:center; padding: 24px 0; }
+      .divider .line { flex:1; height:1px; background: linear-gradient(90deg, transparent, #e5e9f0, transparent); }
+      .divider .dot { margin: 0 16px; width: 28px; height: 28px; background: #f3f4f6; border-radius: 9999px; display:grid; place-items:center; }
+
+      .card { background: var(--card-bg); border:1px solid var(--border); border-radius: 16px; padding: 20px; }
+      .title { margin:0 0 8px; font-size: 18px; font-weight: 700; }
+      .p { margin:0; font-size: 14px; line-height:1.7; color:#374151; }
+
+      /* Example blocks matching our sections */
+      .whyOneLiner .label { font-size: 12px; color:#6b7280; margin:0 0 6px; }
+      .whyOneLiner .text { font-weight: 700; color:#0f172a; margin:0; }
+
+      .grid2 { display:grid; grid-template-columns: 1fr; gap: 16px; }
+      @media(min-width: 640px){ .grid2 { grid-template-columns: 1fr 1fr; } }
+    </style>
+  </head>
+  <body>
+    <div class="root-bg">
+      <div class="wash"></div>
+      <div class="blobA"></div>
+      <div class="blobB"></div>
+    </div>
+
+    <!-- Transparent Report Header (back + save) -->
+    <header class="header">
+      <div class="container">
+        <div class="row">
+          <a class="back" href="#" aria-label="뒤로가기"><span>←</span><span>뒤로</span></a>
+          <a class="btn" href="#" aria-label="저장">저장</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- Report Title block (본문 상단에 배치) -->
+      <section class="section">
+        <div class="card">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:16px">
+            <div>
+              <h2 class="title">Why 보고서</h2>
+              <div style="font-size:12px; color:#6b7280">2025.09.11</div>
+            </div>
+            <div style="font-size:28px">📘</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="divider"><div class="line"></div><div class="dot"><div style="width:8px;height:8px;border-radius:9999px;background:#9ca3af"></div></div><div class="line"></div></section>
+
+      <!-- Why Statement Section -->
+      <section class="section">
+        <div class="card whyOneLiner">
+          <p class="label">나의 Why 한문장</p>
+          <p class="text">사람과 사람 사이에 따뜻함이 흐르도록 구조를 만들고, 그 따뜻함이 서로의 하루에 자연스레 스며들게 한다.</p>
+        </div>
+      </section>
+
+      <section class="divider"><div class="line"></div><div class="dot"><div style="width:8px;height:8px;border-radius:9999px;background:#9ca3af"></div></div><div class="line"></div></section>
+
+      <!-- Value Map (예시 2열) -->
+      <section class="section">
+        <div class="grid2">
+          <div class="card">
+            <h3 class="title">핵심 가치</h3>
+            <p class="p">공감, 성장, 책임, 창의</p>
+          </div>
+          <div class="card">
+            <h3 class="title">행동 원리</h3>
+            <p class="p">사람을 먼저 생각하고, 구조를 만들며, 끝까지 결과를 본다.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="divider"><div class="line"></div><div class="dot"><div style="width:8px;height:8px;border-radius:9999px;background:#9ca3af"></div></div><div class="line"></div></section>
+
+      <!-- Style Pattern / Master-Manager 등은 동일 카드 톤으로 확장 가능 -->
+      <section class="section">
+        <div class="card">
+          <h3 class="title">Style Pattern</h3>
+          <p class="p">디자이너가 이 블록을 기반으로 타이포/컴포넌트 스펙을 제안해 주세요.</p>
+        </div>
+      </section>
+
+      <div style="height:24px"></div>
+    </main>
+  </body>
+  </html>
+
+

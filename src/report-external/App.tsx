@@ -186,7 +186,7 @@ export default function App({ initialReports }: { initialReports?: ReportsMap })
             createdAt={createdAt}
           />
           {loading && (
-            <div className="max-w-4xl mx-auto px-6">
+            <div className="max-w-full md:max-w-4xl md:mx-auto px-0 md:px-6">
               <div className="space-y-6">
                 <Skeleton className="h-24 w-full" />
                 <Skeleton className="h-40 w-full" />
@@ -195,7 +195,7 @@ export default function App({ initialReports }: { initialReports?: ReportsMap })
             </div>
           )}
           
-          <div className="max-w-4xl mx-auto px-6 py-8">
+          <div className="max-w-full md:max-w-4xl md:mx-auto px-0 md:px-6 py-8 overflow-x-hidden">
             <div className="space-y-20">
               
               {/* Section 0: Why Statement */}

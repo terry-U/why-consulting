@@ -7,10 +7,7 @@ import {
   Moon, 
   AlertTriangle,
   CheckCircle,
-  ArrowRight,
-  Pin, 
-  PinOff, 
-  Link 
+  ArrowRight
 } from 'lucide-react';
 
 interface LightShadowSectionProps {
@@ -177,7 +174,7 @@ export function LightShadowSection({ isPinned, onTogglePin, language, data }: Li
     <div className="space-y-8">
       {/* Section Header */}
       <div className="relative group">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between pl-3 md:pl-0">
           <div className="flex items-center gap-4">
             <Badge variant="secondary" className="text-lg px-4 py-2 font-medium">4</Badge>
             <div>
@@ -190,7 +187,7 @@ export function LightShadowSection({ isPinned, onTogglePin, language, data }: Li
       </div>
 
       {/* Light - Strengths */}
-      <Card className="shadow-lg">
+      <Card className="shadow-lg bg-amber-50">
         <CardHeader>
           <h3 className="text-xl font-semibold flex items-center gap-2">
             <Sun className="h-5 w-5 text-amber-500" />
@@ -282,10 +279,10 @@ export function LightShadowSection({ isPinned, onTogglePin, language, data }: Li
       </Card>
 
       {/* Shadow - Weaknesses */}
-      <Card className="shadow-lg">
+      <Card className="shadow-lg bg-slate-900">
         <CardHeader>
-          <h3 className="text-xl font-semibold flex items-center gap-2">
-            <Moon className="h-5 w-5 text-slate-500" />
+          <h3 className="text-xl font-semibold flex items-center gap-2 text-white">
+            <Moon className="h-5 w-5 text-slate-200" />
             {text.shadowTitle}
           </h3>
         </CardHeader>
@@ -321,8 +318,8 @@ export function LightShadowSection({ isPinned, onTogglePin, language, data }: Li
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Insight */}
-                <div className="p-6 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border-l-4 border-amber-500">
+                {/* Insight (Shadow - unified amber tone) */}
+                <div className="p-6 rounded-lg border-l-4 border-amber-500 bg-amber-50">
                   <p className="leading-relaxed text-amber-800">
                     {shadow.insight}
                   </p>
@@ -351,13 +348,13 @@ export function LightShadowSection({ isPinned, onTogglePin, language, data }: Li
                   </h5>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {shadow.solutions.map((solution: { title: string; method: string }, index: number) => (
-                      <Card key={index} className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+                      <Card key={index} className="bg-emerald-50 border-green-200">
                         <CardContent className="pt-4">
-                          <h6 className="font-semibold mb-2 text-green-800">
+                          <h6 className="font-semibold mb-2 text-emerald-800">
                             {solution.title}
                           </h6>
-                          <p className="text-sm text-muted-foreground mb-1">{text.methodLabel}:</p>
-                          <p className="leading-relaxed text-green-700">
+                          <p className="text-sm text-slate-500 mb-1">{text.methodLabel}:</p>
+                          <p className="leading-relaxed text-emerald-700">
                             {solution.method}
                           </p>
                         </CardContent>

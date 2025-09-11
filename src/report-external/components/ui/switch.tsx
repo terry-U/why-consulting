@@ -13,7 +13,14 @@ function Switch({
     <SwitchPrimitive.Root
       data-slot="switch"
       className={cn(
-        "peer data-[state=checked]:bg-primary data-[state=unchecked]:bg-switch-background focus-visible:border-ring focus-visible:ring-ring/50 dark:data-[state=unchecked]:bg-input/80 inline-flex h-[1.15rem] w-8 shrink-0 items-center rounded-full border border-transparent transition-all outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
+        // 보편적 토글 크기/스타일 (iOS 유사)
+        "peer inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors outline-none p-0.5",
+        // 상태 색상
+        "data-[state=checked]:bg-primary data-[state=unchecked]:bg-gray-300",
+        // 포커스 접근성
+        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        // 비활성화
+        "disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       {...props}
@@ -21,7 +28,10 @@ function Switch({
       <SwitchPrimitive.Thumb
         data-slot="switch-thumb"
         className={cn(
-          "bg-card dark:data-[state=unchecked]:bg-card-foreground dark:data-[state=checked]:bg-primary-foreground pointer-events-none block size-4 rounded-full ring-0 transition-transform data-[state=checked]:translate-x-[calc(100%-2px)] data-[state=unchecked]:translate-x-0",
+          // 손잡이: 흰색 원형, 그림자, 부드러운 이동
+          "pointer-events-none block h-5 w-5 rounded-full bg-white shadow ring-0 transition-transform",
+          // 위치 이동(좌 → 우): 패딩(2px) 고려, ON에서 약간 왼쪽으로 더 붙여 17px 이동
+          "data-[state=unchecked]:translate-x-0 data-[state=checked]:translate-x-[17px]",
         )}
       />
     </SwitchPrimitive.Root>

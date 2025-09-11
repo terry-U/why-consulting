@@ -1,11 +1,7 @@
 import { Card, CardContent, CardHeader } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
 import { 
-  ScrollText,
-  Pin, 
-  PinOff, 
-  Link 
+  ScrollText
 } from 'lucide-react';
 
 interface PhilosophySectionProps {
@@ -19,7 +15,7 @@ export function PhilosophySection({ isPinned, onTogglePin, language, data }: Phi
   const content = {
     ko: {
       title: '철학자의 편지',
-      subtitle: '아리스토텔레스가 전하는 지혜',
+      subtitle: '나와 비슷한 사상을 가진 철학자 선배로부터',
       letterContent: `나는 아리스토텔레스요. 그리스 북쪽의 작은 해안마을에서 태어나, 젊어서는 아테네에서 철학을 배우고 가르쳤소. 나는 늘 "사람이 어떻게 더 잘 살 수 있는가"를 고민했지요. 자네의 말—사람들을 지혜롭게 하여 더 안전하고 합리적인 세상을 만들겠다는 뜻—을 듣고 반가웠소. 내 삶에서 직접 겪은 몇 가지 이야기를 나눌 테니, 자네의 길에 작은 등불이 되기를 바라오.
 
 젊은 시절, 나는 바다 곁에서 물고기와 갑각류를 오래 들여다보았소. 날카로운 생각이 아니라 차분한 관찰이 내 스승이었지요. 한 번은 어부가 가져온 희귀한 생물을 해부하면서, 책에서 배운 말보다 손에 닿는 사실이 훨씬 많은 것을 알려 준다는 걸 배웠소. 자네가 사람들을 더 안전하게 이끌고 싶다면, 먼저 지금 실제로 일어나고 있는 일부터 분명히 하시오. 추측과 소문 위에 쌓은 계획은 작은 파도에도 무너지오.
@@ -85,7 +81,7 @@ Aristotle`
     <div className="space-y-8">
       {/* Section Header */}
       <div className="relative group">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between pl-3 md:pl-0">
           <div className="flex items-center gap-4">
             <Badge variant="secondary" className="text-lg px-4 py-2 font-medium">5</Badge>
             <div>
