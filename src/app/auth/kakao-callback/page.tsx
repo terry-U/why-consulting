@@ -55,6 +55,14 @@ function KakaoCallbackContent() {
           } catch (e) {
             console.warn('setSession skipped/failed:', e)
           }
+        } else if ((result as any)?.session?.properties?.hashed_token) {
+          // 기존 사용자 폴백: 이메일 발송 없이 해시 토큰으로 즉시 세션 교환
+          try {
+            const token_hash = (result as any).session.properties.hashed_token as string
+            await supabase.auth.verifyOtp({ type: 'magiclink', token_hash })
+          } catch (e) {
+            console.warn('verifyOtp(magiclink) failed:', e)
+          }
         }
 
         console.log('✅ Session set (or cookie-based), deciding next route...')
