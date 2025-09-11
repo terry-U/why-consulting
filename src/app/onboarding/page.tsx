@@ -90,7 +90,14 @@ function OnboardingRunner() {
           body: JSON.stringify({ userId: me.id })
         })
         const created = await createRes.json()
-        if (!createRes.ok || !created?.success) throw new Error(created?.error || '세션 생성 실패')
+        if (!createRes.ok || !created?.success) {
+          if (created?.code === 'NO_TICKETS' || (created?.error || '').includes('상담권')) {
+            alert('상담권이 부족합니다. 구매 페이지로 이동합니다.')
+            router.push('/pay')
+            return
+          }
+          throw new Error(created?.error || '세션 생성 실패')
+        }
         router.push(`/session/${created.session.id}`)
         return
       } catch (e) {

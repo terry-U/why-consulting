@@ -8,6 +8,7 @@ import { getUserSessions, createNewSession } from '@/lib/sessions'
 import { getUserConsultationHistory, SessionWithHistory } from '@/lib/history'
 import { useAuth } from '@/hooks/useAuth'
 import dynamic from 'next/dynamic'
+import * as React from 'react'
 
 // 지연 로딩으로 성능 최적화
 const ConsultationHistoryList = dynamic(
@@ -25,6 +26,8 @@ import AsyncButton from '@/components/common/AsyncButton'
 export default function HomePage() {
   const { user, loading: authLoading } = useAuth()
   const [sessions, setSessions] = useState<SessionWithHistory[]>([])
+  const [tickets, setTickets] = useState<number | null>(null)
+  const [showBuyPopup, setShowBuyPopup] = useState(false)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
@@ -36,28 +39,19 @@ export default function HomePage() {
       return
     }
 
-    // 결제/온보딩 분기만 처리(홈에서는 자동 세션 생성 금지)
+    // 결제만 확인 (홈에서는 온보딩 자동 이동 금지)
     (async () => {
       try {
         // 1) 결제 여부 확인
         const res = await fetch(`/api/user/status?userId=${user.id}`)
         const data = await res.json()
         const isPaid = !!data?.user?.is_paid_user
+        setTickets(typeof data?.user?.remaining_tickets === 'number' ? data.user.remaining_tickets : null)
 
         if (!isPaid) {
           router.replace('/pay')
           return
         }
-
-        // 2) 온보딩 체크(기기 기준). 미완료면 온보딩으로
-        try {
-          const seen = typeof window !== 'undefined' && localStorage.getItem('onboarding_seen') === 'true'
-          if (!seen) {
-            router.replace('/onboarding?autoStart=1')
-            return
-          }
-        } catch {}
-
         // 홈에서는 자동 시작하지 않음. 사용자가 명시적으로 CTA를 눌러야 시작
       } catch {}
     })()
@@ -98,18 +92,26 @@ export default function HomePage() {
         router.replace('/pay')
         return
       }
+      if (typeof js?.user?.remaining_tickets === 'number') {
+        setTickets(js.user.remaining_tickets)
+        if (js.user.remaining_tickets <= 0) { setShowBuyPopup(true); return }
+      }
 
       const newSession = await createNewSession(user.id)
+      // 세션 생성이 성공하면 서버에서 1장 차감되었으므로 UI도 즉시 반영
+      if (typeof tickets === 'number') setTickets(Math.max(0, tickets - 1))
       router.replace(`/session/${newSession.id}`)
-    } catch (error) {
+    } catch (error: any) {
       console.error('새 세션 생성 오류:', error)
+      const msg = String(error?.message || '')
+      if (msg.includes('NO_TICKETS') || msg.includes('402')) { setShowBuyPopup(true); return }
       alert('새 상담을 시작할 수 없습니다. 다시 시도해주세요.')
     }
   }
 
   if (authLoading || loading) {
     return (
-      <ResponsiveLayout className="bg-gradient-to-br from-yellow-50 to-orange-100">
+      <ResponsiveLayout>
         <DashboardSkeleton />
       </ResponsiveLayout>
     )
@@ -127,18 +129,23 @@ export default function HomePage() {
               {user?.email?.split('@')[0]}님
             </p>
           </div>
-          <button
-            onClick={handleLogout}
-            className="icon-btn text-gray-500 hover:text-gray-800"
-            aria-label="로그아웃"
-            title="로그아웃"
-          >
-            {/* Material icon: logout */}
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-              <path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3h-6v2h6v14h-6v2h6c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/>
-            </svg>
-          </button>
+          <div />
         </div>
+
+        {/* 레이어 구매 팝업 */}
+        {showBuyPopup && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/50" onClick={() => setShowBuyPopup(false)} />
+            <div className="relative z-10 w-full max-w-md rounded-2xl p-6 shadow-2xl" style={{background:'rgba(255,255,255,0.85)'}}>
+              <h3 className="text-lg font-semibold mb-2">상담권이 필요합니다</h3>
+              <p className="text-sm text-gray-600 mb-4">남은 상담권이 없습니다. 지금 5장을 9,900원에 구매해 바로 상담을 시작하시겠어요?</p>
+              <div className="flex justify-end gap-2">
+                <button className="btn px-4 py-2 rounded-full text-gray-700 bg-gray-100 hover:bg-gray-200" onClick={() => setShowBuyPopup(false)}>나중에</button>
+                <button className="btn btn-primary px-4 py-2 rounded-full text-white" onClick={() => router.push('/pay')}>지금 구매하기</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 메인 CTA */}
         <div className="mb-8">
@@ -169,8 +176,8 @@ export default function HomePage() {
               <p className="text-gray-500 text-sm">남은 상담 횟수</p>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold text-yellow-600">10장</div>
-              <button className="text-sm text-gray-500 hover:text-gray-700">
+              <div className="text-2xl font-bold text-yellow-600">{tickets === null ? '-' : `${tickets}장`}</div>
+              <button className="text-sm text-gray-500 hover:text-gray-700" onClick={() => router.push('/pay')}>
                 구매하기
               </button>
             </div>
@@ -179,8 +186,6 @@ export default function HomePage() {
 
         {/* 세션 목록 */}
         <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-gray-900">내 대화 기록</h2>
-          
           <ConsultationHistoryList
             history={sessions}
             onSelectSession={(sessionId) => {

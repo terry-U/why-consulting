@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Toaster } from './components/ui/sonner';
@@ -38,7 +38,6 @@ export default function App({ initialReports }: { initialReports?: ReportsMap })
 
   // Load theme from localStorage on mount
   useEffect(() => {
-    setTheme('light');
     localStorage.setItem('goldenCircle-theme', 'light');
   }, []);
 
@@ -150,18 +149,14 @@ export default function App({ initialReports }: { initialReports?: ReportsMap })
     );
   };
 
-  const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    localStorage.setItem('goldenCircle-theme', newTheme);
-  };
+  const toggleTheme = () => {};
 
   const toggleTOC = () => {
     setIsTOCVisible(!isTOCVisible);
   };
 
   return (
-    <div className={`${theme === 'dark' ? 'dark' : ''} min-h-screen bg-background text-foreground`}>
+    <div className={`report-root min-h-screen text-foreground`}>
       <div className="min-h-screen">
         {/* Table of Contents Overlay */}
         {isTOCVisible && (

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { SessionWithHistory } from '@/lib/history'
 
 interface ConsultationHistoryListProps {
@@ -16,8 +16,52 @@ export default function ConsultationHistoryList({
 }: ConsultationHistoryListProps) {
   const [expandedSession, setExpandedSession] = useState<string | null>(null)
 
-  const toggleExpanded = (sessionId: string) => {
-    setExpandedSession(expandedSession === sessionId ? null : sessionId)
+  const ordinalMap = useMemo(() => {
+    const toMs = (v: any) => new Date(v || '').getTime()
+    const arr = [...history].sort((a, b) => {
+      const as = toMs((a as any).started_at || (a as any).created_at || (a as any).createdAt)
+      const bs = toMs((b as any).started_at || (b as any).created_at || (b as any).createdAt)
+      return as - bs
+    })
+    const map = new Map<string, number>()
+    arr.forEach((s, i) => map.set(s.id, i + 1))
+    return map
+  }, [history])
+
+  const toKoreanOrdinal = (n?: number) => {
+    if (!n || n < 1) return '상담'
+    const dict: Record<number, string> = {
+      1: '첫번째', 2: '두번째', 3: '세번째', 4: '네번째', 5: '다섯번째', 6: '여섯번째', 7: '일곱번째', 8: '여덟번째', 9: '아홉번째', 10: '열번째',
+      11: '열한번째', 12: '열두번째', 13: '열세번째', 14: '열네번째', 15: '열다섯번째', 16: '열여섯번째', 17: '열일곱번째', 18: '열여덟번째', 19: '열아홉번째', 20: '스무번째',
+    }
+    return dict[n] || `${n}번째`
+  }
+
+  const formatRelative = (value?: any) => {
+    if (!value) return '-'
+    const d = new Date(value)
+    if (isNaN(d.getTime())) return '-'
+    const now = Date.now()
+    const diffMs = now - d.getTime()
+    const min = 60 * 1000
+    const hour = 60 * min
+    const day = 24 * hour
+    const week = 7 * day
+    if (diffMs < min) return '얼마 전'
+    if (diffMs < hour) return `${Math.floor(diffMs / min)}분 전`
+    if (diffMs < day) return `${Math.floor(diffMs / hour)}시간 전`
+    if (diffMs < week) return `${Math.floor(diffMs / day)}일 전`
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const da = String(d.getDate()).padStart(2, '0')
+    return `${y}.${m}.${da}`
+  }
+
+  const formatDate = (value?: any, withTime = false) => {
+    if (!value) return '-'
+    const d = new Date(value)
+    if (isNaN(d.getTime())) return '-'
+    return withTime ? d.toLocaleString('ko-KR') : d.toLocaleDateString('ko-KR')
   }
 
   const getStatusColor = (status: string) => {
@@ -81,7 +125,7 @@ export default function ConsultationHistoryList({
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-3">
                   <h3 className="font-semibold text-gray-900">
-                    상담 #{session.id.slice(0, 8)}
+                    {toKoreanOrdinal(ordinalMap.get(session.id))} 상담
                   </h3>
                   {(() => {
                     const effectiveDone = session.status === 'completed' || session.counseling_phase === 'summary' || !!session.whyStatement || !!session.generated_why
@@ -94,42 +138,17 @@ export default function ConsultationHistoryList({
                   })()}
                 </div>
                 
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      toggleExpanded(session.id)
-                    }}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    {expandedSession === session.id ? '▲' : '▼'}
-                  </button>
-                  
-                  {onDeleteSession && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        if (confirm('이 상담 기록을 삭제하시겠습니까?')) {
-                          onDeleteSession(session.id)
-                        }
-                      }}
-                      className="text-red-400 hover:text-red-600 transition-colors"
-                    >
-                      🗑️
-                    </button>
-                  )}
+                <div className="text-xs text-gray-500">
+                  {(session.status === 'completed' || session.counseling_phase === 'summary' || !!session.whyStatement)
+                    ? (<>{formatRelative((session as any).updated_at || (session as any).updatedAt)} 상담 종료</>)
+                    : (<>{formatRelative((session as any).started_at || (session as any).created_at || (session as any).createdAt)} 상담 시작</>)}
                 </div>
               </div>
-              
-              <p className="text-sm text-gray-500 mb-2">
-                {new Date(session.created_at).toLocaleDateString('ko-KR')} • 
-                메시지 {session.messageCount || 0}개
-              </p>
               
               {/* Why 문장 (완료된 경우) */}
               {session.whyStatement && (
                 <div className="mt-3 card p-3">
-                  <p className="text-sm font-medium text-gray-600 mb-1">도출된 Why</p>
+                  <p className="text-sm font-medium text-gray-600 mb-1">나의 Why 한문장</p>
                   <p className="text-gray-900 font-medium">"{session.whyStatement}"</p>
                 </div>
               )}
@@ -137,68 +156,12 @@ export default function ConsultationHistoryList({
               {/* 마지막 메시지 (진행 중인 경우) */}
               {!session.whyStatement && session.lastMessage && (
                 <div className="mt-3 card p-3">
-                  <p className="text-sm text-gray-700 truncate">💬 {session.lastMessage}</p>
+                  <p className="text-sm text-gray-700 line-clamp-3">💬 {session.lastMessage}</p>
                 </div>
               )}
             </div>
 
-            {/* 확장된 상세 정보 */}
-            {expandedSession === session.id && (
-              <div className="border-t border-gray-200 p-4 bg-white/60 backdrop-blur-md">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium text-gray-700">상담 단계:</span>
-                    <span className="ml-2 text-gray-600">
-                      {session.counseling_phase === 'questions' ? `질문 ${session.current_question_index}/8` :
-                       session.counseling_phase === 'summary' ? '요약 중' :
-                       session.counseling_phase === 'completed' ? '완료' : '알 수 없음'}
-                    </span>
-                  </div>
-                  
-                  <div>
-                    <span className="font-medium text-gray-700">진행률:</span>
-                    <span className="ml-2 text-gray-600">
-                      {session.counseling_phase === 'completed' ? '100%' :
-                       session.counseling_phase === 'questions' ? `${Math.round((session.current_question_index / 8) * 100)}%` :
-                       session.counseling_phase === 'summary' ? '90%' : '5%'}
-                    </span>
-                  </div>
-                  
-                  <div>
-                    <span className="font-medium text-gray-700">생성일:</span>
-                    <span className="ml-2 text-gray-600">
-                      {new Date(session.created_at).toLocaleString('ko-KR')}
-                    </span>
-                  </div>
-                  
-                  <div>
-                    <span className="font-medium text-gray-700">수정일:</span>
-                    <span className="ml-2 text-gray-600">
-                      {new Date(session.updated_at).toLocaleString('ko-KR')}
-                    </span>
-                  </div>
-                </div>
-                
-                {/* 답변 요약 (있는 경우) */}
-                {session.answers && Object.keys(session.answers).length > 0 && (
-                  <div className="mt-4">
-                    <p className="font-medium text-gray-700 mb-2">답변 요약:</p>
-                    <div className="space-y-2">
-                      {Object.entries(session.answers).map(([questionId, answer]) => (
-                        <div key={questionId} className="text-sm">
-                          <span className="font-medium text-gray-600">{questionId}:</span>
-                          <span className="ml-2 text-gray-800">
-                            {typeof answer === 'string' && answer.length > 100 
-                              ? answer.substring(0, 100) + '...' 
-                              : answer}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+            {/* 확장 정보/삭제/토글 제거 */}
           </div>
         ))}
       </div>

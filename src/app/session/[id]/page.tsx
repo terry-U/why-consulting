@@ -142,8 +142,8 @@ export default function SessionPage() {
       <div className="h-full flex flex-col">
         {/* 상단 고정 헤더 (뒤로가기 + 질문 텍스트) */}
         <div className="fixed top-0 left-0 right-0 z-50">
-          <div className="w-full px-4 sm:px-6 py-3 border-b border-white/30 bg-white/60 backdrop-blur-md shadow-sm">
-            <div className="grid grid-cols-3 items-center">
+          <div className="w-full px-4 sm:px-6 py-3 border-b border-white/20 bg-transparent">
+            <div className="max-w-4xl mx-auto flex items-center justify-between">
               <button
                 onClick={() => router.push('/home')}
                 className="justify-self-start text-gray-600 hover:text-gray-900 transition-colors flex items-center gap-2"

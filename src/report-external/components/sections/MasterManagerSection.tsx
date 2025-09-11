@@ -156,18 +156,51 @@ export function MasterManagerSection({ isPinned, onTogglePin, language, data }: 
     return colors[color as keyof typeof colors] || colors.blue;
   };
 
-  // 현재 유저의 위치 (API → fallback)
-  const currentUser = {
-    others: typeof data?.scores?.others === 'number' ? data.scores.others : 72,
-    master: typeof data?.scores?.master === 'number' ? data.scores.master : 58,
-  };
+  // 현재 유저의 위치 (장면 해설 우선 → 점수 폴백)
   const orientation = data?.orientation;
   const execution = data?.execution;
-  const currentTypeName = data?.current_type?.name;
-  const userType = quadrantTypes.find(type => 
-    Math.abs(type.quadrant.others - currentUser.others) < 20 && 
-    Math.abs((100 - type.quadrant.manager) - currentUser.master) < 20
-  ) || quadrantTypes[0]; // 기본값으로 중재자
+  const othersFromScene = (typeof orientation?.score === 'number' && (orientation?.side === 'self' || orientation?.side === 'others'))
+    ? (orientation.side === 'others' ? orientation.score : 100 - orientation.score)
+    : undefined;
+  // manager 점수(높을수록 매니저, 낮을수록 마스터)
+  const managerFromScene = (typeof execution?.score === 'number' && (execution?.side === 'manager' || execution?.side === 'master'))
+    ? (execution.side === 'manager' ? execution.score : 100 - execution.score)
+    : undefined;
+  const currentUser = {
+    others: typeof othersFromScene === 'number'
+      ? othersFromScene
+      : (typeof data?.scores?.others === 'number' ? data.scores.others : 72),
+    manager: typeof managerFromScene === 'number'
+      ? managerFromScene
+      : (typeof data?.scores?.master === 'number' ? (100 - data.scores.master) : 58),
+  };
+
+  // 파생 기준(단일 기준 적용): 점수에서 방향과 제목 표기용 점수 계산
+  const derivedOrientationSide = currentUser.others >= 50 ? 'others' : 'self';
+  const derivedExecutionSide = currentUser.manager >= 50 ? 'manager' : 'master';
+  const orientationScoreForTitle = derivedOrientationSide === 'others' ? currentUser.others : (100 - currentUser.others);
+  const executionScoreForTitle = derivedExecutionSide === 'manager' ? currentUser.manager : (100 - currentUser.manager);
+  const orientationStrong = Math.abs(currentUser.others - 50) >= 15;
+  const executionStrong = Math.abs(currentUser.manager - 50) >= 15;
+  const orientationTitle = derivedOrientationSide === 'others'
+    ? (orientationStrong ? '타인의 변화를 더 중요하게 생각합니다.' : '타인의 변화를 조금 더 중요하게 생각합니다.')
+    : (orientationStrong ? '자신의 성취를 더 중요하게 생각합니다.' : '자신의 성취를 약간 더 중요하게 생각합니다.');
+  const executionTitle = derivedExecutionSide === 'manager'
+    ? (executionStrong ? '타인과 협업을 더 중요하게 생각합니다.' : '타인과 협업을 조금 더 중요하게 생각합니다.')
+    : (executionStrong ? '스스로 실행을 더 중요하게 생각합니다.' : '스스로 실행을 조금 더 중요하게 생각합니다.');
+  // 점수만으로 타입을 결정(프롬프트 생성값 사용 안 함)
+  const typeByScores = (others: number, manager: number) => {
+    if (others >= 50 && manager >= 50) return { id: 'mediator', name: '중재자' } as const;
+    if (others >= 50 && manager < 50)  return { id: 'lighthouse', name: '등대지기' } as const;
+    if (others < 50 && manager >= 50)  return { id: 'prophet', name: '선지자' } as const;
+    return { id: 'sage', name: '도인' } as const;
+  };
+  const derivedType = typeByScores(currentUser.others, currentUser.manager);
+  const currentTypeName = derivedType.name;
+  const userType = quadrantTypes.find(type =>
+    Math.abs(type.quadrant.others - currentUser.others) < 20 &&
+    Math.abs(type.quadrant.manager - currentUser.manager) < 20
+  ) || quadrantTypes.find(t => t.id === derivedType.id) || quadrantTypes[0];
 
   return (
     <div className="space-y-8">
@@ -192,7 +225,7 @@ export function MasterManagerSection({ isPinned, onTogglePin, language, data }: 
             {text.description}
           </p>
           <div className={`p-4 rounded-lg ${getColorClass(userType.color)}`}>
-            <h3 className="font-semibold mb-2">{currentTypeName ? `당신은 **${currentTypeName}** 타입입니다` : text.currentType}</h3>
+            <h3 className="font-semibold mb-2">{`당신은 **${currentTypeName}** 타입입니다`}</h3>
             <p className="text-sm">{userType.description}</p>
           </div>
         </CardContent>
@@ -259,62 +292,62 @@ export function MasterManagerSection({ isPinned, onTogglePin, language, data }: 
             {/* 방향 강조 표시 */}
             {/* 상단 방향 */}
             <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-950/20 rounded-full border border-blue-200 dark:border-blue-800">
-              <div className="text-xs font-semibold text-blue-700 dark:text-blue-300">매니저 지향</div>
-              <div className="text-xs text-blue-600 dark:text-blue-400">↑</div>
+              <div className="text-xs font-semibold text-blue-700">매니저 지향</div>
+              <div className="text-xs text-blue-600">↑</div>
             </div>
             
             {/* 하단 방향 */}
             <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 flex items-center gap-2 px-3 py-1 bg-green-50 dark:bg-green-950/20 rounded-full border border-green-200 dark:border-green-800">
-              <div className="text-xs font-semibold text-green-700 dark:text-green-300">마스터 지향</div>
-              <div className="text-xs text-green-600 dark:text-green-400">↓</div>
+              <div className="text-xs font-semibold text-green-700">마스터 지향</div>
+              <div className="text-xs text-green-600">↓</div>
             </div>
             
             {/* 좌측 방향 */}
             <div className="absolute top-1/2 -left-32 transform -translate-y-1/2 flex items-center gap-2 px-3 py-1 bg-purple-50 dark:bg-purple-950/20 rounded-full border border-purple-200 dark:border-purple-800">
-              <div className="text-xs text-purple-600 dark:text-purple-400">←</div>
-              <div className="text-xs font-semibold text-purple-700 dark:text-purple-300">자기지향</div>
+              <div className="text-xs text-purple-600">←</div>
+              <div className="text-xs font-semibold text-purple-700">자기지향</div>
             </div>
             
             {/* 우측 방향 */}
             <div className="absolute top-1/2 -right-32 transform -translate-y-1/2 flex items-center gap-2 px-3 py-1 bg-rose-50 dark:bg-rose-950/20 rounded-full border border-rose-200 dark:border-rose-800">
-              <div className="text-xs font-semibold text-rose-700 dark:text-rose-300">타인지향</div>
-              <div className="text-xs text-rose-600 dark:text-rose-400">→</div>
+              <div className="text-xs font-semibold text-rose-700">타인지향</div>
+              <div className="text-xs text-rose-600">→</div>
             </div>
 
             {/* 4사분면 배경 영역들 (복원) */}
             {/* 1사분면: 자기지향 + 매니저 (선지자) */}
-            <div className="absolute top-0 left-0 w-1/2 h-1/2 flex items-center justify-center">
-              <div className="text-center opacity-20 hover:opacity-40 transition-opacity">
+            <div className={`absolute top-0 left-0 w-1/2 h-1/2 flex items-center justify-center ${derivedType.id === 'prophet' ? 'bg-primary/5' : ''}`}>
+              <div className="text-center opacity-70 hover:opacity-90 transition-opacity">
                 <Lightbulb className="h-8 w-8 text-violet-500 mx-auto mb-2" />
-                <p className="text-sm font-medium text-violet-600 dark:text-violet-400">선지자</p>
-                <p className="text-xs text-muted-foreground">자기지향 · 매니저</p>
+                <p className="text-sm font-medium text-violet-600">선지자</p>
+                <p className="text-xs text-foreground/70">자기지향 · 매니저</p>
               </div>
             </div>
             
             {/* 2사분면: 타인지향 + 매니저 (중재자) */}
-            <div className="absolute top-0 right-0 w-1/2 h-1/2 flex items-center justify-center bg-primary/5">
-              <div className="text-center opacity-30 hover:opacity-50 transition-opacity">
+            <div className={`absolute top-0 right-0 w-1/2 h-1/2 flex items-center justify-center ${derivedType.id === 'mediator' ? 'bg-primary/5' : ''}`}>
+              <div className="text-center opacity-90 hover:opacity-100 transition-opacity">
                 <Users2 className="h-8 w-8 text-blue-500 mx-auto mb-2" />
-                <p className="text-sm font-medium text-blue-600 dark:text-blue-400">중재자</p>
-                <p className="text-xs text-muted-foreground">타인지향 · 매니저</p>
+                <p className="text-sm font-medium text-blue-600">중재자</p>
+                <p className="text-xs text-foreground/70">타인지향 · 매니저</p>
               </div>
             </div>
             
             {/* 3사분면: 자기지향 + 마스터 (도인) */}
-            <div className="absolute bottom-0 left-0 w-1/2 h-1/2 flex items-center justify-center">
-              <div className="text-center opacity-20 hover:opacity-40 transition-opacity">
+            <div className={`absolute bottom-0 left-0 w-1/2 h-1/2 flex items-center justify-center ${derivedType.id === 'sage' ? 'bg-primary/5' : ''}`}>
+              <div className="text-center opacity-70 hover:opacity-90 transition-opacity">
                 <Target className="h-8 w-8 text-green-500 mx-auto mb-2" />
-                <p className="text-sm font-medium text-green-600 dark:text-green-400">도인</p>
-                <p className="text-xs text-muted-foreground">자기지향 · 마스터</p>
+                <p className="text-sm font-medium text-green-600">도인</p>
+                <p className="text-xs text-foreground/70">자기지향 · 마스터</p>
               </div>
             </div>
             
             {/* 4사분면: 타인지향 + 마스터 (등대지기) */}
-            <div className="absolute bottom-0 right-0 w-1/2 h-1/2 flex items-center justify-center">
-              <div className="text-center opacity-20 hover:opacity-40 transition-opacity">
+            <div className={`absolute bottom-0 right-0 w-1/2 h-1/2 flex items-center justify-center ${derivedType.id === 'lighthouse' ? 'bg-primary/5' : ''}`}>
+              <div className="text-center opacity-70 hover:opacity-90 transition-opacity">
                 <Compass className="h-8 w-8 text-amber-500 mx-auto mb-2" />
-                <p className="text-sm font-medium text-amber-600 dark:text-amber-400">등대지기</p>
-                <p className="text-xs text-muted-foreground">타인지향 · 마스터</p>
+                <p className="text-sm font-medium text-amber-600">등대지기</p>
+                <p className="text-xs text-foreground/70">타인지향 · 마스터</p>
               </div>
             </div>
 
@@ -327,11 +360,11 @@ export function MasterManagerSection({ isPinned, onTogglePin, language, data }: 
               className="absolute w-6 h-6 rounded-full border-4 border-primary bg-primary shadow-lg shadow-primary/25 animate-pulse transform -translate-x-3 -translate-y-3 z-20"
               style={{
                 left: `${currentUser.others}%`,
-                bottom: `${100 - currentUser.master}%`
+                top: `${100 - currentUser.manager}%`
               }}
             >
               <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 text-xs font-semibold text-primary whitespace-nowrap bg-background px-2 py-1 rounded shadow-md">
-                현재 위치 ({currentUser.others}, {currentUser.master})
+                현재 위치 ({currentUser.others}, {currentUser.manager})
               </div>
             </div>
 
@@ -342,7 +375,7 @@ export function MasterManagerSection({ isPinned, onTogglePin, language, data }: 
           <div className="mt-8 grid grid-cols-2 gap-4">
             {quadrantTypes.map((type) => {
               const IconComponent = type.icon;
-              const isCurrentType = currentTypeName ? type.name === currentTypeName : type.id === 'mediator';
+              const isCurrentType = type.id === derivedType.id;
               
               return (
                 <div 
@@ -360,7 +393,6 @@ export function MasterManagerSection({ isPinned, onTogglePin, language, data }: 
                     <div>
                       <h4 className="font-semibold flex items-center gap-2">
                         {type.name}
-                        {isCurrentType && <Badge variant="default" className="text-xs">현재</Badge>}
                       </h4>
                       <p className="text-xs text-muted-foreground">{type.position}</p>
                     </div>
@@ -395,15 +427,22 @@ export function MasterManagerSection({ isPinned, onTogglePin, language, data }: 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">{spectrumData.motivation.label}</span>
-              <span className="text-sm text-muted-foreground">
-                {text.motivationOthers} {currentUser.others} / {text.motivationSelf} {100 - currentUser.others}
-              </span>
+              <span className="text-sm text-muted-foreground">{orientationTitle}</span>
             </div>
             <div className="relative">
-              <Progress value={currentUser.others} className="h-3" />
-              <div className="flex justify-between mt-2 text-sm text-muted-foreground">
-                <span>{text.motivationSelf}</span>
-                <span>{text.motivationOthers}</span>
+              <div className="h-3 w-full rounded bg-muted overflow-hidden flex">
+                <div
+                  className={`h-3 ${currentUser.others >= (100 - currentUser.others) ? 'bg-slate-400' : 'bg-blue-500'}`}
+                  style={{ width: `${100 - currentUser.others}%` }}
+                />
+                <div
+                  className={`h-3 ${currentUser.others >= (100 - currentUser.others) ? 'bg-blue-500' : 'bg-slate-400'}`}
+                  style={{ width: `${currentUser.others}%` }}
+                />
+              </div>
+              <div className="flex justify-between mt-2 text-sm">
+                <span className={derivedOrientationSide === 'self' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>{text.motivationSelf}</span>
+                <span className={derivedOrientationSide === 'others' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>{text.motivationOthers}</span>
               </div>
             </div>
           </div>
@@ -412,15 +451,24 @@ export function MasterManagerSection({ isPinned, onTogglePin, language, data }: 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">{spectrumData.execution.label}</span>
-              <span className="text-sm text-muted-foreground">
-                {text.executionMaster} {currentUser.master} / {text.executionManager} {100 - currentUser.master}
-              </span>
+              <span className="text-sm text-muted-foreground">{executionTitle}</span>
             </div>
             <div className="relative">
-              <Progress value={currentUser.master} className="h-3" />
-              <div className="flex justify-between mt-2 text-sm text-muted-foreground">
-                <span>{text.executionManager}</span>
-                <span>{text.executionMaster}</span>
+              <div className="h-3 w-full rounded bg-muted overflow-hidden flex">
+                {/* Left: Master */}
+                <div
+                  className={`h-3 ${(100 - currentUser.manager) >= currentUser.manager ? 'bg-emerald-500' : 'bg-slate-400'}`}
+                  style={{ width: `${100 - currentUser.manager}%` }}
+                />
+                {/* Right: Manager */}
+                <div
+                  className={`h-3 ${(100 - currentUser.manager) >= currentUser.manager ? 'bg-slate-400' : 'bg-emerald-500'}`}
+                  style={{ width: `${currentUser.manager}%` }}
+                />
+              </div>
+              <div className="flex justify-between mt-2 text-sm">
+                <span className={derivedExecutionSide === 'master' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>{text.executionMaster}</span>
+                <span className={derivedExecutionSide === 'manager' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>{text.executionManager}</span>
               </div>
             </div>
           </div>
@@ -450,7 +498,9 @@ export function MasterManagerSection({ isPinned, onTogglePin, language, data }: 
                   <Heart className="h-6 w-6" />
                 </div>
                 <h4 className="font-semibold text-lg">
-                  {orientation.side === 'others' ? '타인지향 가치관 — 타인 쪽으로 기울어 있음' : '자기지향 가치관 — 자기 쪽으로 기울어 있음'} ({orientation.score})
+                  {derivedOrientationSide === 'others'
+                    ? `타인지향 가치관 — ${orientationStrong ? '타인의 변화를 더 중요하게 생각합니다.' : '타인의 변화를 조금 더 중요하게 생각합니다.'}`
+                    : `자기지향 가치관 — ${orientationStrong ? '자신의 성취를 더 중요하게 생각합니다.' : '자신의 성취를 약간 더 중요하게 생각합니다.'}`}
                 </h4>
               </div>
               <div className="pl-12 space-y-4">
@@ -489,7 +539,7 @@ export function MasterManagerSection({ isPinned, onTogglePin, language, data }: 
                   <Wrench className="h-6 w-6" />
                 </div>
                 <h4 className="font-semibold text-lg">
-                  {execution.side === 'master' ? '실행 방식 — 마스터 쪽이 우세' : '실행 방식 — 매니저 쪽이 우세'} ({execution.score})
+                  {`실행 방식 — ${executionTitle}`}
                 </h4>
               </div>
               <div className="pl-12 space-y-4">

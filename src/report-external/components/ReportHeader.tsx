@@ -1,5 +1,4 @@
 import { Button } from './ui/button';
-import { Badge } from './ui/badge';
 import { Download, Menu } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -20,44 +19,32 @@ export function ReportHeader({ language, onLanguageChange, onToggleMobileTOC, cr
   };
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-background">
-      <div className="container mx-auto px-4 py-3 lg:py-4 max-w-7xl">
+    <header className="sticky top-0 z-30 border-b border-white/20 bg-transparent">
+      <div className="container mx-auto px-4 py-3 max-w-4xl">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 lg:gap-4">
-            {/* Mobile TOC Toggle */}
-            {onToggleMobileTOC && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={onToggleMobileTOC}
-                className="lg:hidden p-2"
-                aria-label="목차 열기"
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
-            )}
-            
-            <div>
-              <h1 className="text-lg lg:text-xl font-medium">Why 보고서</h1>
-              <div className="flex items-center gap-2 mt-1">
-                <Badge variant="outline" className="text-xs">{createdAt ? new Date(createdAt).toLocaleDateString('ko-KR') : ''}</Badge>
-              </div>
-            </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => { try { history.back(); } catch { window.location.href = '/home'; } }}
+              className="text-gray-600 hover:text-gray-900 transition-colors flex items-center gap-2"
+              aria-label="뒤로가기"
+              title="뒤로가기"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+              </svg>
+            </button>
           </div>
 
-          {/* Desktop Actions (저장만) */}
           <div className="hidden sm:flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleSave} className="hidden lg:flex">
+            <Button variant="outline" size="sm" onClick={handleSave}>
               <Download className="h-4 w-4 mr-2" />
               저장
             </Button>
           </div>
 
-          {/* Mobile Actions - 저장만 */}
           <div className="flex sm:hidden items-center gap-2">
             <Button variant="outline" size="sm" onClick={handleSave} className="p-2">
-              <Download className="h-4 w-4 mr-2" />
-              저장
+              <Download className="h-4 w-4" />
             </Button>
           </div>
         </div>

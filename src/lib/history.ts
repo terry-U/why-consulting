@@ -5,6 +5,7 @@ export interface SessionWithHistory extends Session {
   lastMessage?: string | null
   whyStatement?: string | null
   messageCount?: number
+  lastActivityAt?: string
 }
 
 /**
@@ -14,6 +15,44 @@ export async function getUserConsultationHistory(userId: string): Promise<Sessio
   console.log('📚 상담 히스토리 조회 시작:', userId)
   
   try {
+    const extractWhyOneLiner = (md?: string | null): string | null => {
+      if (!md || typeof md !== 'string') return null
+      const text = md.trim()
+      // 1) JSON 스타일 on_why_main
+      let m = text.match(/"on_why_main"\s*:\s*"([^"]+)"/i)
+      if (m && m[1]) return m[1].trim()
+      // 2) 비JSON 라벨 on_why_main (하이픈/스페이스 허용)
+      m = text.match(/on[\s_-]*why[\s_-]*main\s*[:=]\s*["“]?([^\n\r"”]+)["”]?/i)
+      if (m && m[1]) return m[1].trim()
+      // 3) 백틱 코드블록 안 JSON 추출 시도
+      const fenceJson = text.match(/```\s*json[\s\S]*?\{[\s\S]*?\}[\s\S]*?```/i)
+      if (fenceJson) {
+        const jsonStr = fenceJson[0].replace(/```\s*json/i, '').replace(/```$/, '').trim()
+        try {
+          const obj = JSON.parse(jsonStr)
+          if (obj && typeof obj.on_why_main === 'string') return obj.on_why_main.trim()
+        } catch {}
+      }
+      // 4) "Why:" 라인 (점수/라벨 제외)
+      const whyMatch = text.match(/(?:^|\n)\s*Why\s*:\s*(.+)/i)
+      if (whyMatch && whyMatch[1]) {
+        const val = whyMatch[1].trim().replace(/^"|"$/g, '')
+        if (!/(Master|Manager|점수)/i.test(val)) return val
+      }
+      // 3) "# My Why" 이후 첫 문단
+      const myWhyIdx = text.toLowerCase().indexOf('# my why')
+      if (myWhyIdx >= 0) {
+        const after = text.slice(myWhyIdx).split(/\n/).slice(1)
+        const para = after.find(l => l && !l.startsWith('#') && !l.startsWith('-'))
+        if (para) return para.trim()
+      }
+      // 5) 첫 비헤딩/비불릿/블록인용 아님 (점수/라벨 제외)
+      const firstLine = text.split(/\n/).find(l => {
+        const s = l?.trim() || ''
+        return s && !s.startsWith('#') && !s.startsWith('-') && !s.startsWith('>') && !/(Master|Manager|점수)/i.test(s)
+      })
+      return firstLine ? firstLine.trim() : null
+    }
     // 사용자의 모든 세션 가져오기
     const { data: sessions, error: sessionsError } = await supabase
       .from('sessions')
@@ -36,7 +75,7 @@ export async function getUserConsultationHistory(userId: string): Promise<Sessio
           // 마지막 메시지 가져오기
           const { data: lastMessage } = await supabase
             .from('messages')
-            .select('content, role')
+            .select('content, role, created_at')
             .eq('session_id', session.id)
             .order('created_at', { ascending: false })
             .limit(1)
@@ -48,26 +87,42 @@ export async function getUserConsultationHistory(userId: string): Promise<Sessio
             .select('*', { count: 'exact', head: true })
             .eq('session_id', session.id)
 
+          const lastMessageAt = lastMessage?.created_at ? new Date(lastMessage.created_at).toISOString() : null
+          const updatedAt = session.updated_at ? new Date(session.updated_at).toISOString() : null
+          const createdAt = session.created_at ? new Date(session.created_at).toISOString() : null
+          const lastActivityAt = (lastMessageAt && updatedAt)
+            ? (new Date(lastMessageAt) > new Date(updatedAt) ? lastMessageAt : updatedAt)
+            : (lastMessageAt || updatedAt || createdAt || new Date().toISOString())
+
           return {
             ...session,
             lastMessage: lastMessage?.content || null,
-            whyStatement: session.generated_why,
-            messageCount: messageCount || 0
+            whyStatement: extractWhyOneLiner(session.generated_why),
+            messageCount: messageCount || 0,
+            lastActivityAt
           }
         } catch (error) {
           console.error(`세션 ${session.id} 추가 정보 로딩 오류:`, error)
           return {
             ...session,
             lastMessage: null,
-            whyStatement: session.generated_why,
-            messageCount: 0
+            whyStatement: extractWhyOneLiner(session.generated_why),
+            messageCount: 0,
+            lastActivityAt: session.updated_at || session.created_at
           }
         }
       })
     )
 
-    console.log('✅ 히스토리 조회 완료:', sessionsWithHistory.length)
-    return sessionsWithHistory
+    // 최근 활동일시 기준 내림차순 정렬(일관된 UX)
+    const sorted = [...sessionsWithHistory].sort((a, b) => {
+      const ta = new Date(a.lastActivityAt || a.updated_at || a.created_at).getTime()
+      const tb = new Date(b.lastActivityAt || b.updated_at || b.created_at).getTime()
+      return tb - ta
+    })
+
+    console.log('✅ 히스토리 조회 완료(정렬 적용):', sorted.length)
+    return sorted
 
   } catch (error) {
     console.error('❌ 히스토리 조회 오류:', error)

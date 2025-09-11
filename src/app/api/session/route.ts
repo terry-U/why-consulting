@@ -126,37 +126,43 @@ export async function POST(request: NextRequest) {
     console.log('- OPENAI_API_KEY 존재:', !!process.env.OPENAI_API_KEY)
     console.log('- SUPABASE_SERVICE_ROLE_KEY 존재:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
 
-    // OpenAI Thread 생성
+    // 새 세션 생성 (티켓 1장 차감 + 세션 생성) - 트랜잭션 RPC
+    console.log('🗄️ 티켓 차감 및 세션 생성 RPC 호출')
+    let newSessionId: string | null = null
+    try {
+      const { data: rpcId, error: rpcErr } = await supabaseServer.rpc('start_new_session', { p_user_id: userId })
+      if (rpcErr) {
+        if ((rpcErr as any)?.message?.includes('NO_TICKETS')) {
+          return NextResponse.json({ success: false, code: 'NO_TICKETS', error: '상담권이 부족합니다.' }, { status: 402 })
+        }
+        throw rpcErr
+      }
+      newSessionId = rpcId as string
+    } catch (e) {
+      console.error('❌ 세션 생성(RPC) 실패:', e)
+      return NextResponse.json({ success: false, step: 'start_new_session', error: (e as Error)?.message || '세션 생성 실패' }, { status: 500 })
+    }
+
+    // OpenAI Thread 생성 (성공/실패와 무관히 세션은 생성됨)
     console.log('🧵 OpenAI Thread 생성 시도...')
-    let threadId: string
+    let threadId: string | null = null
     try {
       threadId = await createThread()
     } catch (e) {
       console.error('❌ Thread 생성 실패:', e)
-      return NextResponse.json({ success: false, step: 'createThread', error: (e as Error)?.message || 'Thread 생성 실패' }, { status: 500 })
-    }
-    console.log('✅ Thread 생성 성공:', threadId)
-
-    // 새 세션 생성 (thread_id 포함)
-    console.log('🗄️ 데이터베이스 세션 생성 시도...')
-    const { session, error: createSessionError } = await createSession(userId, threadId)
-
-    if (!session || createSessionError) {
-      console.error('❌ 세션 생성 실패 - createSession 오류:', createSessionError)
-      return NextResponse.json(
-        { success: false, step: 'createSession', error: createSessionError?.message || '세션 생성에 실패했습니다.' },
-        { status: 500 }
-      )
     }
 
-    // 첫 메시지는 채팅 인터페이스에서 처리
-    console.log('✅ 세션 생성 완료 - 첫 인사는 채팅에서 처리')
+    // Thread ID를 세션에 업데이트(선택사항)
+    if (threadId) {
+      await supabaseServer
+        .from('sessions')
+        .update({ thread_id: threadId })
+        .eq('id', newSessionId)
+    }
 
-    console.log('✅ 세션 생성 API 성공:', session.id)
-    return NextResponse.json({
-      success: true,
-      session
-    })
+    console.log('✅ 세션 생성 API 성공:', newSessionId)
+    const { data: session } = await supabaseServer.from('sessions').select('*').eq('id', newSessionId).single()
+    return NextResponse.json({ success: true, session })
 
   } catch (error) {
     console.error('❌ 세션 생성 API 오류 상세:', error)

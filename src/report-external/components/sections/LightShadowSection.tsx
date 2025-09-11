@@ -163,21 +163,9 @@ export function LightShadowSection({ isPinned, onTogglePin, language, data }: Li
 
   const getColorClass = (color: string, type: 'bg' | 'text' | 'border' = 'bg') => {
     const colors = {
-      amber: {
-        bg: 'bg-amber-50 dark:bg-amber-950/20',
-        text: 'text-amber-600 dark:text-amber-400',
-        border: 'border-amber-200 dark:border-amber-800'
-      },
-      blue: {
-        bg: 'bg-blue-50 dark:bg-blue-950/20',
-        text: 'text-blue-600 dark:text-blue-400',
-        border: 'border-blue-200 dark:border-blue-800'
-      },
-      violet: {
-        bg: 'bg-violet-50 dark:bg-violet-950/20',
-        text: 'text-violet-600 dark:text-violet-400',
-        border: 'border-violet-200 dark:border-violet-800'
-      }
+      amber: { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-200' },
+      blue: { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-200' },
+      violet: { bg: 'bg-violet-50', text: 'text-violet-600', border: 'border-violet-200' }
     };
     return colors[color as keyof typeof colors]?.[type] || colors.blue[type];
   };
@@ -244,32 +232,32 @@ export function LightShadowSection({ isPinned, onTogglePin, language, data }: Li
               <CardContent className="space-y-6">
                 {/* Insight */}
                 <div className="p-4 rounded-lg border-l-4 border-amber-500">
-                  <p className="text-insight text-amber-800 dark:text-amber-200">
+                  <p className="text-insight text-amber-800">
                     {strength.insight}
                   </p>
                 </div>
 
                 {/* Situations and Roles */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
-                    <h5 className="font-semibold mb-3 text-green-800 dark:text-green-200">
+                  <div className="p-4 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50">
+                    <h5 className="font-semibold mb-3 text-green-800">
                       {text.situationsLabel}:
                     </h5>
                     <ul className="space-y-2">
                       {strength.situations.map((situation: string, index: number) => (
-                        <li key={index} className="text-green-700 dark:text-green-300 font-medium">
+                        <li key={index} className="text-green-700 font-medium">
                           • {situation}
                         </li>
                       ))}
                     </ul>
                   </div>
-                  <div className="p-4 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
-                    <h5 className="font-semibold mb-3 text-green-800 dark:text-green-200">
+                  <div className="p-4 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50">
+                    <h5 className="font-semibold mb-3 text-green-800">
                       {text.rolesLabel}:
                     </h5>
                     <ul className="space-y-2">
                       {strength.roles.map((role: string, index: number) => (
-                        <li key={index} className="text-green-700 dark:text-green-300 font-medium">
+                        <li key={index} className="text-green-700 font-medium">
                           • {role}
                         </li>
                       ))}
@@ -278,12 +266,12 @@ export function LightShadowSection({ isPinned, onTogglePin, language, data }: Li
                 </div>
 
                 {/* Impact */}
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 rounded-lg">
-                  <h5 className="font-semibold mb-2 text-blue-800 dark:text-blue-200 flex items-center gap-2">
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+                  <h5 className="font-semibold mb-2 text-blue-800 flex items-center gap-2">
                     <CheckCircle className="h-4 w-4" />
                     {text.impactLabel}:
                   </h5>
-                  <p className="leading-relaxed font-medium text-blue-700 dark:text-blue-300">
+                  <p className="leading-relaxed font-medium text-blue-700">
                     {strength.impact}
                   </p>
                 </div>
@@ -334,21 +322,21 @@ export function LightShadowSection({ isPinned, onTogglePin, language, data }: Li
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Insight */}
-                <div className="p-6 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-lg border-l-4 border-amber-500">
-                  <p className="leading-relaxed text-amber-800 dark:text-amber-200">
+                <div className="p-6 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border-l-4 border-amber-500">
+                  <p className="leading-relaxed text-amber-800">
                     {shadow.insight}
                   </p>
                 </div>
 
                 {/* Examples */}
-                <div className="p-4 bg-slate-50 dark:bg-slate-950/20 rounded-lg">
-                  <h5 className="font-semibold mb-3 flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                <div className="p-4 bg-slate-50 rounded-lg">
+                  <h5 className="font-semibold mb-3 flex items-center gap-2 text-slate-700">
                     <AlertTriangle className="h-4 w-4" />
                     {text.examplesLabel}:
                   </h5>
                   <ul className="space-y-2">
                     {shadow.examples.map((example: string, index: number) => (
-                      <li key={index} className="text-slate-600 dark:text-slate-400">
+                      <li key={index} className="text-slate-600">
                         • {example}
                       </li>
                     ))}
@@ -357,19 +345,19 @@ export function LightShadowSection({ isPinned, onTogglePin, language, data }: Li
 
                 {/* Solutions */}
                 <div className="space-y-4">
-                  <h5 className="font-semibold flex items-center gap-2 text-green-700 dark:text-green-300">
+                  <h5 className="font-semibold flex items-center gap-2 text-green-700">
                     <ArrowRight className="h-5 w-5" />
                     {text.solutionsLabel}:
                   </h5>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {shadow.solutions.map((solution: { title: string; method: string }, index: number) => (
-                      <Card key={index} className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-green-200 dark:border-green-800">
+                      <Card key={index} className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
                         <CardContent className="pt-4">
-                          <h6 className="font-semibold mb-2 text-green-800 dark:text-green-200">
+                          <h6 className="font-semibold mb-2 text-green-800">
                             {solution.title}
                           </h6>
                           <p className="text-sm text-muted-foreground mb-1">{text.methodLabel}:</p>
-                          <p className="leading-relaxed text-green-700 dark:text-green-300">
+                          <p className="leading-relaxed text-green-700">
                             {solution.method}
                           </p>
                         </CardContent>

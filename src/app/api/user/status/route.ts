@@ -12,14 +12,14 @@ export async function GET(request: NextRequest) {
     let user: any = null
     let { data, error } = await supabaseServer
       .from('users')
-      .select('id, is_paid_user, onboarding_completed')
+      .select('id, is_paid_user, onboarding_completed, remaining_tickets')
       .eq('id', userId)
       .single()
     if (error) {
       // 레거시 스키마: onboarding_completed 컬럼이 없으면 기본 false로 재조회
       const fallback = await supabaseServer
         .from('users')
-        .select('id, is_paid_user')
+        .select('id, is_paid_user, remaining_tickets')
         .eq('id', userId)
         .single()
       if (fallback.error) {

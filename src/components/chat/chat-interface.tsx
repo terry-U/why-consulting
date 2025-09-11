@@ -622,7 +622,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
 
       {/* 답변 확인 버튼들 - 전체 화면 */}
       {showAdvanceButtons && nextPhaseData && (
-        <div className="fixed inset-0 bg-white z-50 flex flex-col">
+        <div className="fixed inset-0 z-50 flex flex-col" style={{background:'rgba(255,255,255,0.85)'}}>
           <div className="flex-1 p-6 overflow-y-auto">
             <div className="max-w-2xl mx-auto">
               <div className="mb-8">
@@ -632,7 +632,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
 
               {/* 현재 질문 */}
               {currentQuestion && (
-                <div className="border border-gray-200 rounded-xl p-6 mb-6 bg-white">
+                <div className="border border-gray-200 rounded-xl p-6 mb-6" style={{background:'rgba(255,255,255,0.9)'}}>
                   <p className="text-xs text-gray-500 mb-2">현재 질문</p>
                   <p className="text-lg font-medium text-gray-900">"{currentQuestion.text}"</p>
                 </div>
@@ -643,7 +643,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
                 const lastMessage = messages[messages.length - 1];
                 const answerReadyMatch = lastMessage.content.match(/\*\*\[ANSWER_READY\]\*\*([\s\S]*?)\*\*\[ANSWER_READY\]\*\*/);
                 return answerReadyMatch ? (
-                  <div className="border border-gray-200 rounded-xl p-6 mb-8 bg-white">
+                  <div className="border border-gray-200 rounded-xl p-6 mb-8" style={{background:'rgba(255,255,255,0.9)'}}>
                     <p className="text-xs text-gray-500 mb-2">내 답변</p>
                     <div className="text-xl text-gray-900 leading-relaxed whitespace-pre-line">💡 {answerReadyMatch[1]}</div>
                   </div>
@@ -653,7 +653,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
           </div>
 
           {/* 하단 버튼 영역 */}
-          <div className="border-t border-gray-200 p-6 bg-white">
+          <div className="border-t border-gray-200 p-6" style={{background:'rgba(255,255,255,0.9)'}}>
             <div className="max-w-md mx-auto flex justify-center gap-3">
               <button
                 onClick={() => handleAdvanceToNext(true)}
@@ -675,7 +675,7 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
       )}
 
       {/* 하단 고정 바: 스크롤 업 시 숨김 (바깥 레이아웃 영향 없도록) */}
-      <div className={`fixed bottom-0 left-0 right-0 px-4 py-4 bg-white/50 backdrop-blur-xl border-t border-white/20 transition-transform transition-opacity duration-200 will-change-transform ${(isScrolledUp || isTyping) ? 'opacity-0 pointer-events-none translate-y-2' : 'opacity-100 translate-y-0'}`}>
+      <div className={`fixed bottom-0 left-0 right-0 px-4 py-4 border-t border-white/20 transition-transform transition-opacity duration-200 will-change-transform ${(isScrolledUp || isTyping) ? 'opacity-0 pointer-events-none translate-y-2' : 'opacity-100 translate-y-0'}`} style={{background:'rgba(255,255,255,0.35)', backdropFilter:'blur(12px)'}}>
         <div className="max-w-4xl mx-auto flex flex-col gap-2">
           {/* 상단 액션 라인 */}
           <div className="flex items-center justify-start">
@@ -684,7 +684,8 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
               disabled={isLoading || isTyping}
               aria-label="충분해요, 다음 질문"
               title="충분해요, 다음 질문"
-              className="px-3 py-2 rounded-md border border-gray-300 bg-white/70 text-gray-700 hover:bg-white disabled:opacity-40"
+              className="px-3 py-2 rounded-md border border-gray-300 text-gray-700 disabled:opacity-40"
+              style={{background:'rgba(255,255,255,0.7)'}}
             >
               충분해요, 다음 질문
             </button>
@@ -700,7 +701,8 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
               onKeyPress={handleKeyPress}
               placeholder="솔직한 마음을 편하게 말해주세요..."
               aria-label="메시지 입력"
-              className="input resize-none w-full bg-white/80 border-white/30 text-gray-900 placeholder-gray-600 py-3 pl-4 pr-12 rounded-xl focus:ring-2 focus:ring-purple-400/50 focus:border-transparent text-base backdrop-blur-sm min-h-[3.2rem]"
+              className="input resize-none w-full border-white/30 text-gray-900 placeholder-gray-600 py-3 pl-4 pr-12 rounded-xl focus:ring-2 focus:ring-purple-400/50 focus:border-transparent text-base backdrop-blur-sm min-h-[3.2rem]"
+              style={{background:'rgba(255,255,255,0.8)'}}
               rows={2}
               disabled={isLoading || isTyping}
             />
@@ -740,9 +742,9 @@ export default function ChatInterface({ session, initialMessages, onSessionUpdat
       {/* 대화 마무리 모달 */}
       {showWrapUpModal && (
         <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-2xl border border-gray-200 max-w-2xl w-full mx-4 p-6">
+          <div className="rounded-2xl border border-gray-200 max-w-2xl w-full mx-4 p-6" style={{background:'rgba(255,255,255,0.95)'}}>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">대화 요약</h3>
-            <div className="border border-gray-200 rounded-xl p-4 bg-white mb-4 max-h-64 overflow-auto whitespace-pre-line text-gray-800 text-sm">
+            <div className="border border-gray-200 rounded-xl p-4 mb-4 max-h-64 overflow-auto whitespace-pre-line text-gray-800 text-sm" style={{background:'rgba(255,255,255,0.95)'}}>
               {wrapUpSummary}
             </div>
             <p className="text-sm text-gray-700 mb-4">

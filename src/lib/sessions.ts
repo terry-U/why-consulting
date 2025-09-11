@@ -67,22 +67,11 @@ export async function getActiveSession(userId: string): Promise<Session | null> 
  * 새로운 상담 세션을 생성합니다
  */
 export async function createNewSession(userId: string): Promise<Session> {
-  const { data: session, error } = await supabase
-    .from('sessions')
-    .insert({
-      user_id: userId,
-      status: 'active',
-      counseling_phase: 'questions',
-      current_question_index: 1,
-      answers: {}
-    })
-    .select()
-    .single()
-
-  if (error) {
-    console.error('세션 생성 오류:', error)
-    throw new Error('새 상담 세션을 생성할 수 없습니다')
+  const res = await fetch('/api/session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId }) })
+  const js = await res.json()
+  if (!res.ok || !js?.success) {
+    const code = js?.code || ''
+    throw new Error(code || js?.error || '새 상담 세션을 생성할 수 없습니다')
   }
-
-  return session
+  return js.session as Session
 }

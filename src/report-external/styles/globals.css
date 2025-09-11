@@ -1,4 +1,4 @@
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(.report-dark *));
 
 :root {
   --font-size: 14px;
@@ -61,7 +61,7 @@
   --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.3);
 }
 
-.dark {
+.report-dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.145 0 0);
@@ -578,4 +578,9 @@
 
 html {
   font-size: var(--font-size);
+}
+
+/* Force light color scheme for report UI regardless of OS preference */
+.report-root {
+  color-scheme: light;
 }

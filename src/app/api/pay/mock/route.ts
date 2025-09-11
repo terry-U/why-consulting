@@ -19,8 +19,10 @@ export async function POST(request: NextRequest) {
     // 사용자 결제 상태 플래그
     const { error: userErr } = await supabaseServer
       .from('users')
-      .update({ is_paid_user: true })
+      .update({ is_paid_user: true, remaining_tickets: (supabaseServer as any).rpc ? undefined : undefined })
       .eq('id', userId)
+      .select('id')
+      .single()
     if (userErr) {
       return NextResponse.json({ success: false, error: '사용자 결제 상태 업데이트 실패' }, { status: 500 })
     }

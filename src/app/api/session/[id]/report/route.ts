@@ -5,6 +5,29 @@ import { buildReportPrompt, SYSTEM_KO_JSON_ONLY } from '@/lib/report-prompts'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
+function temperatureForType(type: 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers' | 'light_shadow' | 'philosophy' | 'action_recipe' | 'future_path' | 'epilogue'): number {
+  // 보다 자연스러운 문장 생성이 필요한 타입은 온도를 높이고, 구조 중심 타입은 낮춥니다.
+  switch (type) {
+    case 'philosophy':
+      return 0.8
+    case 'light_shadow':
+    case 'epilogue':
+    case 'style_pattern':
+      return 0.7
+    case 'my_why':
+      return 0.4
+    case 'action_recipe':
+    case 'fit_triggers':
+    case 'future_path':
+      return 0.5
+    case 'value_map':
+    case 'master_manager_spectrum':
+      return 0.4
+    default:
+      return 0.6
+  }
+}
+
 function parseJsonFlex(raw: string): any {
   // direct parse
   try { return JSON.parse(raw) } catch {}
@@ -56,6 +79,16 @@ function validateAndFillValueMap(input: any) {
   })
   const rawItems = Array.isArray(input?.items) ? input.items : []
   const items = rawItems.slice(0, 3).map(toItem)
+  const makePlaceholder = (idx: number) => ({
+    head: `보정 항목 ${idx+1}`,
+    heart: '',
+    gapLevel: 'medium' as const,
+    headDetail: '',
+    heartDetail: '',
+    scene: '',
+    bridge: ''
+  })
+  while (items.length < 3) items.push(makePlaceholder(items.length))
   const today_actions = Array.isArray(input?.today_actions) ? input.today_actions.slice(0, 3).map((s: any) => (typeof s === 'string' ? s.trim() : '')) : []
   const summary = typeof input?.summary === 'string' ? input.summary.trim() : ''
   return { items, today_actions, summary }
@@ -97,6 +130,17 @@ function validateAndFillStylePattern(input: any) {
     story: typeof it?.story === 'string' ? it.story.trim() : ''
   })
   const styles = Array.isArray(input?.styles) ? input.styles.slice(0, 5).map(normalizeItem) : []
+  const placeholder = (idx: number) => ({
+    title: `보정 스타일 ${idx+1}`,
+    subtitle: '',
+    fitLevel: 'medium' as const,
+    what: '',
+    example: '',
+    why: '',
+    caution: '',
+    story: ''
+  })
+  while (styles.length < 3) styles.push(placeholder(styles.length))
   const quick_tips = Array.isArray(input?.quick_tips)
     ? input.quick_tips.slice(0, 4).map((q: any) => ({
         id: typeof q?.id === 'string' ? q.id : '',
@@ -175,13 +219,11 @@ function validateAndFillMasterManager(input: any) {
   const orientation = normalizeInsight(input?.orientation, orientationDefault)
   const execution = normalizeInsight(input?.execution, executionDefault)
   const normType = (t: any) => ({
-    id: typeof t?.id === 'string' ? t.id : '',
     name: typeof t?.name === 'string' ? t.name.trim() : '',
     position: typeof t?.position === 'string' ? t.position.trim() : '',
     description: typeof t?.description === 'string' ? t.description.trim() : '',
     traits: Array.isArray(t?.traits) ? t.traits.slice(0, 8).map((s: any) => (typeof s === 'string' ? s.trim() : '')) : []
   })
-  const current_type = normType(input?.current_type || {})
   const types = Array.isArray(input?.types) ? input.types.slice(0, 5).map(normType) : []
   const scenes = Array.isArray(input?.scenes)
     ? input.scenes.slice(0, 5).map((s: any) => ({
@@ -191,26 +233,16 @@ function validateAndFillMasterManager(input: any) {
         conclusion: typeof s?.conclusion === 'string' ? s.conclusion.trim() : ''
       }))
     : []
-  return { scores, orientation, execution, current_type, types, scenes }
+  return { scores, orientation, execution, types, scenes }
 }
 
-function masterManagerToMarkdown(mm: { scores: any; current_type: any; types?: any[]; scenes?: any[] }) {
+function masterManagerToMarkdown(mm: { scores: any; types?: any[]; scenes?: any[] }) {
   const lines: string[] = []
   lines.push('# Master–Manager Spectrum')
   lines.push('')
   if (mm?.scores) {
     lines.push(`- Master 점수: ${mm.scores.master}%`)
     lines.push(`- Manager(others) 점수: ${mm.scores.others}%`)
-    lines.push('')
-  }
-  if (mm?.current_type?.name) {
-    lines.push(`## 현재 타입: ${mm.current_type.name}`)
-    if (mm.current_type.position) lines.push(`- 포지션: ${mm.current_type.position}`)
-    if (mm.current_type.description) lines.push(`- 설명: ${mm.current_type.description}`)
-    if (Array.isArray(mm.current_type.traits) && mm.current_type.traits.length) {
-      lines.push('- 특성:')
-      for (const tr of mm.current_type.traits) lines.push(`  - ${tr}`)
-    }
     lines.push('')
   }
   if (Array.isArray(mm.scenes) && mm.scenes.length) {
@@ -343,7 +375,10 @@ function lightShadowToMarkdown(ls: { strengths?: any[]; shadows?: any[] }) {
 }
 
 function validateAndFillPhilosophy(input: any) {
-  const letter_content = typeof input?.letter_content === 'string' ? input.letter_content.trim() : ''
+  let letter_content = typeof input?.letter_content === 'string' ? input.letter_content.trim() : ''
+  if (!letter_content || letter_content.length < 10) {
+    letter_content = '자네의 길은 이미 시작되었네. 오늘의 작은 한 걸음이 내일의 방향을 바꾼다. 숨을 고르고, 마음의 중심을 놓치지 말게. 가까운 사람과 조용히 대화하고, 한 가지 일을 끝까지 마무리하세.'
+  }
   return { letter_content }
 }
 
@@ -390,6 +425,9 @@ function validateAndFillFuturePath(input: any) {
     remove: Array.isArray(input?.environment?.remove) ? input.environment.remove.slice(0, 3).map(normalizeEnv) : [],
     strengthen: Array.isArray(input?.environment?.strengthen) ? input.environment.strengthen.slice(0, 3).map(normalizeEnv) : []
   }
+  const makeEnv = (idx: number) => ({ category: `보정 ${idx+1}`, items: ['', '', '', ''], impact: '' })
+  while (environment.remove.length < 3) environment.remove.push(makeEnv(environment.remove.length))
+  while (environment.strengthen.length < 3) environment.strengthen.push(makeEnv(environment.strengthen.length))
   return { environment }
 }
 
@@ -440,18 +478,44 @@ function epilogueToMarkdown(e: { overall_score?: number; insights?: any[]; actio
 }
 export async function GET(req: Request, context: any) {
   // Robust sessionId resolution: await params (Next 15) and safe URL fallback
+  const safeParseUrl = (request: Request): URL => {
+    try { return new URL(request.url) } catch {}
+    const host = request.headers.get('host') || 'localhost:3000'
+    const proto = request.headers.get('x-forwarded-proto') || 'http'
+    const path = (request as any)?.url || '/'
+    return new URL(`${proto}://${host}${path}`)
+  }
+  const url = safeParseUrl(req)
   let sessionId: string | undefined
   try {
+    const extractOnWhyMain = (md?: string | null): string | null => {
+      if (!md) return null
+      const text = String(md)
+      // JSON key
+      let m = text.match(/"on_why_main"\s*:\s*"([^"]+)"/i)
+      if (m && m[1]) return m[1].trim()
+      // label forms
+      m = text.match(/(?:^|\n)\s*on[\s_-]*why[\s_-]*main\s*[:=]\s*(?:["“]([^\n\r"”]+)["”]|([^\n\r]+))/i)
+      if (m && (m[1] || m[2])) return (m[1] || m[2])!.trim()
+      // Why: line (avoid score-like text)
+      const w = text.match(/(?:^|\n)\s*Why\s*:\s*(.+)/i)
+      if (w && w[1] && !/(Master|Manager|점수)/i.test(w[1])) return w[1].trim().replace(/^"|"$/g, '')
+      return null
+    }
     const params = await (context?.params)
     sessionId = params?.id
   } catch {}
+  // 절대 폴백 금지: 세션 혼선을 방지하기 위해 파라미터가 없으면 거부
   if (!sessionId) {
-    const parts = new URL(req.url).pathname.split('/').filter(Boolean)
-    const idx = parts.indexOf('session')
-    sessionId = idx >= 0 && parts[idx + 1] ? parts[idx + 1] : parts.slice(-2, -1)[0]
+    return NextResponse.json({ success: false, error: 'sessionId가 필요합니다(경로 파라미터 누락)' }, { status: 400 })
   }
-  const { searchParams } = new URL(req.url)
+  const { searchParams } = url
   const type = (searchParams.get('type') || 'my_why') as 'my_why' | 'value_map' | 'style_pattern' | 'master_manager_spectrum' | 'fit_triggers' | 'light_shadow' | 'philosophy' | 'action_recipe' | 'future_path' | 'epilogue'
+  // 빈 type 혹은 허용되지 않은 값 거부
+  const allowedTypes = new Set(['my_why','value_map','style_pattern','master_manager_spectrum','fit_triggers','light_shadow','philosophy','action_recipe','future_path','epilogue'])
+  if (!type || !allowedTypes.has(type)) {
+    return NextResponse.json({ success: false, error: '유효하지 않은 type 파라미터' }, { status: 400 })
+  }
   const checkOnly = (searchParams.get('check') === '1' || searchParams.get('check') === 'true')
   const backfill = false
   const force = (searchParams.get('force') === '1' || searchParams.get('force') === 'true')
@@ -462,6 +526,20 @@ export async function GET(req: Request, context: any) {
   }
 
   try {
+    const deriveOnWhyMainFromParsed = (parsed: any): string | null => {
+      if (!parsed) return null
+      if (typeof parsed.on_why_main === 'string' && parsed.on_why_main.trim()) return parsed.on_why_main.trim()
+      if (typeof parsed.headline === 'string' && parsed.headline.trim()) return parsed.headline.trim()
+      const md = typeof parsed.markdown === 'string' ? parsed.markdown : undefined
+      if (md) {
+        const text = String(md)
+        let m = text.match(/"on_why_main"\s*:\s*"([^"]+)"/i)
+        if (m && m[1]) return m[1].trim()
+        m = text.match(/(?:^|\n)\s*on[\s_-]*why[\s_-]*main\s*[:=]\s*(?:["“]([^\n\r"”]+)["”]|([^\n\r]+))/i)
+        if (m && (m[1] || m[2])) return (m[1] || m[2])!.trim()
+      }
+      return null
+    }
     // reset=1: 기존 보고서 전부 삭제 후 진행
     if (reset) {
       await supabaseServer
@@ -480,7 +558,18 @@ export async function GET(req: Request, context: any) {
 
     if (!force && !existingErr && existing?.content && !needsBackfill) {
       // 캐시 즉시 반환. 보고서가 존재한다면 상태를 완료로 갱신(비동기)
-      markSessionCompleted(sessionId, existing.content?.markdown).catch(() => {})
+      if (type === 'my_why') {
+        let cachedWhy = existing.content?.markdown as string | undefined
+        const one = deriveOnWhyMainFromParsed(existing.content)
+        if (one && typeof cachedWhy === 'string' && !/on[\s_-]*why[\s_-]*main\s*[:=]/i.test(cachedWhy)) {
+          cachedWhy = `on_why_main: "${one}"
+` + cachedWhy
+        }
+        markSessionCompleted(sessionId, cachedWhy).catch(() => {})
+      } else {
+        // 다른 타입에서는 세션 상태만 완료로 (generated_why 미변경)
+        markSessionCompleted(sessionId).catch(() => {})
+      }
       // my_why + cascade는 비동기로 연쇄 생성 트리거(응답 지연 방지)
       if (type === 'my_why' && cascade) generateOthersIfMissing(sessionId).catch(() => {})
       return NextResponse.json({ success: true, report: existing.content, cached: true, createdAt: existing.created_at || existing.updated_at })
@@ -504,13 +593,25 @@ export async function GET(req: Request, context: any) {
 
     const { data: messages, error: msgError } = await supabaseServer
       .from('messages')
-      .select('role, content, counselor_id, created_at')
+      .select('role, content, counselor_id, created_at, session_id')
       .eq('session_id', sessionId)
       .order('created_at', { ascending: true })
 
     if (msgError) {
       return NextResponse.json({ success: false, error: '메시지 로딩 실패' }, { status: 500 })
     }
+    try {
+      const count = Array.isArray(messages) ? messages.length : 0
+      const distinctSessions = new Set((messages || []).map((m: any) => m.session_id))
+      const head = (messages || []).slice(0, 2).map((m: any) => `[${m.role}] ${(m.content || '').slice(0, 60)}`)
+      const tail = (messages || []).slice(-2).map((m: any) => `[${m.role}] ${(m.content || '').slice(0, 60)}`)
+      console.log('[REPORT] sessionId=', sessionId, ' type=', type, ' messages=', count, ' distinctSessionIds=', Array.from(distinctSessions).join(','))
+      console.log('[REPORT] sample(head)=', head, '\n[REPORT] sample(tail)=', tail)
+      if (distinctSessions.size > 1 || (distinctSessions.size === 1 && !distinctSessions.has(sessionId))) {
+        console.error('❌ 메시지 세션 불일치 감지: 요청 세션=', sessionId, ' distinct=', Array.from(distinctSessions).join(','))
+        return NextResponse.json({ success: false, error: '세션 메시지 불일치' }, { status: 409 })
+      }
+    } catch {}
 
     // transcriptBuilder로 대체됨
     // 3) 이전에 생성된 1번 Why 보고서(있다면) 로드하여 2~5번 입력에 합산
@@ -557,12 +658,18 @@ export async function GET(req: Request, context: any) {
 
     const systemMessage = SYSTEM_KO_JSON_ONLY
 
+    // Prompt logging (trimmed for safety)
+    try {
+      console.log('[REPORT] type=', type, '\n[REPORT] system=', systemMessage, '\n[REPORT] userPrompt=', prompt)
+    } catch {}
+
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
         { role: 'system', content: systemMessage },
         { role: 'user', content: prompt }
-      ]
+      ],
+      temperature: temperatureForType(type)
     })
 
     const content = completion.choices[0]?.message?.content || ''
@@ -585,7 +692,8 @@ export async function GET(req: Request, context: any) {
           messages: [
             { role: 'system', content: SYSTEM_KO_JSON_ONLY },
             { role: 'user', content: strictPrompt }
-          ]
+          ],
+          temperature: temperatureForType(type)
         })
         const retryContent = retry.choices[0]?.message?.content || ''
         parsed = tryParse(retryContent) || { markdown: retryContent.trim() }
@@ -612,11 +720,26 @@ export async function GET(req: Request, context: any) {
     }
 
     // 어떤 타입이든 생성/저장 후 세션 상태 완료 처리 (why markdown만 동기화)
-    await markSessionCompleted(sessionId, parsed?.markdown)
+    let whyMdToSave: string | undefined = undefined
+    if (type === 'my_why' && typeof parsed?.markdown === 'string') {
+      const one = deriveOnWhyMainFromParsed(parsed)
+      if (one && !/on[\s_-]*why[\s_-]*main\s*[:=]/i.test(parsed.markdown)) {
+        whyMdToSave = `on_why_main: "${one}"
+` + parsed.markdown
+      } else {
+        whyMdToSave = parsed.markdown
+      }
+    }
+    // 세션 완료 상태 갱신. my_why일 때만 generated_why 동기화
+    if (type === 'my_why') {
+      await markSessionCompleted(sessionId, whyMdToSave || (parsed?.markdown as string | undefined))
+    } else {
+      await markSessionCompleted(sessionId)
+    }
 
     // cascade: my_why 생성 완료 시 2~5 자동 생성 (이미 존재하면 스킵)
     if (cascade && type === 'my_why') {
-      const whyMd = (parsed?.markdown as string | undefined)
+      const whyMd = (whyMdToSave || (parsed?.markdown as string | undefined))
       generateOthersIfMissing(sessionId, whyMd).catch(() => {})
       return NextResponse.json({ success: true, report: parsed, first: true, cascading: true, createdAt: new Date().toISOString() })
     }
@@ -679,6 +802,9 @@ async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
       whyMarkdown: whyMd,
       userName: undefined
     })
+    try {
+      console.log('[CHAIN] type=', t, '\n[CHAIN] system=', 'JSON-only', '\n[CHAIN] userPrompt=', prompt)
+    } catch {}
 
     // Retry up to 3 attempts with incremental backoff
     let lastErr: any = null
@@ -694,8 +820,7 @@ async function generateOthersIfMissing(sessionId: string, whyMd?: string) {
             { role: 'system', content: sys },
         { role: 'user', content: prompt }
       ],
-      temperature: 0.2,
-      response_format: { type: 'json_object' }
+      temperature: temperatureForType(t)
     })
     const content = completion.choices[0]?.message?.content || ''
         let parsed: any

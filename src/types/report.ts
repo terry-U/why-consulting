@@ -60,13 +60,12 @@ export interface StylePatternReport extends ReportBase {
 
 export interface SpectrumScores { others: number; master: number }
 export interface SpectrumTypeMeta {
-  id: string; name: string; position: string; description: string; traits: string[]
+  name: string; position: string; description: string; traits: string[]
 }
 export interface SpectrumScene { category: string; evidence: string[]; analysis: string; conclusion: string }
 export interface MasterManagerReport extends ReportBase {
   type: 'master_manager_spectrum'
   scores: SpectrumScores
-  current_type: SpectrumTypeMeta
   types: SpectrumTypeMeta[]
   scenes: SpectrumScene[]
 }

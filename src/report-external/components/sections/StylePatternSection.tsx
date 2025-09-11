@@ -1,20 +1,6 @@
-import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
-import { Checkbox } from '../ui/checkbox';
-import { 
-  Users, 
-  Zap, 
-  Brain, 
-  ThumbsUp,
-  ThumbsDown,
-  CheckCircle,
-  Calendar,
-  Target,
-  FileText,
-  Clock
-} from 'lucide-react';
+import { Users, Zap, Brain, ThumbsUp, ThumbsDown } from 'lucide-react';
 
 interface StylePatternSectionProps {
   isPinned: boolean;
@@ -68,50 +54,9 @@ const workingStyles = [
   }
 ];
 
-const quickTips = [
-  {
-    id: 'A',
-    title: '매주 공유 시간 만들기',
-    method: '캘린더에 \"진행상황 공유\" 15분 고정으로 넣어두기',
-    tip: '완벽하지 않아도 \"여기까지 했어요\" 하나만 말해도 충분',
-    icon: Calendar,
-    color: 'blue'
-  },
-  {
-    id: 'B',
-    title: '1주 1실험 해보기',
-    method: '이번 주에 확인하고 싶은 것 1개만 정해서 빠르게 테스트',
-    tip: '실패해도 OK! 배운 것 1줄만 적어두면 성공',
-    icon: Target,
-    color: 'amber'
-  },
-  {
-    id: 'C',
-    title: '사람 얼굴 보이게 하기',
-    method: '숫자 보고서에 \"누가 좋아했나\" 한 줄 추가하기',
-    tip: '\"유저 김○○님이 좋아하셨어요\" 이런 식으로',
-    icon: FileText,
-    color: 'green'
-  },
-  {
-    id: 'D',
-    title: '큰 문제 작게 나누기',
-    method: '복잡한 작업을 3단계로 나누고, 각 단계마다 누군가와 얘기하기',
-    tip: '혼자 너무 오래 버티지 말고 중간 점검 받기',
-    icon: Clock,
-    color: 'violet'
-  }
-];
-
-const todayChecklist = [
-  "오늘 누군가에게 진행상황을 공유했나요?",
-  "이번 주 작은 실험 1개를 계획했나요?",
-  "보고서나 문서에 사람의 얼굴이 보이나요?",
-  "혼자 너무 오래 고민하고 있지는 않나요?"
-];
+// quick tips / checklist / summary 제거됨
 
 export function StylePatternSection({ isPinned, onTogglePin, language, data }: StylePatternSectionProps) {
-  const [checkedItems, setCheckedItems] = useState<boolean[]>(new Array(todayChecklist.length).fill(false));
 
   const content = {
     ko: {
@@ -123,10 +68,7 @@ export function StylePatternSection({ isPinned, onTogglePin, language, data }: S
       exampleTitle: '예를 들면',
       whyTitle: '왜 잘 맞나요?',
       cautionTitle: '주의할 점',
-      quickTipsTitle: '바로 써먹을 수 있는 팁 4가지',
-      todayTitle: '오늘 체크해볼 것들',
-      summaryTitle: '한 줄 요약',
-      summaryText: '사람들과 함께 하고, 작게 시작하고, 어려운 문제도 중간에 공유하면서 해결하면 가장 잘 됩니다.\n오늘은 위 4가지 팁 중 하나만 해보세요.',
+      // quick tips / checklist / summary 제거
       fitLevels: {
         'high': '아주 잘 맞음',
         'medium': '잘 맞음',
@@ -144,10 +86,7 @@ export function StylePatternSection({ isPinned, onTogglePin, language, data }: S
       exampleTitle: 'For example',
       whyTitle: 'Why does it work?',
       cautionTitle: 'Things to watch out for',
-      quickTipsTitle: '4 Tips You Can Use Right Away',
-      todayTitle: 'Things to Check Today',
-      summaryTitle: 'One-line Summary',
-      summaryText: 'Works best when collaborating with people, starting small, and sharing even difficult problems along the way.\nTry just one of the 4 tips above today.',
+      // quick tips / checklist / summary removed
       fitLevels: {
         'high': 'Perfect Fit',
         'medium': 'Good Fit',
@@ -162,16 +101,13 @@ export function StylePatternSection({ isPinned, onTogglePin, language, data }: S
 
   // API 데이터 매핑
   const apiStyles: Array<any> | undefined = Array.isArray(data?.styles) ? data.styles : undefined;
-  const apiQuickTips: Array<any> | undefined = Array.isArray(data?.quick_tips) ? data.quick_tips : undefined;
-  const apiTodayChecklist: string[] | undefined = Array.isArray(data?.today_checklist) ? data.today_checklist : undefined;
-  const apiSummary: string | undefined = typeof data?.summary === 'string' ? data.summary : undefined;
 
   const getFitColor = (level: string) => {
     switch (level) {
-      case 'high': return 'text-green-600 bg-green-100 dark:bg-green-900/20 dark:text-green-400';
-      case 'medium': return 'text-blue-600 bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400';
-      case 'conditional': return 'text-amber-600 bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400';
-      default: return 'text-gray-600 bg-gray-100 dark:bg-gray-900/20 dark:text-gray-400';
+      case 'high': return 'text-green-600 bg-green-100';
+      case 'medium': return 'text-blue-600 bg-blue-100';
+      case 'conditional': return 'text-amber-600 bg-amber-100';
+      default: return 'text-gray-600 bg-gray-100';
     }
   };
 
@@ -183,12 +119,6 @@ export function StylePatternSection({ isPinned, onTogglePin, language, data }: S
       case 'violet': return 'bg-violet-500';
       default: return 'bg-gray-500';
     }
-  };
-
-  const handleCheckItem = (index: number) => {
-    const newCheckedItems = [...checkedItems];
-    newCheckedItems[index] = !newCheckedItems[index];
-    setCheckedItems(newCheckedItems);
   };
 
   return (
@@ -242,7 +172,7 @@ export function StylePatternSection({ isPinned, onTogglePin, language, data }: S
             <Card key={style.id} className="shadow-lg">
               <CardHeader>
                 <div className="flex items-center gap-4">
-                  <div className={`p-3 rounded-lg ${style.color === 'blue' ? 'bg-blue-50 dark:bg-blue-950/20' : style.color === 'amber' ? 'bg-amber-50 dark:bg-amber-950/20' : 'bg-violet-50 dark:bg-violet-950/20'}`}>
+                  <div className={`p-3 rounded-lg ${style.color === 'blue' ? 'bg-blue-50' : style.color === 'amber' ? 'bg-amber-50' : 'bg-violet-50'}`}>
                     <IconComponent className={`h-6 w-6 ${style.color === 'blue' ? 'text-blue-600' : style.color === 'amber' ? 'text-amber-600' : 'text-violet-600'}`} />
                   </div>
                   <div className="flex-1">
@@ -275,21 +205,21 @@ export function StylePatternSection({ isPinned, onTogglePin, language, data }: S
 
                 {/* Why & Caution */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg">
-                    <h4 className="font-semibold mb-2 flex items-center gap-2 text-green-800 dark:text-green-200">
+                  <div className="p-4 bg-green-50 rounded-lg">
+                    <h4 className="font-semibold mb-2 flex items-center gap-2 text-green-800">
                       <ThumbsUp className="h-4 w-4" />
                       {text.whyTitle}
                     </h4>
-                    <p className="text-green-700 dark:text-green-300 leading-relaxed">
+                    <p className="text-green-700 leading-relaxed">
                       {style.why}
                     </p>
                   </div>
-                  <div className="p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg">
-                    <h4 className="font-semibold mb-2 flex items-center gap-2 text-amber-800 dark:text-amber-200">
+                  <div className="p-4 bg-amber-50 rounded-lg">
+                    <h4 className="font-semibold mb-2 flex items-center gap-2 text-amber-800">
                       <ThumbsDown className="h-4 w-4" />
                       {text.cautionTitle}
                     </h4>
-                    <p className="text-amber-700 dark:text-amber-300 leading-relaxed">
+                    <p className="text-amber-700 leading-relaxed">
                       {style.caution}
                     </p>
                   </div>
@@ -312,95 +242,7 @@ export function StylePatternSection({ isPinned, onTogglePin, language, data }: S
         })}
       </div>
 
-      {/* Quick Tips */}
-      <Card className="shadow-lg">
-        <CardHeader>
-          <h3 className="text-xl font-semibold">{text.quickTipsTitle}</h3>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {(apiQuickTips || quickTips).map((tipRaw, i) => {
-              const tip = apiQuickTips ? {
-                id: tipRaw.id || String(i + 1),
-                title: tipRaw.title,
-                method: tipRaw.method,
-                tip: tipRaw.tip,
-                icon: [Calendar, Target, FileText, Clock][i % 4],
-                color: ['blue','amber','green','violet'][i % 4]
-              } : tipRaw
-              const IconComponent = tip.icon;
-              return (
-                <Card key={tip.id} className="border-2 border-muted">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full ${getStyleColor(tip.color)} text-white flex items-center justify-center font-bold`}>
-                        {tip.id}
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-semibold">{tip.title}</h4>
-                      </div>
-                      <IconComponent className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">{text.methodLabel}:</p>
-                      <p className="leading-relaxed">{tip.method}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">{text.tipLabel}:</p>
-                      <p className="leading-relaxed text-green-700 dark:text-green-300">
-                        {tip.tip}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Today's Checklist */}
-      <Card className="shadow-lg border-l-4 border-l-primary">
-        <CardHeader>
-          <h3 className="text-xl font-semibold flex items-center gap-2">
-            <CheckCircle className="h-5 w-5" />
-            {text.todayTitle}
-          </h3>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="space-y-4">
-            {(apiTodayChecklist || todayChecklist).map((item, index) => (
-              <div key={index} className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
-                <Checkbox
-                  id={`today-${index}`}
-                  checked={checkedItems[index]}
-                  onCheckedChange={() => handleCheckItem(index)}
-                />
-                <label
-                  htmlFor={`today-${index}`}
-                  className="text-lg leading-relaxed cursor-pointer flex-1"
-                >
-                  {item}
-                </label>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Summary */}
-      <Card className="shadow-lg bg-gradient-to-r from-blue-50 to-violet-50 dark:from-blue-950/20 dark:to-violet-950/20">
-        <CardHeader>
-          <h3 className="text-xl font-semibold">{text.summaryTitle}</h3>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <p className="leading-relaxed whitespace-pre-line font-medium">
-            {apiSummary || text.summaryText}
-          </p>
-        </CardContent>
-      </Card>
+      {/* Quick Tips / Checklist / Summary 제거 */}
     </div>
   );
 }

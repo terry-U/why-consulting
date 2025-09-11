@@ -80,17 +80,49 @@
 
 /* 다크 선호 무시: 항상 라이트 토큰 유지 (다크 토큰 비활성화) */
 
-body {
-  background: var(--background) !important;
+html, body, #__next, main {
+  background: transparent !important;
   color: var(--foreground);
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
 }
 
+/* App root fixed background base (subtle color wash) */
+.app-bg {
+  background:
+    radial-gradient(1200px 600px at 10% -10%, #fff2d9 14%, rgba(255,242,217,0) 58%),
+    radial-gradient(1000px 500px at 90% -10%, #e6f0ff 14%, rgba(230,240,255,0) 58%),
+    linear-gradient(180deg, #fffefb 0%, #f8fbff 100%);
+}
+
+/* Animated gradient blobs used by the fixed background in layout.tsx */
+@keyframes blobA {
+  0%, 100% { transform: translate3d(0,0,0) scale(1); }
+  50% { transform: translate3d(20px, -10px, 0) scale(1.05); }
+}
+@keyframes blobB {
+  0%, 100% { transform: translate3d(0,0,0) scale(1); }
+  50% { transform: translate3d(-18px, 12px, 0) scale(0.98); }
+}
+.animate-blobA { animation: blobA 14s ease-in-out infinite; }
+.animate-blobB { animation: blobB 18s ease-in-out infinite; }
+
+/* Pink attention animated gradient (from design-ref) */
+@keyframes attnPulse {
+  0%, 100% { transform: scale(1); opacity: 0.18; }
+  50% { transform: scale(1.05); opacity: 0.28; }
+}
+.animate-attn {
+  animation: attnPulse 6s ease-in-out infinite;
+}
+
 /* 세션 화면 배경 보조 유틸 (그라디언트) */
-.session-gradient { background: var(--background) !important; }
+
+/* 세션 화면 배경 유틸: 루트 고정 배경 사용 → 투명 유지 */
+.session-gradient { background: transparent !important; }
 
 /* 부드러운 애니메이티드 그라디언트 배경 */
-.animated-gradient { background: var(--background) !important; }
+/* 이전에 흰색을 강제 적용하던 유틸 → 투명으로 변경 */
+.animated-gradient { background: transparent !important; }
 
 @keyframes gradientShift { from { opacity: 1 } to { opacity: 1 } }
 
@@ -175,7 +207,7 @@ body {
   }
 
   .card {
-    background: var(--surface);
+    background: rgba(255,255,255,0.88);
     border-radius: var(--radius-lg);
     border: 1px solid var(--border);
     box-shadow: none;

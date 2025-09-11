@@ -13,17 +13,12 @@ export interface StyleItem {
   story?: string
 }
 
-export interface QuickTip { id: string; title: string; method: string; tip: string }
-
 export interface StylePatternData {
   styles: StyleItem[]
-  quick_tips?: QuickTip[]
-  today_checklist?: string[]
-  summary?: string
 }
 
 export default function StylePatternStructured({ data }: { data: StylePatternData }) {
-  const { styles = [], quick_tips = [], today_checklist = [], summary } = data || {}
+  const { styles = [] } = data || {}
 
   const fitColor = (level: FitLevel) => {
     switch (level) {
@@ -38,7 +33,6 @@ export default function StylePatternStructured({ data }: { data: StylePatternDat
     <div className="space-y-8">
       <div className="card p-6">
         <h2 className="text-2xl font-bold mb-2">Style Pattern</h2>
-        {summary && <p className="text-gray-700">{summary}</p>}
       </div>
 
       {styles.map((s, idx) => (
@@ -74,27 +68,7 @@ export default function StylePatternStructured({ data }: { data: StylePatternDat
         </div>
       ))}
 
-      {quick_tips.length > 0 && (
-        <div className="card p-6">
-          <h3 className="text-xl font-semibold mb-3">바로 쓰는 팁</h3>
-          <ul className="space-y-2 list-disc ml-5">
-            {quick_tips.map((q, i) => (
-              <li key={i}><span className="font-medium">{q.title}</span>: {q.method} ({q.tip})</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {today_checklist.length > 0 && (
-        <div className="card p-6">
-          <h3 className="text-xl font-semibold mb-3">오늘 체크</h3>
-          <ul className="space-y-2 list-disc ml-5">
-            {today_checklist.map((c, i) => (
-              <li key={i}>{c}</li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {/* quick tips / today checklist 제거 */}
     </div>
   )
 }
