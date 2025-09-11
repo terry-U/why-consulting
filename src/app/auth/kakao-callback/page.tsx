@@ -3,7 +3,6 @@
 import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { handleKakaoCallback } from '@/lib/auth-kakao'
-import { supabase } from '@/lib/auth'
 
 function KakaoCallbackContent() {
   const [isLoading, setIsLoading] = useState(true)
@@ -43,41 +42,14 @@ function KakaoCallbackContent() {
           return
         }
 
-        console.log('✅ Kakao login successful, setting session...')
-
-        // Edge Function에서 받은 세션 데이터로 Supabase 세션 설정
-        if (result.session) {
-          const accessToken = (result as any).session?.access_token ?? (result as any).session?.properties?.hashed_token
-          const refreshToken = (result as any).session?.refresh_token ?? (result as any).session?.properties?.hashed_token
-
-          if (!accessToken || !refreshToken) {
-            console.error('❌ Missing tokens in session payload:', result.session)
-            setError('세션 토큰이 유효하지 않습니다.')
-            setIsLoading(false)
-            return
-          }
-
-          const { error: sessionError } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
-          })
-          
-          if (sessionError) {
-            console.error('❌ Session setting error:', sessionError)
-            setError('세션 설정에 실패했습니다.')
-            setIsLoading(false)
-            return
-          }
-        }
-
-        console.log('✅ Session set successfully, deciding next route...')
+        console.log('✅ Kakao login successful, deciding next route...')
         // 로그인 후 이동 결정: 결제/온보딩/첫 세션 자동 시작 흐름 지원
         let next = '/home'
         try {
           const stored = localStorage.getItem('auth_next')
           if (stored) next = stored
         } catch {}
-        window.location.href = next
+        router.replace(next)
 
       } catch (error) {
         console.error('❌ Callback processing error:', error)
