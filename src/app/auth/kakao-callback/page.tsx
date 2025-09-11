@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { handleKakaoCallback } from '@/lib/auth-kakao'
+import { supabase } from '@/lib/auth'
 
 function KakaoCallbackContent() {
   const [isLoading, setIsLoading] = useState(true)
@@ -42,7 +43,21 @@ function KakaoCallbackContent() {
           return
         }
 
-        console.log('✅ Kakao login successful, deciding next route...')
+        console.log('✅ Kakao login successful, setting local session...')
+
+        // Edge Function이 쿠키를 세팅하지만, CSR 경로 안정화를 위해 로컬 세션도 설정
+        if (result.session?.access_token && result.session?.refresh_token) {
+          try {
+            await supabase.auth.setSession({
+              access_token: result.session.access_token,
+              refresh_token: result.session.refresh_token
+            })
+          } catch (e) {
+            console.warn('setSession skipped/failed:', e)
+          }
+        }
+
+        console.log('✅ Session set (or cookie-based), deciding next route...')
         // 로그인 후 이동 결정: 결제/온보딩/첫 세션 자동 시작 흐름 지원
         let next = '/home'
         try {
