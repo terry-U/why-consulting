@@ -107,8 +107,8 @@ export default function App({ initialReports }: { initialReports?: ReportsMap })
 
         const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
         const pollType = async (t: string) => {
-          // Poll up to ~90s with backoff
-          for (let attempt = 0; attempt < 10; attempt++) {
+          // Faster client polling: cap ~20s
+          for (let attempt = 0; attempt < 6; attempt++) {
             try {
               const backfillFlag = t === 'my_why' ? '&backfill=1' : '';
               const data = await fetchJson(`${base}/api/session/${id}/report?type=${t}${backfillFlag}`);
@@ -121,7 +121,7 @@ export default function App({ initialReports }: { initialReports?: ReportsMap })
                 return;
               }
             } catch {}
-            await delay(Math.min(800 * (attempt + 1), 6000));
+            await delay(Math.min(600 * (attempt + 1), 4000));
           }
         };
 

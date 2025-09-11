@@ -30,14 +30,15 @@ export default async function ReportPage(props: any) {
     const reports: Record<string, any> = {}
     const delay = (ms: number) => new Promise(r => setTimeout(r, ms))
 
+    // SSR에서는 기다림을 최소화: 1~2회만 확인하고 바로 렌더(최대 ~600ms)
     await Promise.all(types.map(async (t) => {
-      for (let attempt = 0; attempt < 8; attempt++) {
+      for (let attempt = 0; attempt < 2; attempt++) {
         const data = await fetchJson(makeUrl(`type=${t}`))
         if (data && (data.success || data.report)) {
           reports[t] = data.report || data
           return
         }
-        await delay(400 * (attempt + 1))
+        await delay(300 * (attempt + 1))
       }
     }))
 
