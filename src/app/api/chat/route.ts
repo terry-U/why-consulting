@@ -58,7 +58,8 @@ const counselors = {
     완성된 경험이 2~3개가 되면 대화를 마무리하고, 다음 질문자로 넘어가면 됩니다. 대화를 마무리 하는 방법은 프롬프트 맨 아래 구성하겠습니다.
     직접적으로 당신이 무엇을 수집하고 있는지는 절대로 알려주시면 안됩니다. 아주 자연스러운 대화로 친숙한 사람과 이야기 나누듯, 상대방이 스스로 기억을 구체적으로 완성할 수 있도록 도와주세요.
     
-    먼저 자기소개를 하며 대화를 열어주세요. 상대는 기억들을 꺼내야 하기 때문에 경직되어 있을거에요. 먼저 친근하게 다가가고, 아이스브레이킹도 좋습니다.
+    먼저 자기소개를 하며 질문과 함께 대화를 열어주세요. 목적성이 분명하게 대화를 이끌어야 합니다. 상대는 이미 이 상담을 진행한다는 사실을 알고있으니, 오늘~해볼까요? 같은 상투적인 인사는 하지 않아도 됩니다.
+    상대는 기억들을 꺼내야 하기 때문에 경직되어 있을거에요. 먼저 친근하게 다가가고, 아이스브레이킹도 좋습니다.
     질문은 왠만하면 한번에 하나만 해주세요. 다른 맥락의 질문을 2개 이상 받으면 상대는 혼란스러워합니다.
 
 
@@ -516,6 +517,11 @@ const counselingQuestions = [
 
 export async function POST(request: NextRequest) {
   try {
+    const t0 = Date.now()
+    const marks: Record<string, number> = {}
+    const markDur = (key: string, startAt: number) => {
+      marks[key] = (Date.now() - startAt)
+    }
     const body = await request.json()
     const { sessionId, message, userId } = body
     // 온도는 상담사 결정 이후 resolveTemperature로 최종 확정
@@ -528,12 +534,14 @@ export async function POST(request: NextRequest) {
     }
 
     // 세션 정보 조회
+    const tSessionStart = Date.now()
     const { data: session, error: sessionError } = await supabaseServer
       .from('sessions')
       .select('*')
       .eq('id', sessionId)
       .eq('user_id', userId)
       .single()
+    markDur('db_session', tSessionStart)
 
     if (sessionError || !session) {
       return NextResponse.json(
@@ -582,6 +590,7 @@ export async function POST(request: NextRequest) {
 
     // 사용자 메시지가 있을 때만 저장 (빈 메시지는 첫 인사용)
     if (message.trim()) {
+      const tSaveUserStart = Date.now()
       const { error: messageError } = await supabaseServer
         .from('messages')
         .insert({
@@ -591,6 +600,7 @@ export async function POST(request: NextRequest) {
           content: message,
           counselor_id: currentCounselorType
         })
+      markDur('db_save_user', tSaveUserStart)
 
       if (messageError) {
         console.error('사용자 메시지 저장 오류:', messageError)
@@ -602,12 +612,14 @@ export async function POST(request: NextRequest) {
     }
 
     // 기존 메시지들 조회 (컨텍스트용) - 상담사별 히스토리 분리
+    const tPrevStart = Date.now()
     const { data: previousMessages } = await supabaseServer
       .from('messages')
       .select('*')
       .eq('session_id', sessionId)
       .eq('counselor_id', currentCounselorType)
       .order('created_at', { ascending: true })
+    markDur('db_prev_msgs', tPrevStart)
 
     // OpenAI 메시지 형식으로 변환
     const openaiMessages = [
@@ -649,6 +661,7 @@ export async function POST(request: NextRequest) {
       request.nextUrl?.searchParams?.get('temperature')
     )
 
+    const tAiStart = Date.now()
     if (modelId.startsWith('gpt-5')) {
       // gpt-5 비활성화: 강제 gpt-4o로 실행
       const completion = await openai.chat.completions.create({
@@ -683,6 +696,7 @@ export async function POST(request: NextRequest) {
         }
       }
     }
+    markDur('ai_openai', tAiStart)
 
     if (!aiResponse) {
       return NextResponse.json(
@@ -692,6 +706,7 @@ export async function POST(request: NextRequest) {
     }
 
     // AI 응답 저장
+    const tSaveAiStart = Date.now()
     const { error: aiMessageError } = await supabaseServer
       .from('messages')
       .insert({
@@ -701,6 +716,7 @@ export async function POST(request: NextRequest) {
         content: aiResponse,
         counselor_id: currentCounselorType
       })
+    markDur('db_save_ai', tSaveAiStart)
 
     if (aiMessageError) {
       console.error('AI 메시지 저장 오류:', aiMessageError)
@@ -764,6 +780,11 @@ export async function POST(request: NextRequest) {
       aiResponsePreview: aiResponse.substring(0, 100) + '...'
     })
 
+    marks.total = (Date.now() - t0)
+    const serverTiming = Object.entries(marks)
+      .map(([k, v]) => `${k};dur=${Math.max(0, Math.round(v))}`)
+      .join(', ')
+
     return NextResponse.json(
       {
         success: true,
@@ -774,7 +795,7 @@ export async function POST(request: NextRequest) {
         temperature,
       },
       {
-        headers: { 'x-llm-temp': String(temperature) }
+        headers: { 'x-llm-temp': String(temperature), 'Server-Timing': serverTiming }
       }
     )
 
