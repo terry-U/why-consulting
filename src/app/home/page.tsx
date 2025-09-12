@@ -155,10 +155,11 @@ export default function HomePage() {
                       })
                       const js = await res.json()
                       if (!res.ok || !js?.success) throw new Error(js?.error || '충전 실패')
-                      // UI 갱신
+                      // UI 갱신 및 새로고침
                       setTickets((prev) => typeof prev === 'number' ? prev + 10 : 10)
                       setShowBuyPopup(false)
                       alert('테스트용으로 상담권 10장을 충전했습니다.')
+                      try { router.refresh() } catch {}
                     } catch (e) {
                       alert('충전에 실패했습니다.')
                     }
