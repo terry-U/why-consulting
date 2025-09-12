@@ -142,6 +142,30 @@ export default function HomePage() {
               <div className="flex justify-end gap-2">
                 <button className="btn px-4 py-2 rounded-full text-gray-700 bg-gray-100 hover:bg-gray-200" onClick={() => setShowBuyPopup(false)}>나중에</button>
                 <button className="btn btn-primary px-4 py-2 rounded-full text-white" onClick={() => router.push('/pay')}>지금 구매하기</button>
+                {/* 테스트용 티켓 충전 버튼 (개발 환경 전용) */}
+                <button
+                  className="btn px-4 py-2 rounded-full text-gray-700 bg-green-100 hover:bg-green-200"
+                  onClick={async () => {
+                    try {
+                      if (!user) return
+                      const res = await fetch('/api/user/add-tickets', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId: user.id, amount: 10 })
+                      })
+                      const js = await res.json()
+                      if (!res.ok || !js?.success) throw new Error(js?.error || '충전 실패')
+                      // UI 갱신
+                      setTickets((prev) => typeof prev === 'number' ? prev + 10 : 10)
+                      setShowBuyPopup(false)
+                      alert('테스트용으로 상담권 10장을 충전했습니다.')
+                    } catch (e) {
+                      alert('충전에 실패했습니다.')
+                    }
+                  }}
+                >
+                  테스트로 10장 충전
+                </button>
               </div>
             </div>
           </div>
