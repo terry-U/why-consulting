@@ -6,6 +6,44 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
+// 온도(temperature) 설정 - 라우트 파일에서 간편하게 조정
+// global: 전체 공통값을 강제 적용하려면 숫자(0~2)를 넣고, 동적(바디/쿼리/ENV)을 쓰려면 null 유지
+// byCounselor: 특정 상담사 타입별로 개별 온도 강제 적용(숫자). 미설정은 null
+const ChatTemperatureConfig = {
+  global: null as number | null, // 예) 0.6 으로 고정하려면 0.6, 동적이면 null 유지
+  byCounselor: {
+    yellow: null,
+    bibi: null,
+    orange: null,
+    purple: null,
+    green: null,
+    blue: null,
+    pink: null,
+    indigo: null,
+  } as Record<string, number | null>,
+}
+
+function clampTemperature(n: number) {
+  return Math.min(2, Math.max(0, n))
+}
+
+function resolveTemperature(counselorType: string, bodyTemp: unknown, queryTemp: unknown) {
+  // 1) 상담사별 강제값
+  const counselorOverride = ChatTemperatureConfig.byCounselor[counselorType]
+  if (typeof counselorOverride === 'number') return clampTemperature(counselorOverride)
+
+  // 2) 전역 강제값
+  if (typeof ChatTemperatureConfig.global === 'number') return clampTemperature(ChatTemperatureConfig.global)
+
+  // 3) 동적 입력 (body > query > ENV 기본값)
+  const bTemp = typeof bodyTemp !== 'undefined' ? Number(bodyTemp) : undefined
+  const qTemp = typeof queryTemp !== 'undefined' ? Number(queryTemp) : undefined
+  const envDefault = Number(process.env.OPENAI_TEMPERATURE ?? 0.7)
+  const picked = [bTemp, qTemp].find(v => typeof v === 'number' && !Number.isNaN(v))
+  const candidate = picked !== undefined ? picked : envDefault
+  return clampTemperature(candidate)
+}
+
 // 상담사 캐릭터 정의
 const counselors = {
   yellow: {
@@ -480,14 +518,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { sessionId, message, userId } = body
-    // temperature: 지원 (우선순위: body > query > env 기본값)
-    const urlTemp = request.nextUrl?.searchParams?.get('temperature')
-    const defaultTemp = Number(process.env.OPENAI_TEMPERATURE ?? 0.7)
-    const bodyTemp = body && typeof body.temperature !== 'undefined' ? Number(body.temperature) : undefined
-    const queryTemp = urlTemp !== null && urlTemp !== undefined ? Number(urlTemp) : undefined
-    let temperature = [bodyTemp, queryTemp].find(v => typeof v === 'number' && !Number.isNaN(v))
-    if (temperature === undefined || Number.isNaN(temperature)) temperature = defaultTemp
-    temperature = Math.min(2, Math.max(0, temperature))
+    // 온도는 상담사 결정 이후 resolveTemperature로 최종 확정
 
     if (!sessionId || message === undefined || !userId) {
       return NextResponse.json(
@@ -611,6 +642,13 @@ export async function POST(request: NextRequest) {
 
     let aiResponse = '' as string
 
+    // 최종 온도 계산 (상담사별/전역/동적)
+    const temperature = resolveTemperature(
+      (currentCounselorType || 'yellow'),
+      body?.temperature,
+      request.nextUrl?.searchParams?.get('temperature')
+    )
+
     if (modelId.startsWith('gpt-5')) {
       // gpt-5 비활성화: 강제 gpt-4o로 실행
       const completion = await openai.chat.completions.create({
@@ -726,18 +764,19 @@ export async function POST(request: NextRequest) {
       aiResponsePreview: aiResponse.substring(0, 100) + '...'
     })
 
-    return NextResponse.json({
-      success: true,
-      response: aiResponse,
-      counselor: currentCounselor,
-      shouldAdvance,
-      nextPhaseData,
-      temperature,
-    }, {
-      headers: {
-        'x-llm-temp': String(temperature)
+    return NextResponse.json(
+      {
+        success: true,
+        response: aiResponse,
+        counselor: currentCounselor,
+        shouldAdvance,
+        nextPhaseData,
+        temperature,
+      },
+      {
+        headers: { 'x-llm-temp': String(temperature) }
       }
-    })
+    )
 
   } catch (error) {
     console.error('채팅 API 오류:', error)
