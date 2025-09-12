@@ -10,7 +10,7 @@ const openai = new OpenAI({
 // global: 전체 공통값을 강제 적용하려면 숫자(0~2)를 넣고, 동적(바디/쿼리/ENV)을 쓰려면 null 유지
 // byCounselor: 특정 상담사 타입별로 개별 온도 강제 적용(숫자). 미설정은 null
 const ChatTemperatureConfig = {
-  global: null as number | null, // 예) 0.6 으로 고정하려면 0.6, 동적이면 null 유지
+  global: 0.8 as number | null, // 예) 0.6 으로 고정하려면 0.6, 동적이면 null 유지
   byCounselor: {
     yellow: null,
     bibi: null,
